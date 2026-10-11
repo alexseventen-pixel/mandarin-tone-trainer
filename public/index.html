@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1220">
+  <meta name="description" content="Practice Mandarin tones with instant voice feedback">
+  <title>Tone — Mandarin pronunciation trainer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header><div class="brand"><span class="brand-mark">声</span><span>Tone</span></div><span class="tag">MANDARIN PRONUNCIATION TRAINER</span></header>
+    <section class="workspace" aria-labelledby="heading">
+      <div class="heading"><div><p class="eyebrow">MANDARIN CHINESE</p><h1 id="heading">Hit the right tone</h1></div><p class="intro">Enter a sentence and verified pinyin, say it in one take, and see the result syllable by syllable.</p></div>
+      <form id="form" class="input-row"><label for="hanzi">Chinese sentence</label><textarea id="hanzi" class="phrase-field" rows="2" autocomplete="off" spellcheck="false" aria-describedby="input-help" placeholder="Example: 你好">一对夫妻怕熊破坏院子里的围栏。</textarea><label for="pinyin">Verified pinyin</label><div class="field-row"><textarea id="pinyin" rows="3" autocomplete="off" spellcheck="false" aria-describedby="input-help" placeholder="Example: nǐ hǎo">yī duì fūqī pà xióng pòhuài yuànzǐ lǐ de wéilán</textarea><button type="submit" class="apply">Apply</button></div><p id="input-help" class="help">Use one syllable per character. Words may be joined: fūqī, pòhuài. Leave neutral tones unmarked.</p></form>
+      <div class="practice"><div class="target"><span class="mini">PHRASE SYLLABLES</span><div id="syllables" class="syllables"></div><span id="tone-name">Select a syllable to view its pitch curve</span></div><div class="recorder"><button id="record" class="record" type="button"><span class="dot"></span><span id="record-label">Start recording</span></button><span id="status" role="status">Say the complete phrase in one take</span></div></div>
+      <section class="result" aria-label="Result"><div class="result-head"><div><span class="mini">PITCH CURVE · SELECTED SYLLABLE</span><h2 id="verdict">Waiting for a recording</h2></div><span id="confidence" class="badge">—</span></div><canvas id="chart" aria-label="Spoken and expected tone comparison"></canvas><div class="legend"><span><i class="target-line"></i>Expected tone</span><span><i class="actual-line"></i>Your voice</span></div><p id="detail" class="detail">After recording, select any syllable to compare its tone.</p><p id="transcript" class="transcript" hidden></p></section>
+      <section id="ai-result" class="ai-result" aria-labelledby="ai-heading" hidden><div class="ai-heading"><div><span class="mini">TONEPERFECT DETAILED REPORT</span><h2 id="ai-heading">Sentence assessment</h2></div><span id="ai-model" class="model-tag"></span></div><div id="ai-scores" class="score-grid"></div><div id="ai-meta" class="ai-meta"></div><h3>Characters and sounds</h3><div id="ai-words" class="ai-words"></div><details class="raw-result"><summary>Complete API response</summary><pre id="ai-raw"></pre></details></section>
+    </section>
+    <footer>TonePerfect provides practice feedback and does not replace a teacher's assessment.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
