@@ -52,6 +52,7 @@ async function serveFile(request,response){
 }
 
 createServer(async(request,response)=>{
+  if(request.method==='GET'&&request.url==='/health')return sendJson(response,200,{status:'ok'});
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);
   if(request.method==='GET')return serveFile(request,response);
   response.writeHead(405);response.end('Method not allowed');

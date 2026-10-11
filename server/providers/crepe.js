@@ -1,4 +1,5 @@
 export async function assessWithCrepe({audio,text,pinyin},config) {
+  if(!config.crepeUrl)throw new Error('CREPE_URL is not configured');
   const response=await fetch(config.crepeUrl,{
     method:'POST',
     headers:{'Content-Type':'application/json'},

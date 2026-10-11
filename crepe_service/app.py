@@ -9,8 +9,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import crepe
 import numpy as np
 
-HOST = "127.0.0.1"
-PORT = int(os.environ.get("CREPE_PORT", "8001"))
+HOST = os.environ.get("HOST", "0.0.0.0")
+PORT = int(os.environ.get("PORT", os.environ.get("CREPE_PORT", "8001")))
 
 
 def read_wav(encoded):

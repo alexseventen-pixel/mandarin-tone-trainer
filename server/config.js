@@ -18,8 +18,13 @@ function loadEnvFile() {
 
 loadEnvFile();
 
+function normalizeCrepeUrl(value){
+  const withScheme=value.includes('://')?value:`http://${value}`;
+  return withScheme.replace(/\/$/,'')+(withScheme.replace(/\/$/,'').endsWith('/assess')?'':'/assess');
+}
+const crepeAddress=process.env.CREPE_URL||'http://127.0.0.1:8001/assess';
 export const config={
   port:Number(process.env.PORT||3000),
   tonePerfectKey:process.env.TONEPERFECT_API_KEY||'',
-  crepeUrl:process.env.CREPE_URL||'http://127.0.0.1:8001/assess'
+  crepeUrl:normalizeCrepeUrl(crepeAddress)
 };
