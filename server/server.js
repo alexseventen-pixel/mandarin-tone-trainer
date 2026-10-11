@@ -4,6 +4,7 @@ import { extname, normalize } from 'node:path';
 import { config } from './config.js';
 import { assessWithTonePerfect } from './providers/toneperfect.js';
 import { assessWithCrepe } from './providers/crepe.js';
+import { pinyin } from 'pinyin-pro';
 
 const publicDir=new URL('../public/',import.meta.url);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
@@ -36,6 +37,33 @@ async function handleAssessment(request,response){
   }
 }
 
+async function handlePrepare(request,response){
+  try{
+    const {text}=await readJson(request);
+    if(typeof text!=='string'||text.length>200)return sendJson(response,400,{error:'Enter a short Chinese sentence'});
+    const characters=[...text].filter(char=>/\p{Script=Han}/u.test(char));
+    if(!characters.length)return sendJson(response,400,{error:'No Chinese characters found'});
+    const citation=pinyin(text,{toneType:'num',type:'array',nonZh:'removed',toneSandhi:false});
+    const spoken=pinyin(text,{toneType:'num',type:'array',nonZh:'removed',toneSandhi:{yi:true,bu:true,thirdTone:true}});
+    const marked=pinyin(text,{toneType:'symbol',type:'array',nonZh:'removed',toneSandhi:{yi:true,bu:true,thirdTone:true}});
+    if(citation.length!==characters.length||spoken.length!==characters.length)return sendJson(response,422,{error:'Could not align every character with pinyin'});
+    const syllables=characters.map((character,index)=>{
+      const base=citation[index].replace(/[0-5]$/,'');
+      const lexical=Number(citation[index].match(/[0-5]$/)?.[0]||5)||5;
+      const surface=Number(spoken[index].match(/[0-5]$/)?.[0]||5)||5;
+      let rule=null;
+      if(lexical!==surface){
+        if(character==='一')rule=`一 changes from tone ${lexical} to tone ${surface} in this context`;
+        else if(character==='不')rule=`不 changes from tone ${lexical} to tone ${surface} before a fourth tone`;
+        else if(lexical===3&&surface===2)rule='Third-tone sandhi: 3 + 3 is pronounced 2 + 3';
+        else rule=`Context changes tone ${lexical} to tone ${surface}`;
+      }
+      return {character,pinyin:marked[index],numbered:`${base}${surface}`,lexical_tone:lexical,surface_tone:surface,rule};
+    });
+    sendJson(response,200,{text,display_pinyin:marked.join(' '),numbered_pinyin:spoken.map(value=>value.replace(/0$/,'5')).join(' '),syllables,rules:syllables.filter(item=>item.rule).map(item=>item.rule)});
+  }catch(error){sendJson(response,400,{error:error.message||'Could not prepare the sentence'});}
+}
+
 async function serveFile(request,response){
   const url=new URL(request.url,'http://localhost');
   const requested=url.pathname==='/'?'index.html':url.pathname.slice(1);
@@ -53,6 +81,7 @@ async function serveFile(request,response){
 
 createServer(async(request,response)=>{
   if(request.method==='GET'&&request.url==='/health')return sendJson(response,200,{status:'ok'});
+  if(request.method==='POST'&&request.url==='/api/prepare')return handlePrepare(request,response);
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);
   if(request.method==='GET')return serveFile(request,response);
   response.writeHead(405);response.end('Method not allowed');
