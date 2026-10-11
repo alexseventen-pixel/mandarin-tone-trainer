@@ -20,7 +20,6 @@ loadEnvFile();
 
 export const config={
   port:Number(process.env.PORT||3000),
-  provider:process.env.AI_PROVIDER||'toneperfect',
   tonePerfectKey:process.env.TONEPERFECT_API_KEY||'',
-  localAiUrl:process.env.LOCAL_AI_URL||'http://127.0.0.1:8000/assess'
+  crepeUrl:process.env.CREPE_URL||'http://127.0.0.1:8001/assess'
 };

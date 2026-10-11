@@ -1,172 +1,132 @@
-# Mandarin Tone Trainer — локальная версия для VS Code
+# Mandarin Tone Trainer — три режима оценки
 
-Это упрощённая версия проекта, которую можно открыть обычной папкой в VS Code.
+Локальное приложение для VS Code с одним выпадающим списком:
 
-В проекте нет сборщика, базы данных и обязательных внешних библиотек. Нужен только **Node.js 20 или новее**.
+1. **ToneMirror · local DTW** — бесплатно, работает в браузере без сервера модели.
+2. **TonePerfect · cloud API** — сохранённая платная оценка через API.
+3. **CREPE · local neural pitch tracker** — бесплатная локальная нейросеть.
 
-## Что находится в папках
+Все режимы показывают общий балл, результат каждого слога, ожидаемый и услышанный тон, временные границы, диагностические показатели и полный JSON.
+
+## Папки
 
 ```text
 mandarin-tone-trainer-vscode/
 ├── public/
-│   ├── index.html       страница приложения
-│   ├── style.css        внешний вид
-│   └── app.js           микрофон, график и отображение результата
+│   ├── index.html              интерфейс и выбор режима
+│   ├── style.css               оформление
+│   └── app.js                  микрофон, YIN, DTW, графики и отчёт
 ├── server/
-│   ├── server.js        локальный веб-сервер и маршрут /api/assess
-│   ├── config.js        чтение настроек из .env
+│   ├── server.js               локальный Node.js-сервер
+│   ├── config.js               настройки .env
 │   └── providers/
-│       ├── toneperfect.js   подключение TonePerfect
-│       └── local.js         подключение собственной локальной модели
+│       ├── toneperfect.js      TonePerfect API
+│       └── crepe.js            мост к локальному CREPE
+├── crepe_service/
+│   ├── app.py                  нейросеть CREPE и оценка тонов
+│   └── requirements.txt        Python-зависимости
 ├── .env.example
-├── .gitignore
 └── package.json
 ```
 
-Ключ хранится только в файле `.env` на вашем компьютере. Браузер его не получает.
+## Основной запуск
 
-## Первый запуск
+Нужен [Node.js 20+](https://nodejs.org/).
 
-1. Установите [Node.js](https://nodejs.org/) версии 20 или новее.
-2. Откройте VS Code.
-3. Выберите **File → Open Folder…** и откройте папку `mandarin-tone-trainer-vscode`.
-4. В левой панели VS Code найдите `.env.example`.
-5. Сделайте его копию с именем `.env`.
-6. Вставьте ключ TonePerfect:
+1. Откройте папку через **File → Open Folder…** в VS Code.
+2. Скопируйте `.env.example` в новый файл `.env`.
+3. Откройте **Terminal → New Terminal**.
+4. Выполните `npm start`.
+5. Откройте [http://localhost:3000](http://localhost:3000).
+
+Для режима **ToneMirror** больше ничего устанавливать не нужно.
+
+## TonePerfect
+
+В `.env`:
 
 ```env
-AI_PROVIDER=toneperfect
 TONEPERFECT_API_KEY=ваш_ключ
+CREPE_URL=http://127.0.0.1:8001/assess
 PORT=3000
 ```
 
-7. Откройте терминал VS Code: **Terminal → New Terminal**.
-8. Выполните:
+Перезапустите `npm start` после замены ключа. Файл `.env` исключён из Git и не передаётся браузеру.
+
+## CREPE
+
+Рекомендуется Python 3.10 или 3.11. В новом терминале VS Code:
 
 ```bash
-npm start
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r crepe_service/requirements.txt
+npm run crepe
 ```
 
-9. Откройте в браузере:
+На Windows:
 
-[http://localhost:3000](http://localhost:3000)
-
-Для остановки сервера нажмите **Ctrl+C** в терминале.
-
-## Как заменить ключ
-
-Откройте файл `.env` и замените значение:
-
-```env
-TONEPERFECT_API_KEY=новый_ключ
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r crepe_service/requirements.txt
+python crepe_service/app.py
 ```
 
-После изменения остановите сервер сочетанием **Ctrl+C** и снова выполните `npm start`.
+Оставьте CREPE-сервис работающим. В другом терминале выполните `npm start`, откройте приложение и выберите **CREPE · local neural pitch tracker**.
 
-Не добавляйте файл `.env` в GitHub. Он уже указан в `.gitignore`.
+Первый анализ может идти дольше: TensorFlow загружает модель. Размер модели задаётся перед запуском переменной `CREPE_MODEL`: `tiny`, `small`, `medium`, `large` или `full`. Начните с `tiny`.
 
-## Режим разработки
+## Различия режимов
 
-Можно запустить:
+### ToneMirror · local DTW
 
-```bash
-npm run dev
-```
+- звук не покидает браузер;
+- YIN извлекает основную частоту;
+- высота нормализуется относительно голоса пользователя;
+- DTW сравнивает кривую каждого слога с четырьмя китайскими тонами;
+- работает быстрее всего и без ключа;
+- границы слогов приблизительные, по паузам и энергии.
 
-Node.js будет автоматически перезапускать сервер после изменений в серверных файлах. После изменения файлов из `public` достаточно обновить страницу браузера.
+Это самостоятельная реализация того же подхода: pitch tracking, нормализация и Dynamic Time Warping. Код стороннего проекта в папку не копировался.
 
-## Как подключить локальную нейросеть
+### TonePerfect
 
-В файле `.env` переключите провайдера:
+- отправляет запись в облачный API;
+- показывает все поля, которые вернул сервис;
+- требует API-ключ и расходует кредиты.
 
-```env
-AI_PROVIDER=local
-LOCAL_AI_URL=http://127.0.0.1:8000/assess
-PORT=3000
-```
+### CREPE
 
-Теперь проект отправляет запись на ваш локальный адрес.
+- использует локальную свёрточную нейросеть для F0;
+- после CREPE применяется нормализация и DTW;
+- показывает confidence, диапазон голоса, Hz, полутона и расстояния до каждого тона;
+- запись остаётся на компьютере;
+- требует Python и TensorFlow.
 
-Запрос имеет формат JSON:
+## Максимально подробный вывод
 
-```json
-{
-  "audioBase64": "UklGR...",
-  "text": "一对夫妻怕熊破坏院子里的围栏。",
-  "pinyin": "yi1 dui4 fu1 qi1 pa4 xiong2 po4 huai4 yuan4 zi3 li3 de5 wei2 lan2",
-  "language": "zh-CN"
-}
-```
+Нажмите **Complete analysis data** под результатом. Там доступны движок и версия, длительность, sample rate, tone score, временные границы, ожидаемый и услышанный тон, voiced ratio, median/min/max Hz, диапазон в полутонах, DTW distance, расстояния до тонов 1–4, confidence CREPE, нормализованная кривая и значения pitch.
 
-`audioBase64` содержит WAV, mono, 16 kHz.
+## Где что менять
 
-Адаптер находится в `server/providers/local.js`. Если ваша модель принимает файл, другой JSON или использует иной URL, меняйте только этот файл.
+- Выпадающий список и подписи: `public/index.html`
+- Цвета и размеры: `public/style.css`
+- ToneMirror, YIN, DTW и отображение: `public/app.js`
+- TonePerfect: `server/providers/toneperfect.js`
+- Передача записи в CREPE: `server/providers/crepe.js`
+- Работа CREPE: `crepe_service/app.py`
 
-## Какой ответ ожидает интерфейс
+## Ограничение
 
-Минимальный ответ:
-
-```json
-{
-  "assessable": true,
-  "scores": {
-    "overall": 86,
-    "tone": 82,
-    "pronunciation": 88
-  },
-  "words": [
-    {
-      "word": "一",
-      "pinyin": "yi1",
-      "score": 92,
-      "phones": [
-        {
-          "dimension": "tone",
-          "expected": 1,
-          "heard": 1,
-          "score": 92,
-          "decision": "no_correction"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Для `decision` интерфейс понимает:
-
-- `no_correction` — тон произнесён хорошо;
-- `review` — тон нужно повторить;
-- `uncertain` — модель не уверена.
-
-Массив `words` должен содержать по одному элементу на каждый китайский иероглиф.
-
-## Где менять интерфейс
-
-- Надписи и разметка: `public/index.html`
-- Цвета и расположение элементов: `public/style.css`
-- Запись микрофона, локальный график и отображение ответа: `public/app.js`
-- TonePerfect API: `server/providers/toneperfect.js`
-- Своя модель: `server/providers/local.js`
+ToneMirror и CREPE измеряют форму высоты голоса, но пока используют приблизительное разделение связной речи на слоги. Для длинных предложений следующим улучшением будет forced alignment по известному тексту и пиньиню.
 
 ## Частые проблемы
 
-### Страница не открывается
+**CREPE не отвечает:** проверьте, что отдельный терминал показывает `CREPE service: http://127.0.0.1:8001/assess`.
 
-Убедитесь, что терминал показывает:
+**TensorFlow не устанавливается:** используйте Python 3.10 или 3.11 и создайте новое `.venv`.
 
-```text
-Mandarin Tone Trainer: http://localhost:3000
-```
+**Микрофон не работает:** разрешите микрофон для `localhost` в Chrome или Edge.
 
-### Микрофон не работает
-
-Разрешите доступ к микрофону для `localhost` в браузере. Лучше использовать Chrome или Edge.
-
-### TonePerfect сообщает, что ключ отсутствует
-
-Проверьте, что файл называется именно `.env`, а строка `TONEPERFECT_API_KEY` содержит ключ без лишних пробелов.
-
-### Локальная модель не отвечает
-
-Сначала отдельно запустите вашу модель и проверьте адрес `LOCAL_AI_URL`. Затем перезапустите этот проект.
+**TonePerfect не видит ключ:** проверьте `.env`, строку `TONEPERFECT_API_KEY` и перезапустите Node.js-сервер.

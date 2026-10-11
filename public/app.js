@@ -1,9 +1,15 @@
 const $ = id => document.getElementById(id);
-const input = $('pinyin'), status = $('status'), button = $('record'), chart = $('chart'), ctx = chart.getContext('2d');
+const input = $('pinyin'), status = $('status'), button = $('record'), chart = $('chart'), ctx = chart.getContext('2d'), provider = $('provider');
+const providerInfo={
+  tonemirror:'Runs entirely in this browser. Pitch is normalized and compared with Mandarin tone contours using DTW.',
+  toneperfect:'Uploads the recording to TonePerfect for cloud pronunciation assessment. Requires TONEPERFECT_API_KEY in .env.',
+  crepe:'Uses the local CREPE neural pitch service. Start it separately on the URL configured in .env.'
+};
 const accents = {ā:['a',1],á:['a',2],ǎ:['a',3],à:['a',4],ē:['e',1],é:['e',2],ě:['e',3],è:['e',4],ī:['i',1],í:['i',2],ǐ:['i',3],ì:['i',4],ō:['o',1],ó:['o',2],ǒ:['o',3],ò:['o',4],ū:['u',1],ú:['u',2],ǔ:['u',3],ù:['u',4],ǖ:['ü',1],ǘ:['ü',2],ǚ:['ü',3],ǜ:['ü',4]};
 const tones = ['neutral','1st · level','2nd · rising','3rd · low','4th · falling'];
 const spellings = new Set(`a ai an ang ao e ei en eng er o ou ba bai ban bang bao bei ben beng bi bian biao bie bin bing bo bu pa pai pan pang pao pei pen peng pi pian piao pie pin ping po pou pu ma mai man mang mao mei men meng mi mian miao mie min ming miu mo mou mu fa fan fang fei fen feng fo fou fu da dai dan dang dao de dei den deng di dian diao die ding diu dong dou du duan dui dun duo ta tai tan tang tao te teng ti tian tiao tie ting tong tou tu tuan tui tun tuo na nai nan nang nao ne nei nen neng ni nian niang niao nie nin ning niu nong nou nu nuan nuo nü nüe la lai lan lang lao le lei leng li lia lian liang liao lie lin ling liu long lou lu luan lun luo lü lüe ga gai gan gang gao ge gei gen geng gong gou gu gua guai guan guang gui gun guo ka kai kan kang kao ke kei ken keng kong kou ku kua kuai kuan kuang kui kun kuo ha hai han hang hao he hei hen heng hong hou hu hua huai huan huang hui hun huo ji jia jian jiang jiao jie jin jing jiong jiu ju juan jue jun qi qia qian qiang qiao qie qin qing qiong qiu qu quan que qun xi xia xian xiang xiao xie xin xing xiong xiu xu xuan xue xun zha zhai zhan zhang zhao zhe zhei zhen zheng zhi zhong zhou zhu zhua zhuai zhuan zhuang zhui zhun zhuo cha chai chan chang chao che chen cheng chi chong chou chu chua chuai chuan chuang chui chun chuo sha shai shan shang shao she shei shen sheng shi shou shu shua shuai shuan shuang shui shun shuo re ren reng ri rong rou ru ruan rui run ruo za zai zan zang zao ze zei zen zeng zi zong zou zu zuan zui zun zuo ca cai can cang cao ce cen ceng ci cong cou cu cuan cui cun cuo sa sai san sang sao se sen seng si song sou su suan sui sun suo ya yan yang yao ye yi yin ying yong you yu yuan yue yun wa wai wan wang wei wen weng wo wu`.split(' '));
 let syllables = [], selected = 0, results = [], stream, audioContext, source, processor, chunks = [], recording = false, recognition, recognized = '';
+provider.onchange=()=>{$('provider-help').textContent=providerInfo[provider.value];results=[];renderSyllables();$('ai-result').hidden=true;status.textContent=`${provider.options[provider.selectedIndex].text} selected. Record the complete phrase.`;};
 function readPart(raw) {
   let base = '', tone = 0, marks = 0;
   for (let i = 0; i < raw.length; i++) {
@@ -66,7 +72,8 @@ function showSelected() {
   $('tone-name').textContent=part.reason||tones[part.tone];
   $('verdict').textContent=!result?`${part.hanzi} ${part.label}`:result.state==='good'?`${part.hanzi} ${part.label}: tone matched`:result.state==='bad'?`${part.hanzi} ${part.label}: check the tone`:`${part.hanzi} ${part.label}: unclear`;
   $('confidence').textContent=!result?'—':result.state==='good'?'Matched':result.state==='bad'?`Sounds like tone ${result.predicted}`:'Uncertain';
-  $('detail').textContent=!result?'Record the phrase, then select a syllable to compare.':result.source==='ai'?`TonePerfect: expected tone ${result.expected ?? '—'}, heard ${result.predicted ?? '—'}. ${result.state==='uncertain'?'The model is uncertain about this correction.':''}`:result.state==='neutral'?'Neutral tone depends on context and is not scored here.':result.state==='uncertain'?'The syllable boundary or pitch was unclear. Check the graph and try again.':`${part.reason?part.reason+'. ':''}Syllable timing in connected speech is approximate; use the graph together with the score.`;
+  const engine=result?.source==='toneperfect'?'TonePerfect':result?.source==='crepe'?'CREPE':'ToneMirror DTW';
+  $('detail').textContent=!result?'Record the phrase, then select a syllable to compare.':result.state==='neutral'?'Neutral tone depends on context and is not scored here.':`${engine}: expected tone ${result.expected ?? part.expected ?? '—'}, heard ${result.predicted ?? '—'}, score ${result.score ?? '—'}/100. ${result.state==='uncertain'?'The result is uncertain. ':''}${part.reason||''}`;
   draw(result?.contour);
 }
 function renderSyllables() {
@@ -83,34 +90,52 @@ function updatePhrase() {
 }
 $('form').onsubmit=e=>{e.preventDefault();updatePhrase()};window.onresize=()=>draw(results[selected]?.contour);
 function pitch(frame,rate) {
-  let energy=0;for(const v of frame)energy+=v*v;if(Math.sqrt(energy/frame.length)<.01)return null;
-  const min=Math.floor(rate/520),max=Math.min(Math.floor(rate/75),frame.length/2);let best=0,bestLag=0;
-  for(let lag=min;lag<=max;lag++){let dot=0,a=0,b=0;for(let j=0;j<frame.length-lag;j++){const x=frame[j],y=frame[j+lag];dot+=x*y;a+=x*x;b+=y*y;}const corr=dot/Math.sqrt(a*b||1);if(corr>best){best=corr;bestLag=lag;}}
-  return best>.77?rate/bestLag:null;
+  let energy=0;for(const value of frame)energy+=value*value;
+  if(Math.sqrt(energy/frame.length)<.008)return null;
+  const minLag=Math.floor(rate/520),maxLag=Math.min(Math.floor(rate/70),Math.floor(frame.length/2));
+  const difference=new Float32Array(maxLag+1);
+  for(let lag=1;lag<=maxLag;lag++){let sum=0;for(let i=0;i<frame.length-lag;i++){const delta=frame[i]-frame[i+lag];sum+=delta*delta;}difference[lag]=sum;}
+  const cmnd=new Float32Array(maxLag+1);cmnd[0]=1;let running=0;
+  for(let lag=1;lag<=maxLag;lag++){running+=difference[lag];cmnd[lag]=difference[lag]*lag/(running||1);}
+  let chosen=0;
+  for(let lag=minLag;lag<=maxLag;lag++){if(cmnd[lag]<.14){while(lag+1<=maxLag&&cmnd[lag+1]<cmnd[lag])lag++;chosen=lag;break;}}
+  if(!chosen)return null;
+  const left=cmnd[chosen-1]??cmnd[chosen],right=cmnd[chosen+1]??cmnd[chosen],denominator=2*(2*cmnd[chosen]-right-left);
+  const refined=denominator?chosen+(right-left)/denominator:chosen;
+  return rate/refined;
 }
 function median(v){const a=[...v].sort((x,y)=>x-y);return a[Math.floor(a.length/2)];}
+function resample(values,count=60){return Array.from({length:count},(_,i)=>{const at=i*(values.length-1)/(count-1),left=Math.floor(at),mix=at-left;return values[left]*(1-mix)+(values[Math.min(values.length-1,left+1)]||values[left])*mix;});}
+function dtw(a,b){const previous=new Float64Array(b.length+1).fill(Infinity),current=new Float64Array(b.length+1);previous[0]=0;for(let i=1;i<=a.length;i++){current.fill(Infinity);for(let j=1;j<=b.length;j++){const cost=(a[i-1]-b[j-1])**2;current[j]=cost+Math.min(current[j-1],previous[j],previous[j-1]);}previous.set(current);}return Math.sqrt(previous[b.length]/(a.length+b.length));}
 function classify(frames,expected) {
-  if(!expected)return{state:'neutral',contour:null};
-  const voiced=frames.filter(f=>f.pitch).map(f=>f.pitch);if(voiced.length<5||voiced.length/frames.length<.45)return{state:'uncertain',contour:null};
-  const mid=median(voiced),hz=frames.map(f=>f.pitch&&Math.abs(12*Math.log2(f.pitch/mid))<9?f.pitch:null),valid=hz.filter(Boolean);if(valid.length<5)return{state:'uncertain',contour:null};
-  const filled=hz.map((x,i)=>x||hz.slice(0,i).reverse().find(Boolean)||hz.slice(i).find(Boolean));
-  const smooth=filled.map((_,i)=>median(filled.slice(Math.max(0,i-2),i+3))),semi=smooth.map(x=>12*Math.log2(x)),low=Math.min(...semi),high=Math.max(...semi),range=high-low;
-  const normalized=semi.map(x=>.18+.64*(x-low)/Math.max(range,2.5)),contour=Array.from({length:60},(_,i)=>normalized[Math.round(i*(normalized.length-1)/59)]);
-  const candidates=[1,2,3,4].map(t=>({tone:t,error:Math.min(...(t===3?[target,(_,x)=>halfThird(x)]:[target]).map(shape=>contour.reduce((sum,v,i)=>{const d=(v-contour[0])-(shape(t,i/59)-shape(t,0));return sum+d*d;},0)/60))})).sort((a,b)=>a.error-b.error);
-  const predicted=candidates[0].tone,clear=candidates[1].error-candidates[0].error>.012;
-  return{state:!clear||(range<1.5&&expected!==1)?'uncertain':predicted===expected?'good':'bad',predicted,contour};
+  if(!expected)return{state:'neutral',contour:null,score:null,diagnostics:{voiced_ratio:0}};
+  const raw=frames.map(f=>f.pitch),voiced=raw.filter(Boolean),voicedRatio=voiced.length/Math.max(1,frames.length);
+  if(voiced.length<5||voicedRatio<.35)return{state:'uncertain',contour:null,score:0,diagnostics:{voiced_ratio:+voicedRatio.toFixed(3),voiced_frames:voiced.length,total_frames:frames.length}};
+  const mid=median(voiced),hz=raw.map(f=>f&&Math.abs(12*Math.log2(f/mid))<10?f:null);
+  const filled=hz.map((value,i)=>value||hz.slice(0,i).reverse().find(Boolean)||hz.slice(i).find(Boolean));
+  const smooth=filled.map((_,i)=>median(filled.slice(Math.max(0,i-2),i+3))),semitones=smooth.map(value=>12*Math.log2(value/mid));
+  const low=Math.min(...semitones),high=Math.max(...semitones),range=high-low;
+  const normalized=resample(semitones.map(value=>.18+.64*(value-low)/Math.max(range,2.5)));
+  const shifted=normalized.map(value=>value-normalized[0]);
+  const candidates=[1,2,3,4].map(tone=>{const shapes=[Array.from({length:60},(_,i)=>target(tone,i/59))];if(tone===3)shapes.push(Array.from({length:60},(_,i)=>halfThird(i/59)));return{tone,distance:Math.min(...shapes.map(shape=>dtw(shifted,shape.map(value=>value-shape[0]))))};}).sort((a,b)=>a.distance-b.distance);
+  const predicted=candidates[0].tone,expectedDistance=candidates.find(item=>item.tone===expected)?.distance??1,score=Math.max(0,Math.round(100-expectedDistance*185));
+  const margin=candidates[1].distance-candidates[0].distance,uncertain=margin<.025||(range<1.2&&expected!==1);
+  return{state:uncertain?'uncertain':predicted===expected&&score>=60?'good':'bad',predicted,expected,score,contour:normalized,diagnostics:{voiced_ratio:+voicedRatio.toFixed(3),voiced_frames:voiced.length,total_frames:frames.length,median_hz:+mid.toFixed(2),min_hz:+Math.min(...voiced).toFixed(2),max_hz:+Math.max(...voiced).toFixed(2),range_semitones:+range.toFixed(2),dtw_distance:+expectedDistance.toFixed(4),classification_margin:+margin.toFixed(4),candidate_distances:candidates.map(item=>({tone:item.tone,distance:+item.distance.toFixed(4)})),pitch_hz:voiced.map(value=>+value.toFixed(2))}};
 }
-function analyze() {
+function analyzeToneMirror() {
   const samples=Float32Array.from(chunks.flatMap(x=>Array.from(x))),rate=audioContext.sampleRate,step=Math.floor(rate*.025),size=Math.floor(rate*.045),frames=[];
   for(let i=0;i+size<samples.length;i+=step){const slice=samples.subarray(i,i+size);let sum=0;for(const v of slice)sum+=v*v;frames.push({energy:Math.sqrt(sum/slice.length),pitch:pitch(slice,rate)});}
   const peak=Math.max(...frames.map(f=>f.energy)),threshold=Math.max(.008,peak*.12),first=frames.findIndex(f=>f.energy>threshold),last=frames.findLastIndex(f=>f.energy>threshold);
-  if(first<0||last-first<syllables.length*4){showError('The recording is too short for this phrase. Say it completely and a little more slowly.');return;}
+  if(first<0||last-first<syllables.length*4){showError('The recording is too short for this phrase. Say it completely and a little more slowly.');return null;}
   const active=frames.slice(first,last+1),n=syllables.length,width=active.length/n,cuts=[0];
   for(let i=1;i<n;i++){const center=Math.round(i*width),radius=Math.max(1,Math.round(width*.3));let best=center,min=Infinity;for(let j=Math.max(cuts.at(-1)+3,center-radius);j<=Math.min(active.length-(n-i)*3,center+radius);j++){const energy=(active[j-1]?.energy||0)+active[j].energy+(active[j+1]?.energy||0),cost=energy/Math.max(peak,.001)+.08*Math.abs(j-center)/radius;if(cost<min){min=cost;best=j;}}cuts.push(best);}cuts.push(active.length);
-  results=syllables.map((part,i)=>classify(active.slice(cuts[i],cuts[i+1]),part.expected));renderSyllables();
-  const good=results.filter(x=>x.state==='good').length,uncertain=results.filter(x=>x.state==='uncertain').length;
-  status.textContent=`Tone matched: ${good} of ${results.filter(x=>x.state!=='neutral').length}. Unclear: ${uncertain}. Select a syllable for details.`;
+  results=syllables.map((part,i)=>({...classify(active.slice(cuts[i],cuts[i+1]),part.expected),source:'tonemirror',start_ms:Math.round((first+cuts[i])*step/rate*1000),end_ms:Math.round((first+cuts[i+1])*step/rate*1000)}));renderSyllables();
+  const scored=results.filter(item=>item.state!=='neutral'),good=scored.filter(item=>item.state==='good').length,uncertain=scored.filter(item=>item.state==='uncertain').length,toneScore=scored.length?Math.round(scored.reduce((sum,item)=>sum+(item.score||0),0)/scored.length):0;
+  const report={provider:'tonemirror',status:'completed',task:'connected_speech_pitch_dtw',language:'zh-CN',model_version:'browser-yin-dtw-1.0',scores:{overall:toneScore,tone:toneScore,matched:good,uncertain},audio:{sample_rate_hz:rate,duration_ms:Math.round(samples.length/rate*1000),analysis_hop_ms:25,analysis_window_ms:45,active_frames:active.length,peak_energy:+peak.toFixed(6)},words:syllables.map((part,i)=>({word:part.hanzi,pinyin:part.label,score:results[i].score,start_ms:results[i].start_ms,end_ms:results[i].end_ms,decision:results[i].state==='good'?'no_correction':results[i].state==='bad'?'review':'uncertain',phones:[{dimension:'tone',expected:part.expected||5,heard:results[i].predicted??null,score:results[i].score,decision:results[i].state==='good'?'no_correction':results[i].state==='bad'?'review':'uncertain'}],analysis:results[i].diagnostics,normalized_contour:results[i].contour}))};
+  status.textContent=`ToneMirror DTW score: ${toneScore}/100. Matched: ${good}. Unclear: ${uncertain}. Select a syllable.`;
   if(recognized){$('transcript').hidden=false;$('transcript').textContent=`Browser transcript: ${recognized}. The transcript does not affect the tone score.`;}
+  renderAiResult(report);
+  return report;
 }
 function showError(message){$('verdict').textContent='Could not assess';$('confidence').textContent='—';$('detail').textContent=message;status.textContent='Try again';}
 function makeWav() {
@@ -133,12 +158,14 @@ function node(tag,className,text) {const element=document.createElement(tag);if(
 function displayValue(value) {return value===null||value===undefined||value===''?'—':typeof value==='object'?JSON.stringify(value):String(value);}
 function renderAiResult(data) {
   $('ai-result').hidden=false;
+  const engine=data.provider==='toneperfect'?'TonePerfect':data.provider==='crepe'?'CREPE neural pitch':data.provider==='tonemirror'?'ToneMirror DTW':data.provider||'Assessment';
+  $('report-kicker').textContent=`${engine.toUpperCase()} · DETAILED REPORT`;
   $('ai-model').textContent=data.model_version?`Model: ${data.model_version}`:'';
   const labels={overall:'Overall',pronunciation:'Pronunciation',initial:'Initials',final:'Finals',tone:'Tones',fluency:'Fluency',rhythm:'Rhythm',completeness:'Completeness'};
   const scores=$('ai-scores');scores.replaceChildren();
   for(const [name,value] of Object.entries(data.scores||{})) {const card=node('div','score-card');card.append(node('span','',labels[name]||name),node('strong','',displayValue(value)));scores.append(card);}
   const meta=$('ai-meta');meta.replaceChildren();
-  const metadata=[['Status',data.status],['Mode',data.task],['Language',data.locale||data.language],['Reason',data.reason],['Request',data.id],['Credits used',data.billing?.credits],['Credits remaining',data.billing?.balance_credits],['Replayed response',data.replayed===undefined?null:data.replayed?'yes':'no']];
+  const metadata=[['Provider',engine],['Status',data.status],['Mode',data.task],['Language',data.locale||data.language],['Reason',data.reason],['Request',data.id],['Credits used',data.billing?.credits],['Credits remaining',data.billing?.balance_credits],['Duration',data.audio?.duration_ms?data.audio.duration_ms+' ms':null],['Sample rate',data.audio?.sample_rate_hz?data.audio.sample_rate_hz+' Hz':null],['Replayed response',data.replayed===undefined?null:data.replayed?'yes':'no']];
   for(const [label,value] of metadata)if(value!==null&&value!==undefined&&value!=='')meta.append(node('span','',`${label}: ${displayValue(value)}`));
   const words=$('ai-words');words.replaceChildren();
   for(const word of data.words||[]) {
@@ -154,30 +181,34 @@ function renderAiResult(data) {
       if(phone.decision)p.append(node('span','decision',phone.decision==='review'?'Repeat':phone.decision==='no_correction'?'Good':phone.decision==='uncertain'?'Uncertain':phone.decision));
       phones.append(p);
     }
+    if(word.analysis){const diagnostics=node('div','diagnostics');for(const [key,value] of Object.entries(word.analysis)){if(Array.isArray(value))continue;diagnostics.append(node('span','',`${key.replaceAll('_',' ')}: ${displayValue(value)}`));}if(diagnostics.childElementCount)card.append(diagnostics);}
     if(phones.childElementCount)card.append(phones);words.append(card);
   }
   if(!words.childElementCount)words.append(node('p','detail','No syllable-level data was returned. The complete response is available below.'));
   $('ai-raw').textContent=JSON.stringify(data,null,2);
 }
-async function evaluateWithAi() {
-  status.textContent='AI is assessing your pronunciation…';
+async function evaluateRemote(engine) {
+  status.textContent=`${engine==='crepe'?'CREPE':'TonePerfect'} is assessing your pronunciation…`;
   try {
     const response=await fetch('/api/assess',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       audioBase64:await blobToBase64(makeWav()),
       text:$('hanzi').value.trim(),
-      pinyin:syllables.map(s=>s.base+(s.tone||5)).join(' ')
+      pinyin:syllables.map(s=>s.base+(s.tone||5)).join(' '),
+      provider:engine
     })});
     const data=await response.json();
     if(!response.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||'The service did not respond');
     if(data.assessable===false)throw new Error('The recording could not be assessed. Make sure you said the displayed phrase.');
+    data.provider=data.provider||engine;
     renderAiResult(data);
     const units=data.words||[];
-    if(units.length!==syllables.length){status.textContent=`TonePerfect assessed the recording. Tone score: ${data.scores?.tone??'—'}. The syllable alignment did not match the text.`;return;}
-    results=units.map((word,i)=>{const tone=word.phones?.find(p=>p.dimension==='tone');const decision=tone?.decision;return {source:'ai',state:!tone||decision==='uncertain'?'uncertain':decision==='review'?'bad':'good',expected:tone?.expected,predicted:tone?.heard,contour:results[i]?.contour||null};});
+    const engineName=engine==='crepe'?'CREPE':'TonePerfect';
+    if(units.length!==syllables.length){status.textContent=`${engineName} assessed the recording. Tone score: ${data.scores?.tone??'—'}. The syllable alignment did not match the text.`;return;}
+    results=units.map((word,i)=>{const tone=word.phones?.find(p=>p.dimension==='tone'),decision=tone?.decision;return {source:engine,state:!tone||decision==='uncertain'?'uncertain':decision==='review'?'bad':'good',expected:tone?.expected,predicted:tone?.heard,score:tone?.score??word.score,contour:word.normalized_contour||results[i]?.contour||null,diagnostics:word.analysis||null};});
     renderSyllables();
     const flagged=results.filter(r=>r.state==='bad').length;
-    status.textContent=`TonePerfect tone score: ${data.scores?.tone??'—'}/100. Syllables to repeat: ${flagged}. Select a syllable.`;
-  } catch(error) {status.textContent=`TonePerfect: ${error.message}. ${results.length?'The local pitch estimate is shown.':'No score was received; record the phrase again.'}`;}
+    status.textContent=`${engineName} tone score: ${data.scores?.tone??'—'}/100. Syllables to repeat: ${flagged}. Select a syllable.`;
+  } catch(error) {status.textContent=`${engine==='crepe'?'CREPE':'TonePerfect'}: ${error.message}. No remote score was received.`;}
 }
 async function start() {
   if(!updatePhrase())return;if(!navigator.mediaDevices?.getUserMedia){showError('Microphone access requires HTTPS and a supported browser.');return;}
@@ -199,8 +230,8 @@ async function stop(){
   source?.disconnect();processor?.disconnect();stream?.getTracks().forEach(t=>t.stop());
   try{
     if(chunks.length>2){
-      analyze();
-      await evaluateWithAi();
+      if(provider.value==='tonemirror')analyzeToneMirror();
+      else {analyzeToneMirror();await evaluateRemote(provider.value);}
     }else showError('The recording is too short. Say the complete phrase.');
   }finally{await audioContext?.close();}
 }

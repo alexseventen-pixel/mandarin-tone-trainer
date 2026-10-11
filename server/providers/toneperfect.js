@@ -15,5 +15,5 @@ export async function assessWithTonePerfect({audio,text,pinyin},config) {
   });
   const data=await response.json();
   if(!response.ok)throw new Error(data?.error?.message||data?.message||`TonePerfect returned ${response.status}`);
-  return data;
+  return {...data,provider:'toneperfect'};
 }

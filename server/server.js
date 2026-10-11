@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, normalize } from 'node:path';
 import { config } from './config.js';
 import { assessWithTonePerfect } from './providers/toneperfect.js';
-import { assessWithLocalAi } from './providers/local.js';
+import { assessWithCrepe } from './providers/crepe.js';
 
 const publicDir=new URL('../public/',import.meta.url);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
@@ -26,12 +26,10 @@ async function readJson(request){
 async function handleAssessment(request,response){
   try{
     const body=await readJson(request);
-    if(typeof body.audioBase64!=='string'||typeof body.text!=='string'||typeof body.pinyin!=='string')return sendJson(response,400,{error:'Invalid recording payload'});
+    if(typeof body.audioBase64!=='string'||typeof body.text!=='string'||typeof body.pinyin!=='string'||!['toneperfect','crepe'].includes(body.provider))return sendJson(response,400,{error:'Invalid recording payload or provider'});
     const input={audio:Buffer.from(body.audioBase64,'base64'),text:body.text,pinyin:body.pinyin};
     if(!input.audio.length||input.audio.length>10_000_000||input.text.length>200||input.pinyin.length>500)return sendJson(response,400,{error:'Check the recording and text'});
-    const data=config.provider==='local'
-      ? await assessWithLocalAi(input,config)
-      : await assessWithTonePerfect(input,config);
+    const data=body.provider==='crepe'?await assessWithCrepe(input,config):await assessWithTonePerfect(input,config);
     sendJson(response,200,data);
   }catch(error){
     sendJson(response,502,{error:error.message||'Assessment failed'});
@@ -59,5 +57,5 @@ createServer(async(request,response)=>{
   response.writeHead(405);response.end('Method not allowed');
 }).listen(config.port,'0.0.0.0',()=>{
   console.log(`Mandarin Tone Trainer: http://localhost:${config.port}`);
-  console.log(`AI provider: ${config.provider}`);
+  console.log('Assessment engines: ToneMirror DTW, TonePerfect, CREPE');
 });
