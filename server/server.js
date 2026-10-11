@@ -7,7 +7,7 @@ import { assessWithCrepe } from './providers/crepe.js';
 import { pinyin } from 'pinyin-pro';
 
 const publicDir=new URL('../public/',import.meta.url);
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav'};
 
 function sendJson(response,status,data){
   response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});

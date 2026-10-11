@@ -1,0 +1,3170 @@
+{
+  "id": "video-1-li-pei-ru",
+  "title": "Video 1 · Bear Door",
+  "speaker": "Li Pei Ru",
+  "language": "zh-CN",
+  "source_document": "субтитры_видео1_draft2.docx",
+  "reference_audio": "/lessons/video-1-li-pei-ru/reference.wav",
+  "duration_ms": 25670,
+  "segments": [
+    {
+      "id": "sentence-01",
+      "order": 1,
+      "text": "一对夫妻怕熊破坏院子里的围栏。",
+      "verified_pinyin": "yī duì fūqī pà xióng pòhuài yuànzǐ lǐ de wéilán",
+      "translation_en": "A couple were afraid that a bear would damage the fence in their yard.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-01.wav",
+      "source_start_ms": 550,
+      "source_end_ms": 4650,
+      "duration_ms": 4100,
+      "reference_pitch": {
+        "median_hz": 264.49,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 232,
+            "hz": 235.29,
+            "confidence": 0.943,
+            "semitones": -2.025
+          },
+          {
+            "time_ms": 248,
+            "hz": 238.81,
+            "confidence": 0.928,
+            "semitones": -1.768
+          },
+          {
+            "time_ms": 262,
+            "hz": 238.81,
+            "confidence": 0.894,
+            "semitones": -1.768
+          },
+          {
+            "time_ms": 278,
+            "hz": 238.81,
+            "confidence": 0.872,
+            "semitones": -1.768
+          },
+          {
+            "time_ms": 308,
+            "hz": 235.29,
+            "confidence": 0.935,
+            "semitones": -2.025
+          },
+          {
+            "time_ms": 338,
+            "hz": 290.91,
+            "confidence": 0.883,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 352,
+            "hz": 296.3,
+            "confidence": 0.955,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 368,
+            "hz": 296.3,
+            "confidence": 0.978,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 382,
+            "hz": 296.3,
+            "confidence": 0.976,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 398,
+            "hz": 290.91,
+            "confidence": 0.974,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 412,
+            "hz": 290.91,
+            "confidence": 0.956,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 428,
+            "hz": 285.71,
+            "confidence": 0.933,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 442,
+            "hz": 280.7,
+            "confidence": 0.909,
+            "semitones": 1.03
+          },
+          {
+            "time_ms": 472,
+            "hz": 290.91,
+            "confidence": 0.852,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 532,
+            "hz": 280.7,
+            "confidence": 0.921,
+            "semitones": 1.03
+          },
+          {
+            "time_ms": 548,
+            "hz": 285.71,
+            "confidence": 0.97,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 562,
+            "hz": 285.71,
+            "confidence": 0.987,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 578,
+            "hz": 285.71,
+            "confidence": 0.987,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 592,
+            "hz": 290.91,
+            "confidence": 0.981,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 608,
+            "hz": 285.71,
+            "confidence": 0.962,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 622,
+            "hz": 280.7,
+            "confidence": 0.936,
+            "semitones": 1.03
+          },
+          {
+            "time_ms": 758,
+            "hz": 296.3,
+            "confidence": 0.841,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 772,
+            "hz": 296.3,
+            "confidence": 0.928,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 788,
+            "hz": 296.3,
+            "confidence": 0.941,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 802,
+            "hz": 296.3,
+            "confidence": 0.887,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 818,
+            "hz": 290.91,
+            "confidence": 0.954,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 832,
+            "hz": 290.91,
+            "confidence": 0.977,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 848,
+            "hz": 290.91,
+            "confidence": 0.959,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 862,
+            "hz": 290.91,
+            "confidence": 0.937,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 878,
+            "hz": 285.71,
+            "confidence": 0.948,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 892,
+            "hz": 285.71,
+            "confidence": 0.951,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 908,
+            "hz": 285.71,
+            "confidence": 0.953,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 922,
+            "hz": 285.71,
+            "confidence": 0.957,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 938,
+            "hz": 285.71,
+            "confidence": 0.956,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 952,
+            "hz": 290.91,
+            "confidence": 0.968,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 968,
+            "hz": 290.91,
+            "confidence": 0.98,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 982,
+            "hz": 313.73,
+            "confidence": 0.843,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 998,
+            "hz": 313.73,
+            "confidence": 0.866,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 1012,
+            "hz": 313.73,
+            "confidence": 0.875,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 1028,
+            "hz": 307.69,
+            "confidence": 0.906,
+            "semitones": 2.619
+          },
+          {
+            "time_ms": 1042,
+            "hz": 307.69,
+            "confidence": 0.914,
+            "semitones": 2.619
+          },
+          {
+            "time_ms": 1058,
+            "hz": 307.69,
+            "confidence": 0.89,
+            "semitones": 2.619
+          },
+          {
+            "time_ms": 1072,
+            "hz": 307.69,
+            "confidence": 0.863,
+            "semitones": 2.619
+          },
+          {
+            "time_ms": 1582,
+            "hz": 313.73,
+            "confidence": 0.875,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 1852,
+            "hz": 192.77,
+            "confidence": 0.883,
+            "semitones": -5.476
+          },
+          {
+            "time_ms": 1868,
+            "hz": 188.24,
+            "confidence": 0.858,
+            "semitones": -5.887
+          },
+          {
+            "time_ms": 1898,
+            "hz": 173.91,
+            "confidence": 0.851,
+            "semitones": -7.258
+          },
+          {
+            "time_ms": 1912,
+            "hz": 172.04,
+            "confidence": 0.865,
+            "semitones": -7.445
+          },
+          {
+            "time_ms": 1928,
+            "hz": 170.21,
+            "confidence": 0.892,
+            "semitones": -7.63
+          },
+          {
+            "time_ms": 1942,
+            "hz": 170.21,
+            "confidence": 0.931,
+            "semitones": -7.63
+          },
+          {
+            "time_ms": 1958,
+            "hz": 170.21,
+            "confidence": 0.928,
+            "semitones": -7.63
+          },
+          {
+            "time_ms": 1972,
+            "hz": 172.04,
+            "confidence": 0.928,
+            "semitones": -7.445
+          },
+          {
+            "time_ms": 1988,
+            "hz": 173.91,
+            "confidence": 0.948,
+            "semitones": -7.258
+          },
+          {
+            "time_ms": 2002,
+            "hz": 177.78,
+            "confidence": 0.893,
+            "semitones": -6.877
+          },
+          {
+            "time_ms": 2018,
+            "hz": 181.82,
+            "confidence": 0.873,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 2033,
+            "hz": 190.48,
+            "confidence": 0.924,
+            "semitones": -5.683
+          },
+          {
+            "time_ms": 2047,
+            "hz": 195.12,
+            "confidence": 0.919,
+            "semitones": -5.266
+          },
+          {
+            "time_ms": 2062,
+            "hz": 197.53,
+            "confidence": 0.881,
+            "semitones": -5.053
+          },
+          {
+            "time_ms": 2302,
+            "hz": 285.71,
+            "confidence": 0.943,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 2318,
+            "hz": 280.7,
+            "confidence": 0.941,
+            "semitones": 1.03
+          },
+          {
+            "time_ms": 2332,
+            "hz": 275.86,
+            "confidence": 0.913,
+            "semitones": 0.729
+          },
+          {
+            "time_ms": 2348,
+            "hz": 271.19,
+            "confidence": 0.932,
+            "semitones": 0.433
+          },
+          {
+            "time_ms": 2362,
+            "hz": 266.67,
+            "confidence": 0.93,
+            "semitones": 0.142
+          },
+          {
+            "time_ms": 2378,
+            "hz": 262.3,
+            "confidence": 0.886,
+            "semitones": -0.144
+          },
+          {
+            "time_ms": 2438,
+            "hz": 262.3,
+            "confidence": 0.937,
+            "semitones": -0.144
+          },
+          {
+            "time_ms": 2452,
+            "hz": 262.3,
+            "confidence": 0.954,
+            "semitones": -0.144
+          },
+          {
+            "time_ms": 2468,
+            "hz": 258.06,
+            "confidence": 0.858,
+            "semitones": -0.426
+          },
+          {
+            "time_ms": 2572,
+            "hz": 213.33,
+            "confidence": 0.867,
+            "semitones": -3.721
+          },
+          {
+            "time_ms": 2588,
+            "hz": 213.33,
+            "confidence": 0.869,
+            "semitones": -3.721
+          },
+          {
+            "time_ms": 2708,
+            "hz": 313.73,
+            "confidence": 0.849,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 2722,
+            "hz": 313.73,
+            "confidence": 0.915,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 2738,
+            "hz": 313.73,
+            "confidence": 0.963,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 2752,
+            "hz": 313.73,
+            "confidence": 0.853,
+            "semitones": 2.956
+          },
+          {
+            "time_ms": 2798,
+            "hz": 296.3,
+            "confidence": 0.916,
+            "semitones": 1.966
+          },
+          {
+            "time_ms": 2812,
+            "hz": 290.91,
+            "confidence": 0.888,
+            "semitones": 1.649
+          },
+          {
+            "time_ms": 2828,
+            "hz": 285.71,
+            "confidence": 0.928,
+            "semitones": 1.336
+          },
+          {
+            "time_ms": 2842,
+            "hz": 275.86,
+            "confidence": 0.906,
+            "semitones": 0.729
+          },
+          {
+            "time_ms": 2858,
+            "hz": 271.19,
+            "confidence": 0.897,
+            "semitones": 0.433
+          },
+          {
+            "time_ms": 2872,
+            "hz": 258.06,
+            "confidence": 0.879,
+            "semitones": -0.426
+          },
+          {
+            "time_ms": 2948,
+            "hz": 222.22,
+            "confidence": 0.861,
+            "semitones": -3.014
+          },
+          {
+            "time_ms": 2992,
+            "hz": 207.79,
+            "confidence": 0.881,
+            "semitones": -4.177
+          },
+          {
+            "time_ms": 3008,
+            "hz": 207.79,
+            "confidence": 0.918,
+            "semitones": -4.177
+          },
+          {
+            "time_ms": 3022,
+            "hz": 197.53,
+            "confidence": 0.887,
+            "semitones": -5.053
+          },
+          {
+            "time_ms": 3038,
+            "hz": 183.91,
+            "confidence": 0.918,
+            "semitones": -6.29
+          },
+          {
+            "time_ms": 3052,
+            "hz": 183.91,
+            "confidence": 0.95,
+            "semitones": -6.29
+          },
+          {
+            "time_ms": 3068,
+            "hz": 181.82,
+            "confidence": 0.966,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 3082,
+            "hz": 181.82,
+            "confidence": 0.963,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 3098,
+            "hz": 179.78,
+            "confidence": 0.929,
+            "semitones": -6.683
+          },
+          {
+            "time_ms": 3112,
+            "hz": 181.82,
+            "confidence": 0.871,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 3128,
+            "hz": 183.91,
+            "confidence": 0.844,
+            "semitones": -6.29
+          },
+          {
+            "time_ms": 3142,
+            "hz": 186.05,
+            "confidence": 0.862,
+            "semitones": -6.09
+          },
+          {
+            "time_ms": 3218,
+            "hz": 166.67,
+            "confidence": 0.847,
+            "semitones": -7.994
+          },
+          {
+            "time_ms": 3322,
+            "hz": 181.82,
+            "confidence": 0.927,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 3338,
+            "hz": 181.82,
+            "confidence": 0.968,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 3352,
+            "hz": 181.82,
+            "confidence": 0.99,
+            "semitones": -6.488
+          },
+          {
+            "time_ms": 3368,
+            "hz": 183.91,
+            "confidence": 0.986,
+            "semitones": -6.29
+          },
+          {
+            "time_ms": 3382,
+            "hz": 186.05,
+            "confidence": 0.977,
+            "semitones": -6.09
+          },
+          {
+            "time_ms": 3398,
+            "hz": 190.48,
+            "confidence": 0.96,
+            "semitones": -5.683
+          },
+          {
+            "time_ms": 3412,
+            "hz": 200.0,
+            "confidence": 0.917,
+            "semitones": -4.838
+          },
+          {
+            "time_ms": 3428,
+            "hz": 207.79,
+            "confidence": 0.886,
+            "semitones": -4.177
+          },
+          {
+            "time_ms": 3442,
+            "hz": 213.33,
+            "confidence": 0.872,
+            "semitones": -3.721
+          },
+          {
+            "time_ms": 3458,
+            "hz": 219.18,
+            "confidence": 0.862,
+            "semitones": -3.253
+          },
+          {
+            "time_ms": 3472,
+            "hz": 219.18,
+            "confidence": 0.911,
+            "semitones": -3.253
+          },
+          {
+            "time_ms": 3488,
+            "hz": 213.33,
+            "confidence": 0.855,
+            "semitones": -3.721
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-02",
+      "order": 2,
+      "text": "安装了一个熊门。",
+      "verified_pinyin": "ānzhuāngle yīgè xióng mén",
+      "translation_en": "So they installed a bear door.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-02.wav",
+      "source_start_ms": 4850,
+      "source_end_ms": 6880,
+      "duration_ms": 2030,
+      "reference_pitch": {
+        "median_hz": 190.48,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 322,
+            "hz": 262.3,
+            "confidence": 0.885,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 338,
+            "hz": 262.3,
+            "confidence": 0.913,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 352,
+            "hz": 262.3,
+            "confidence": 0.952,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 368,
+            "hz": 262.3,
+            "confidence": 0.982,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 382,
+            "hz": 262.3,
+            "confidence": 0.994,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 398,
+            "hz": 262.3,
+            "confidence": 0.989,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 412,
+            "hz": 262.3,
+            "confidence": 0.961,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 458,
+            "hz": 271.19,
+            "confidence": 0.89,
+            "semitones": 6.116
+          },
+          {
+            "time_ms": 472,
+            "hz": 271.19,
+            "confidence": 0.865,
+            "semitones": 6.116
+          },
+          {
+            "time_ms": 488,
+            "hz": 266.67,
+            "confidence": 0.844,
+            "semitones": 5.825
+          },
+          {
+            "time_ms": 502,
+            "hz": 262.3,
+            "confidence": 0.897,
+            "semitones": 5.539
+          },
+          {
+            "time_ms": 518,
+            "hz": 258.06,
+            "confidence": 0.947,
+            "semitones": 5.257
+          },
+          {
+            "time_ms": 532,
+            "hz": 258.06,
+            "confidence": 0.953,
+            "semitones": 5.257
+          },
+          {
+            "time_ms": 548,
+            "hz": 258.06,
+            "confidence": 0.925,
+            "semitones": 5.257
+          },
+          {
+            "time_ms": 562,
+            "hz": 253.97,
+            "confidence": 0.948,
+            "semitones": 4.98
+          },
+          {
+            "time_ms": 578,
+            "hz": 250.0,
+            "confidence": 0.909,
+            "semitones": 4.707
+          },
+          {
+            "time_ms": 592,
+            "hz": 246.15,
+            "confidence": 0.854,
+            "semitones": 4.439
+          },
+          {
+            "time_ms": 712,
+            "hz": 186.05,
+            "confidence": 0.877,
+            "semitones": -0.407
+          },
+          {
+            "time_ms": 728,
+            "hz": 188.24,
+            "confidence": 0.89,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 742,
+            "hz": 181.82,
+            "confidence": 0.933,
+            "semitones": -0.806
+          },
+          {
+            "time_ms": 758,
+            "hz": 183.91,
+            "confidence": 0.965,
+            "semitones": -0.608
+          },
+          {
+            "time_ms": 772,
+            "hz": 186.05,
+            "confidence": 0.982,
+            "semitones": -0.407
+          },
+          {
+            "time_ms": 788,
+            "hz": 186.05,
+            "confidence": 0.992,
+            "semitones": -0.407
+          },
+          {
+            "time_ms": 802,
+            "hz": 188.24,
+            "confidence": 0.995,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 818,
+            "hz": 188.24,
+            "confidence": 0.997,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 832,
+            "hz": 190.48,
+            "confidence": 0.99,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 848,
+            "hz": 190.48,
+            "confidence": 0.977,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 862,
+            "hz": 188.24,
+            "confidence": 0.943,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 892,
+            "hz": 246.15,
+            "confidence": 0.921,
+            "semitones": 4.439
+          },
+          {
+            "time_ms": 908,
+            "hz": 242.42,
+            "confidence": 0.889,
+            "semitones": 4.174
+          },
+          {
+            "time_ms": 922,
+            "hz": 238.81,
+            "confidence": 0.856,
+            "semitones": 3.915
+          },
+          {
+            "time_ms": 1358,
+            "hz": 179.78,
+            "confidence": 0.858,
+            "semitones": -1.001
+          },
+          {
+            "time_ms": 1372,
+            "hz": 175.82,
+            "confidence": 0.892,
+            "semitones": -1.386
+          },
+          {
+            "time_ms": 1388,
+            "hz": 175.82,
+            "confidence": 0.888,
+            "semitones": -1.386
+          },
+          {
+            "time_ms": 1402,
+            "hz": 177.78,
+            "confidence": 0.893,
+            "semitones": -1.195
+          },
+          {
+            "time_ms": 1418,
+            "hz": 181.82,
+            "confidence": 0.939,
+            "semitones": -0.806
+          },
+          {
+            "time_ms": 1432,
+            "hz": 190.48,
+            "confidence": 0.968,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1448,
+            "hz": 195.12,
+            "confidence": 0.958,
+            "semitones": 0.417
+          },
+          {
+            "time_ms": 1462,
+            "hz": 200.0,
+            "confidence": 0.906,
+            "semitones": 0.844
+          },
+          {
+            "time_ms": 1522,
+            "hz": 246.15,
+            "confidence": 0.887,
+            "semitones": 4.439
+          },
+          {
+            "time_ms": 1538,
+            "hz": 246.15,
+            "confidence": 0.888,
+            "semitones": 4.439
+          },
+          {
+            "time_ms": 1688,
+            "hz": 170.21,
+            "confidence": 0.883,
+            "semitones": -1.948
+          },
+          {
+            "time_ms": 1702,
+            "hz": 172.04,
+            "confidence": 0.927,
+            "semitones": -1.763
+          },
+          {
+            "time_ms": 1718,
+            "hz": 172.04,
+            "confidence": 0.909,
+            "semitones": -1.763
+          },
+          {
+            "time_ms": 1732,
+            "hz": 175.82,
+            "confidence": 0.866,
+            "semitones": -1.386
+          },
+          {
+            "time_ms": 1748,
+            "hz": 179.78,
+            "confidence": 0.952,
+            "semitones": -1.001
+          },
+          {
+            "time_ms": 1762,
+            "hz": 181.82,
+            "confidence": 0.984,
+            "semitones": -0.806
+          },
+          {
+            "time_ms": 1778,
+            "hz": 183.91,
+            "confidence": 0.992,
+            "semitones": -0.608
+          },
+          {
+            "time_ms": 1792,
+            "hz": 186.05,
+            "confidence": 0.994,
+            "semitones": -0.407
+          },
+          {
+            "time_ms": 1808,
+            "hz": 188.24,
+            "confidence": 0.994,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 1822,
+            "hz": 190.48,
+            "confidence": 0.992,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1838,
+            "hz": 188.24,
+            "confidence": 0.988,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 1852,
+            "hz": 188.24,
+            "confidence": 0.99,
+            "semitones": -0.205
+          },
+          {
+            "time_ms": 1868,
+            "hz": 188.24,
+            "confidence": 0.982,
+            "semitones": -0.205
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-03",
+      "order": 3,
+      "text": "原本担心没有用。",
+      "verified_pinyin": "yuánběn dānxīn méiyǒu yòng",
+      "translation_en": "At first, they were worried it would not work.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-03.wav",
+      "source_start_ms": 6880,
+      "source_end_ms": 8780,
+      "duration_ms": 1900,
+      "reference_pitch": {
+        "median_hz": 251.99,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 172,
+            "hz": 242.42,
+            "confidence": 0.904,
+            "semitones": -0.67
+          },
+          {
+            "time_ms": 188,
+            "hz": 242.42,
+            "confidence": 0.936,
+            "semitones": -0.67
+          },
+          {
+            "time_ms": 202,
+            "hz": 246.15,
+            "confidence": 0.973,
+            "semitones": -0.406
+          },
+          {
+            "time_ms": 218,
+            "hz": 246.15,
+            "confidence": 0.974,
+            "semitones": -0.406
+          },
+          {
+            "time_ms": 232,
+            "hz": 246.15,
+            "confidence": 0.967,
+            "semitones": -0.406
+          },
+          {
+            "time_ms": 248,
+            "hz": 246.15,
+            "confidence": 0.982,
+            "semitones": -0.406
+          },
+          {
+            "time_ms": 262,
+            "hz": 246.15,
+            "confidence": 0.993,
+            "semitones": -0.406
+          },
+          {
+            "time_ms": 278,
+            "hz": 250.0,
+            "confidence": 0.936,
+            "semitones": -0.137
+          },
+          {
+            "time_ms": 292,
+            "hz": 250.0,
+            "confidence": 0.869,
+            "semitones": -0.137
+          },
+          {
+            "time_ms": 368,
+            "hz": 222.22,
+            "confidence": 0.848,
+            "semitones": -2.176
+          },
+          {
+            "time_ms": 382,
+            "hz": 222.22,
+            "confidence": 0.922,
+            "semitones": -2.176
+          },
+          {
+            "time_ms": 398,
+            "hz": 219.18,
+            "confidence": 0.939,
+            "semitones": -2.415
+          },
+          {
+            "time_ms": 442,
+            "hz": 253.97,
+            "confidence": 0.9,
+            "semitones": 0.136
+          },
+          {
+            "time_ms": 458,
+            "hz": 253.97,
+            "confidence": 0.879,
+            "semitones": 0.136
+          },
+          {
+            "time_ms": 472,
+            "hz": 258.06,
+            "confidence": 0.911,
+            "semitones": 0.412
+          },
+          {
+            "time_ms": 488,
+            "hz": 258.06,
+            "confidence": 0.899,
+            "semitones": 0.412
+          },
+          {
+            "time_ms": 502,
+            "hz": 262.3,
+            "confidence": 0.881,
+            "semitones": 0.695
+          },
+          {
+            "time_ms": 518,
+            "hz": 266.67,
+            "confidence": 0.922,
+            "semitones": 0.981
+          },
+          {
+            "time_ms": 532,
+            "hz": 266.67,
+            "confidence": 0.963,
+            "semitones": 0.981
+          },
+          {
+            "time_ms": 548,
+            "hz": 266.67,
+            "confidence": 0.971,
+            "semitones": 0.981
+          },
+          {
+            "time_ms": 562,
+            "hz": 271.19,
+            "confidence": 0.983,
+            "semitones": 1.272
+          },
+          {
+            "time_ms": 578,
+            "hz": 266.67,
+            "confidence": 0.984,
+            "semitones": 0.981
+          },
+          {
+            "time_ms": 592,
+            "hz": 266.67,
+            "confidence": 0.977,
+            "semitones": 0.981
+          },
+          {
+            "time_ms": 608,
+            "hz": 262.3,
+            "confidence": 0.917,
+            "semitones": 0.695
+          },
+          {
+            "time_ms": 712,
+            "hz": 280.7,
+            "confidence": 0.857,
+            "semitones": 1.868
+          },
+          {
+            "time_ms": 728,
+            "hz": 280.7,
+            "confidence": 0.947,
+            "semitones": 1.868
+          },
+          {
+            "time_ms": 742,
+            "hz": 280.7,
+            "confidence": 0.965,
+            "semitones": 1.868
+          },
+          {
+            "time_ms": 758,
+            "hz": 280.7,
+            "confidence": 0.926,
+            "semitones": 1.868
+          },
+          {
+            "time_ms": 772,
+            "hz": 275.86,
+            "confidence": 0.958,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 788,
+            "hz": 275.86,
+            "confidence": 0.978,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 802,
+            "hz": 275.86,
+            "confidence": 0.957,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 818,
+            "hz": 271.19,
+            "confidence": 0.961,
+            "semitones": 1.272
+          },
+          {
+            "time_ms": 832,
+            "hz": 271.19,
+            "confidence": 0.989,
+            "semitones": 1.272
+          },
+          {
+            "time_ms": 848,
+            "hz": 271.19,
+            "confidence": 0.988,
+            "semitones": 1.272
+          },
+          {
+            "time_ms": 862,
+            "hz": 275.86,
+            "confidence": 0.986,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 878,
+            "hz": 275.86,
+            "confidence": 0.994,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 892,
+            "hz": 275.86,
+            "confidence": 0.997,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 908,
+            "hz": 275.86,
+            "confidence": 0.998,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 922,
+            "hz": 275.86,
+            "confidence": 0.997,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 938,
+            "hz": 275.86,
+            "confidence": 0.993,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 952,
+            "hz": 275.86,
+            "confidence": 0.983,
+            "semitones": 1.567
+          },
+          {
+            "time_ms": 968,
+            "hz": 271.19,
+            "confidence": 0.966,
+            "semitones": 1.272
+          },
+          {
+            "time_ms": 982,
+            "hz": 271.19,
+            "confidence": 0.967,
+            "semitones": 1.272
+          },
+          {
+            "time_ms": 1132,
+            "hz": 183.91,
+            "confidence": 0.924,
+            "semitones": -5.452
+          },
+          {
+            "time_ms": 1148,
+            "hz": 183.91,
+            "confidence": 0.965,
+            "semitones": -5.452
+          },
+          {
+            "time_ms": 1162,
+            "hz": 188.24,
+            "confidence": 0.941,
+            "semitones": -5.049
+          },
+          {
+            "time_ms": 1178,
+            "hz": 197.53,
+            "confidence": 0.926,
+            "semitones": -4.215
+          },
+          {
+            "time_ms": 1192,
+            "hz": 200.0,
+            "confidence": 0.919,
+            "semitones": -4.0
+          },
+          {
+            "time_ms": 1208,
+            "hz": 205.13,
+            "confidence": 0.883,
+            "semitones": -3.562
+          },
+          {
+            "time_ms": 1222,
+            "hz": 207.79,
+            "confidence": 0.886,
+            "semitones": -3.339
+          },
+          {
+            "time_ms": 1238,
+            "hz": 207.79,
+            "confidence": 0.864,
+            "semitones": -3.339
+          },
+          {
+            "time_ms": 1268,
+            "hz": 195.12,
+            "confidence": 0.876,
+            "semitones": -4.428
+          },
+          {
+            "time_ms": 1282,
+            "hz": 190.48,
+            "confidence": 0.925,
+            "semitones": -4.844
+          },
+          {
+            "time_ms": 1298,
+            "hz": 188.24,
+            "confidence": 0.913,
+            "semitones": -5.049
+          },
+          {
+            "time_ms": 1312,
+            "hz": 181.82,
+            "confidence": 0.924,
+            "semitones": -5.65
+          },
+          {
+            "time_ms": 1328,
+            "hz": 179.78,
+            "confidence": 0.918,
+            "semitones": -5.845
+          },
+          {
+            "time_ms": 1342,
+            "hz": 177.78,
+            "confidence": 0.902,
+            "semitones": -6.039
+          },
+          {
+            "time_ms": 1358,
+            "hz": 175.82,
+            "confidence": 0.872,
+            "semitones": -6.231
+          },
+          {
+            "time_ms": 1462,
+            "hz": 231.88,
+            "confidence": 0.863,
+            "semitones": -1.44
+          },
+          {
+            "time_ms": 1478,
+            "hz": 235.29,
+            "confidence": 0.886,
+            "semitones": -1.187
+          },
+          {
+            "time_ms": 1492,
+            "hz": 235.29,
+            "confidence": 0.936,
+            "semitones": -1.187
+          },
+          {
+            "time_ms": 1508,
+            "hz": 235.29,
+            "confidence": 0.922,
+            "semitones": -1.187
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-04",
+      "order": 4,
+      "text": "没想到这只熊非常的聪明。",
+      "verified_pinyin": "méi xiǎngdào zhè zhǐ xióng fēicháng de cōngmíng",
+      "translation_en": "But they did not expect the bear to be very smart.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-04.wav",
+      "source_start_ms": 8880,
+      "source_end_ms": 11900,
+      "duration_ms": 3020,
+      "reference_pitch": {
+        "median_hz": 280.7,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 278,
+            "hz": 301.89,
+            "confidence": 0.851,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 292,
+            "hz": 307.69,
+            "confidence": 0.925,
+            "semitones": 1.589
+          },
+          {
+            "time_ms": 442,
+            "hz": 290.91,
+            "confidence": 0.857,
+            "semitones": 0.619
+          },
+          {
+            "time_ms": 458,
+            "hz": 285.71,
+            "confidence": 0.951,
+            "semitones": 0.306
+          },
+          {
+            "time_ms": 472,
+            "hz": 285.71,
+            "confidence": 0.958,
+            "semitones": 0.306
+          },
+          {
+            "time_ms": 488,
+            "hz": 285.71,
+            "confidence": 0.965,
+            "semitones": 0.306
+          },
+          {
+            "time_ms": 502,
+            "hz": 285.71,
+            "confidence": 0.988,
+            "semitones": 0.306
+          },
+          {
+            "time_ms": 518,
+            "hz": 290.91,
+            "confidence": 0.903,
+            "semitones": 0.619
+          },
+          {
+            "time_ms": 532,
+            "hz": 313.73,
+            "confidence": 0.896,
+            "semitones": 1.926
+          },
+          {
+            "time_ms": 548,
+            "hz": 313.73,
+            "confidence": 0.946,
+            "semitones": 1.926
+          },
+          {
+            "time_ms": 562,
+            "hz": 313.73,
+            "confidence": 0.973,
+            "semitones": 1.926
+          },
+          {
+            "time_ms": 578,
+            "hz": 313.73,
+            "confidence": 0.982,
+            "semitones": 1.926
+          },
+          {
+            "time_ms": 592,
+            "hz": 313.73,
+            "confidence": 0.968,
+            "semitones": 1.926
+          },
+          {
+            "time_ms": 608,
+            "hz": 307.69,
+            "confidence": 0.949,
+            "semitones": 1.589
+          },
+          {
+            "time_ms": 622,
+            "hz": 307.69,
+            "confidence": 0.981,
+            "semitones": 1.589
+          },
+          {
+            "time_ms": 638,
+            "hz": 307.69,
+            "confidence": 0.973,
+            "semitones": 1.589
+          },
+          {
+            "time_ms": 652,
+            "hz": 301.89,
+            "confidence": 0.961,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 668,
+            "hz": 301.89,
+            "confidence": 0.986,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 682,
+            "hz": 301.89,
+            "confidence": 0.99,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 698,
+            "hz": 301.89,
+            "confidence": 0.958,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 712,
+            "hz": 296.3,
+            "confidence": 0.904,
+            "semitones": 0.936
+          },
+          {
+            "time_ms": 728,
+            "hz": 290.91,
+            "confidence": 0.86,
+            "semitones": 0.619
+          },
+          {
+            "time_ms": 742,
+            "hz": 280.7,
+            "confidence": 0.91,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 758,
+            "hz": 280.7,
+            "confidence": 0.89,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 772,
+            "hz": 280.7,
+            "confidence": 0.865,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 878,
+            "hz": 275.86,
+            "confidence": 0.874,
+            "semitones": -0.301
+          },
+          {
+            "time_ms": 892,
+            "hz": 280.7,
+            "confidence": 0.883,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 908,
+            "hz": 280.7,
+            "confidence": 0.85,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1222,
+            "hz": 188.24,
+            "confidence": 0.93,
+            "semitones": -6.917
+          },
+          {
+            "time_ms": 1238,
+            "hz": 188.24,
+            "confidence": 0.938,
+            "semitones": -6.917
+          },
+          {
+            "time_ms": 1252,
+            "hz": 190.48,
+            "confidence": 0.952,
+            "semitones": -6.713
+          },
+          {
+            "time_ms": 1268,
+            "hz": 192.77,
+            "confidence": 0.965,
+            "semitones": -6.506
+          },
+          {
+            "time_ms": 1282,
+            "hz": 195.12,
+            "confidence": 0.954,
+            "semitones": -6.296
+          },
+          {
+            "time_ms": 1298,
+            "hz": 200.0,
+            "confidence": 0.945,
+            "semitones": -5.868
+          },
+          {
+            "time_ms": 1312,
+            "hz": 202.53,
+            "confidence": 0.934,
+            "semitones": -5.651
+          },
+          {
+            "time_ms": 1328,
+            "hz": 202.53,
+            "confidence": 0.868,
+            "semitones": -5.651
+          },
+          {
+            "time_ms": 1342,
+            "hz": 195.12,
+            "confidence": 0.938,
+            "semitones": -6.296
+          },
+          {
+            "time_ms": 1358,
+            "hz": 195.12,
+            "confidence": 0.959,
+            "semitones": -6.296
+          },
+          {
+            "time_ms": 1372,
+            "hz": 195.12,
+            "confidence": 0.966,
+            "semitones": -6.296
+          },
+          {
+            "time_ms": 1388,
+            "hz": 192.77,
+            "confidence": 0.976,
+            "semitones": -6.506
+          },
+          {
+            "time_ms": 1402,
+            "hz": 192.77,
+            "confidence": 0.967,
+            "semitones": -6.506
+          },
+          {
+            "time_ms": 1418,
+            "hz": 190.48,
+            "confidence": 0.946,
+            "semitones": -6.713
+          },
+          {
+            "time_ms": 1508,
+            "hz": 216.22,
+            "confidence": 0.841,
+            "semitones": -4.518
+          },
+          {
+            "time_ms": 1958,
+            "hz": 177.78,
+            "confidence": 0.919,
+            "semitones": -7.907
+          },
+          {
+            "time_ms": 1972,
+            "hz": 177.78,
+            "confidence": 0.917,
+            "semitones": -7.907
+          },
+          {
+            "time_ms": 1988,
+            "hz": 183.91,
+            "confidence": 0.932,
+            "semitones": -7.32
+          },
+          {
+            "time_ms": 2002,
+            "hz": 192.77,
+            "confidence": 0.955,
+            "semitones": -6.506
+          },
+          {
+            "time_ms": 2018,
+            "hz": 195.12,
+            "confidence": 0.964,
+            "semitones": -6.296
+          },
+          {
+            "time_ms": 2033,
+            "hz": 197.53,
+            "confidence": 0.949,
+            "semitones": -6.083
+          },
+          {
+            "time_ms": 2378,
+            "hz": 238.81,
+            "confidence": 0.889,
+            "semitones": -2.798
+          },
+          {
+            "time_ms": 2392,
+            "hz": 238.81,
+            "confidence": 0.867,
+            "semitones": -2.798
+          },
+          {
+            "time_ms": 2422,
+            "hz": 262.3,
+            "confidence": 0.891,
+            "semitones": -1.174
+          },
+          {
+            "time_ms": 2438,
+            "hz": 266.67,
+            "confidence": 0.933,
+            "semitones": -0.888
+          },
+          {
+            "time_ms": 2452,
+            "hz": 275.86,
+            "confidence": 0.966,
+            "semitones": -0.301
+          },
+          {
+            "time_ms": 2468,
+            "hz": 285.71,
+            "confidence": 0.965,
+            "semitones": 0.306
+          },
+          {
+            "time_ms": 2482,
+            "hz": 296.3,
+            "confidence": 0.975,
+            "semitones": 0.936
+          },
+          {
+            "time_ms": 2498,
+            "hz": 301.89,
+            "confidence": 0.983,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 2512,
+            "hz": 307.69,
+            "confidence": 0.99,
+            "semitones": 1.589
+          },
+          {
+            "time_ms": 2528,
+            "hz": 301.89,
+            "confidence": 0.956,
+            "semitones": 1.26
+          },
+          {
+            "time_ms": 2708,
+            "hz": 190.48,
+            "confidence": 0.873,
+            "semitones": -6.713
+          },
+          {
+            "time_ms": 2722,
+            "hz": 192.77,
+            "confidence": 0.887,
+            "semitones": -6.506
+          },
+          {
+            "time_ms": 2738,
+            "hz": 190.48,
+            "confidence": 0.91,
+            "semitones": -6.713
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-05",
+      "order": 5,
+      "text": "直接就走了过去。",
+      "verified_pinyin": "zhíjiē jiù zǒule guòqù",
+      "translation_en": "It walked straight through.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-05.wav",
+      "source_start_ms": 12150,
+      "source_end_ms": 14140,
+      "duration_ms": 1990,
+      "reference_pitch": {
+        "median_hz": 372.09,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 382,
+            "hz": 250.0,
+            "confidence": 0.841,
+            "semitones": -6.885
+          },
+          {
+            "time_ms": 398,
+            "hz": 258.06,
+            "confidence": 0.877,
+            "semitones": -6.335
+          },
+          {
+            "time_ms": 412,
+            "hz": 262.3,
+            "confidence": 0.842,
+            "semitones": -6.053
+          },
+          {
+            "time_ms": 608,
+            "hz": 372.09,
+            "confidence": 0.895,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 622,
+            "hz": 380.95,
+            "confidence": 0.845,
+            "semitones": 0.407
+          },
+          {
+            "time_ms": 638,
+            "hz": 380.95,
+            "confidence": 0.875,
+            "semitones": 0.407
+          },
+          {
+            "time_ms": 652,
+            "hz": 390.24,
+            "confidence": 0.928,
+            "semitones": 0.825
+          },
+          {
+            "time_ms": 668,
+            "hz": 390.24,
+            "confidence": 0.863,
+            "semitones": 0.825
+          },
+          {
+            "time_ms": 682,
+            "hz": 380.95,
+            "confidence": 0.925,
+            "semitones": 0.407
+          },
+          {
+            "time_ms": 698,
+            "hz": 380.95,
+            "confidence": 0.938,
+            "semitones": 0.407
+          },
+          {
+            "time_ms": 712,
+            "hz": 372.09,
+            "confidence": 0.943,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 728,
+            "hz": 372.09,
+            "confidence": 0.921,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1192,
+            "hz": 188.24,
+            "confidence": 0.885,
+            "semitones": -11.797
+          },
+          {
+            "time_ms": 1208,
+            "hz": 188.24,
+            "confidence": 0.96,
+            "semitones": -11.797
+          },
+          {
+            "time_ms": 1222,
+            "hz": 190.48,
+            "confidence": 0.966,
+            "semitones": -11.592
+          },
+          {
+            "time_ms": 1238,
+            "hz": 190.48,
+            "confidence": 0.951,
+            "semitones": -11.592
+          },
+          {
+            "time_ms": 1252,
+            "hz": 190.48,
+            "confidence": 0.922,
+            "semitones": -11.592
+          },
+          {
+            "time_ms": 1282,
+            "hz": 500.0,
+            "confidence": 0.864,
+            "semitones": 5.115
+          },
+          {
+            "time_ms": 1298,
+            "hz": 500.0,
+            "confidence": 0.933,
+            "semitones": 5.115
+          },
+          {
+            "time_ms": 1312,
+            "hz": 500.0,
+            "confidence": 0.943,
+            "semitones": 5.115
+          },
+          {
+            "time_ms": 1328,
+            "hz": 500.0,
+            "confidence": 0.934,
+            "semitones": 5.115
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-06",
+      "order": 6,
+      "text": "这样一来，围栏不会坏了。",
+      "verified_pinyin": "zhèyàng yī lái, wéilán bù huì huàile",
+      "translation_en": "In this way, the fence would not be damaged.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-06.wav",
+      "source_start_ms": 14140,
+      "source_end_ms": 16880,
+      "duration_ms": 2740,
+      "reference_pitch": {
+        "median_hz": 216.22,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 278,
+            "hz": 216.22,
+            "confidence": 0.919,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 292,
+            "hz": 216.22,
+            "confidence": 0.943,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 382,
+            "hz": 195.12,
+            "confidence": 0.869,
+            "semitones": -1.778
+          },
+          {
+            "time_ms": 398,
+            "hz": 192.77,
+            "confidence": 0.937,
+            "semitones": -1.987
+          },
+          {
+            "time_ms": 412,
+            "hz": 192.77,
+            "confidence": 0.964,
+            "semitones": -1.987
+          },
+          {
+            "time_ms": 428,
+            "hz": 192.77,
+            "confidence": 0.989,
+            "semitones": -1.987
+          },
+          {
+            "time_ms": 442,
+            "hz": 192.77,
+            "confidence": 0.993,
+            "semitones": -1.987
+          },
+          {
+            "time_ms": 458,
+            "hz": 190.48,
+            "confidence": 0.995,
+            "semitones": -2.194
+          },
+          {
+            "time_ms": 472,
+            "hz": 190.48,
+            "confidence": 0.996,
+            "semitones": -2.194
+          },
+          {
+            "time_ms": 488,
+            "hz": 190.48,
+            "confidence": 0.996,
+            "semitones": -2.194
+          },
+          {
+            "time_ms": 502,
+            "hz": 190.48,
+            "confidence": 0.996,
+            "semitones": -2.194
+          },
+          {
+            "time_ms": 518,
+            "hz": 190.48,
+            "confidence": 0.994,
+            "semitones": -2.194
+          },
+          {
+            "time_ms": 532,
+            "hz": 192.77,
+            "confidence": 0.991,
+            "semitones": -1.987
+          },
+          {
+            "time_ms": 548,
+            "hz": 195.12,
+            "confidence": 0.987,
+            "semitones": -1.778
+          },
+          {
+            "time_ms": 562,
+            "hz": 197.53,
+            "confidence": 0.962,
+            "semitones": -1.565
+          },
+          {
+            "time_ms": 578,
+            "hz": 197.53,
+            "confidence": 0.926,
+            "semitones": -1.565
+          },
+          {
+            "time_ms": 608,
+            "hz": 186.05,
+            "confidence": 0.885,
+            "semitones": -2.602
+          },
+          {
+            "time_ms": 622,
+            "hz": 179.78,
+            "confidence": 0.862,
+            "semitones": -3.195
+          },
+          {
+            "time_ms": 652,
+            "hz": 168.42,
+            "confidence": 0.897,
+            "semitones": -4.325
+          },
+          {
+            "time_ms": 668,
+            "hz": 168.42,
+            "confidence": 0.842,
+            "semitones": -4.325
+          },
+          {
+            "time_ms": 758,
+            "hz": 152.38,
+            "confidence": 0.883,
+            "semitones": -6.058
+          },
+          {
+            "time_ms": 772,
+            "hz": 150.94,
+            "confidence": 0.926,
+            "semitones": -6.222
+          },
+          {
+            "time_ms": 788,
+            "hz": 150.94,
+            "confidence": 0.909,
+            "semitones": -6.222
+          },
+          {
+            "time_ms": 802,
+            "hz": 149.53,
+            "confidence": 0.881,
+            "semitones": -6.385
+          },
+          {
+            "time_ms": 1282,
+            "hz": 210.53,
+            "confidence": 0.929,
+            "semitones": -0.462
+          },
+          {
+            "time_ms": 1298,
+            "hz": 207.79,
+            "confidence": 0.967,
+            "semitones": -0.688
+          },
+          {
+            "time_ms": 1312,
+            "hz": 207.79,
+            "confidence": 0.98,
+            "semitones": -0.688
+          },
+          {
+            "time_ms": 1328,
+            "hz": 210.53,
+            "confidence": 0.952,
+            "semitones": -0.462
+          },
+          {
+            "time_ms": 1342,
+            "hz": 213.33,
+            "confidence": 0.917,
+            "semitones": -0.233
+          },
+          {
+            "time_ms": 1358,
+            "hz": 216.22,
+            "confidence": 0.934,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1372,
+            "hz": 216.22,
+            "confidence": 0.931,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1388,
+            "hz": 219.18,
+            "confidence": 0.872,
+            "semitones": 0.235
+          },
+          {
+            "time_ms": 1448,
+            "hz": 266.67,
+            "confidence": 0.843,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 1462,
+            "hz": 266.67,
+            "confidence": 0.898,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 1478,
+            "hz": 271.19,
+            "confidence": 0.893,
+            "semitones": 3.922
+          },
+          {
+            "time_ms": 1492,
+            "hz": 275.86,
+            "confidence": 0.914,
+            "semitones": 4.217
+          },
+          {
+            "time_ms": 1508,
+            "hz": 271.19,
+            "confidence": 0.857,
+            "semitones": 3.922
+          },
+          {
+            "time_ms": 1598,
+            "hz": 222.22,
+            "confidence": 0.953,
+            "semitones": 0.474
+          },
+          {
+            "time_ms": 1612,
+            "hz": 222.22,
+            "confidence": 0.952,
+            "semitones": 0.474
+          },
+          {
+            "time_ms": 1628,
+            "hz": 222.22,
+            "confidence": 0.89,
+            "semitones": 0.474
+          },
+          {
+            "time_ms": 1702,
+            "hz": 250.0,
+            "confidence": 0.84,
+            "semitones": 2.513
+          },
+          {
+            "time_ms": 1718,
+            "hz": 253.97,
+            "confidence": 0.929,
+            "semitones": 2.786
+          },
+          {
+            "time_ms": 1732,
+            "hz": 253.97,
+            "confidence": 0.933,
+            "semitones": 2.786
+          },
+          {
+            "time_ms": 1748,
+            "hz": 253.97,
+            "confidence": 0.89,
+            "semitones": 2.786
+          },
+          {
+            "time_ms": 1838,
+            "hz": 219.18,
+            "confidence": 0.91,
+            "semitones": 0.235
+          },
+          {
+            "time_ms": 1852,
+            "hz": 216.22,
+            "confidence": 0.911,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 1868,
+            "hz": 213.33,
+            "confidence": 0.929,
+            "semitones": -0.233
+          },
+          {
+            "time_ms": 1882,
+            "hz": 207.79,
+            "confidence": 0.927,
+            "semitones": -0.688
+          },
+          {
+            "time_ms": 1898,
+            "hz": 205.13,
+            "confidence": 0.842,
+            "semitones": -0.912
+          },
+          {
+            "time_ms": 1958,
+            "hz": 271.19,
+            "confidence": 0.841,
+            "semitones": 3.922
+          },
+          {
+            "time_ms": 1972,
+            "hz": 271.19,
+            "confidence": 0.951,
+            "semitones": 3.922
+          },
+          {
+            "time_ms": 1988,
+            "hz": 266.67,
+            "confidence": 0.967,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 2002,
+            "hz": 266.67,
+            "confidence": 0.992,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 2018,
+            "hz": 266.67,
+            "confidence": 0.976,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 2033,
+            "hz": 262.3,
+            "confidence": 0.952,
+            "semitones": 3.345
+          },
+          {
+            "time_ms": 2047,
+            "hz": 258.06,
+            "confidence": 0.912,
+            "semitones": 3.062
+          },
+          {
+            "time_ms": 2078,
+            "hz": 266.67,
+            "confidence": 0.924,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 2092,
+            "hz": 266.67,
+            "confidence": 0.912,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 2108,
+            "hz": 266.67,
+            "confidence": 0.877,
+            "semitones": 3.631
+          },
+          {
+            "time_ms": 2168,
+            "hz": 320.0,
+            "confidence": 0.944,
+            "semitones": 6.787
+          },
+          {
+            "time_ms": 2182,
+            "hz": 320.0,
+            "confidence": 0.937,
+            "semitones": 6.787
+          },
+          {
+            "time_ms": 2198,
+            "hz": 326.53,
+            "confidence": 0.948,
+            "semitones": 7.137
+          },
+          {
+            "time_ms": 2212,
+            "hz": 326.53,
+            "confidence": 0.906,
+            "semitones": 7.137
+          },
+          {
+            "time_ms": 2228,
+            "hz": 333.33,
+            "confidence": 0.955,
+            "semitones": 7.493
+          },
+          {
+            "time_ms": 2242,
+            "hz": 333.33,
+            "confidence": 0.966,
+            "semitones": 7.493
+          },
+          {
+            "time_ms": 2258,
+            "hz": 333.33,
+            "confidence": 0.841,
+            "semitones": 7.493
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-07",
+      "order": 7,
+      "text": "熊走路也方便了。",
+      "verified_pinyin": "xióng zǒulù yě fāngbiànle",
+      "translation_en": "And it became easier for the bear to walk.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-07.wav",
+      "source_start_ms": 16880,
+      "source_end_ms": 19140,
+      "duration_ms": 2260,
+      "reference_pitch": {
+        "median_hz": 231.67,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 322,
+            "hz": 250.0,
+            "confidence": 0.894,
+            "semitones": 1.319
+          },
+          {
+            "time_ms": 338,
+            "hz": 250.0,
+            "confidence": 0.905,
+            "semitones": 1.319
+          },
+          {
+            "time_ms": 352,
+            "hz": 253.97,
+            "confidence": 0.844,
+            "semitones": 1.591
+          },
+          {
+            "time_ms": 382,
+            "hz": 290.91,
+            "confidence": 0.845,
+            "semitones": 3.942
+          },
+          {
+            "time_ms": 412,
+            "hz": 313.73,
+            "confidence": 0.872,
+            "semitones": 5.25
+          },
+          {
+            "time_ms": 428,
+            "hz": 320.0,
+            "confidence": 0.944,
+            "semitones": 5.592
+          },
+          {
+            "time_ms": 442,
+            "hz": 326.53,
+            "confidence": 0.963,
+            "semitones": 5.942
+          },
+          {
+            "time_ms": 458,
+            "hz": 326.53,
+            "confidence": 0.953,
+            "semitones": 5.942
+          },
+          {
+            "time_ms": 472,
+            "hz": 320.0,
+            "confidence": 0.935,
+            "semitones": 5.592
+          },
+          {
+            "time_ms": 488,
+            "hz": 320.0,
+            "confidence": 0.941,
+            "semitones": 5.592
+          },
+          {
+            "time_ms": 502,
+            "hz": 320.0,
+            "confidence": 0.901,
+            "semitones": 5.592
+          },
+          {
+            "time_ms": 622,
+            "hz": 190.48,
+            "confidence": 0.902,
+            "semitones": -3.389
+          },
+          {
+            "time_ms": 638,
+            "hz": 188.24,
+            "confidence": 0.938,
+            "semitones": -3.594
+          },
+          {
+            "time_ms": 652,
+            "hz": 190.48,
+            "confidence": 0.91,
+            "semitones": -3.389
+          },
+          {
+            "time_ms": 668,
+            "hz": 192.77,
+            "confidence": 0.881,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 758,
+            "hz": 326.53,
+            "confidence": 0.844,
+            "semitones": 5.942
+          },
+          {
+            "time_ms": 772,
+            "hz": 340.43,
+            "confidence": 0.862,
+            "semitones": 6.664
+          },
+          {
+            "time_ms": 788,
+            "hz": 363.64,
+            "confidence": 0.905,
+            "semitones": 7.806
+          },
+          {
+            "time_ms": 802,
+            "hz": 390.24,
+            "confidence": 0.931,
+            "semitones": 9.028
+          },
+          {
+            "time_ms": 818,
+            "hz": 400.0,
+            "confidence": 0.947,
+            "semitones": 9.456
+          },
+          {
+            "time_ms": 832,
+            "hz": 410.26,
+            "confidence": 0.983,
+            "semitones": 9.894
+          },
+          {
+            "time_ms": 848,
+            "hz": 410.26,
+            "confidence": 0.991,
+            "semitones": 9.894
+          },
+          {
+            "time_ms": 862,
+            "hz": 410.26,
+            "confidence": 0.99,
+            "semitones": 9.894
+          },
+          {
+            "time_ms": 878,
+            "hz": 400.0,
+            "confidence": 0.978,
+            "semitones": 9.456
+          },
+          {
+            "time_ms": 892,
+            "hz": 390.24,
+            "confidence": 0.961,
+            "semitones": 9.028
+          },
+          {
+            "time_ms": 908,
+            "hz": 372.09,
+            "confidence": 0.904,
+            "semitones": 8.203
+          },
+          {
+            "time_ms": 1222,
+            "hz": 166.67,
+            "confidence": 0.84,
+            "semitones": -5.701
+          },
+          {
+            "time_ms": 1238,
+            "hz": 163.27,
+            "confidence": 0.908,
+            "semitones": -6.057
+          },
+          {
+            "time_ms": 1252,
+            "hz": 161.62,
+            "confidence": 0.897,
+            "semitones": -6.233
+          },
+          {
+            "time_ms": 1268,
+            "hz": 160.0,
+            "confidence": 0.883,
+            "semitones": -6.408
+          },
+          {
+            "time_ms": 1388,
+            "hz": 197.53,
+            "confidence": 0.893,
+            "semitones": -2.76
+          },
+          {
+            "time_ms": 1402,
+            "hz": 197.53,
+            "confidence": 0.93,
+            "semitones": -2.76
+          },
+          {
+            "time_ms": 1418,
+            "hz": 195.12,
+            "confidence": 0.96,
+            "semitones": -2.972
+          },
+          {
+            "time_ms": 1432,
+            "hz": 195.12,
+            "confidence": 0.972,
+            "semitones": -2.972
+          },
+          {
+            "time_ms": 1448,
+            "hz": 192.77,
+            "confidence": 0.967,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1462,
+            "hz": 192.77,
+            "confidence": 0.968,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1478,
+            "hz": 192.77,
+            "confidence": 0.978,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1492,
+            "hz": 192.77,
+            "confidence": 0.984,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1508,
+            "hz": 195.12,
+            "confidence": 0.996,
+            "semitones": -2.972
+          },
+          {
+            "time_ms": 1522,
+            "hz": 192.77,
+            "confidence": 0.995,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1538,
+            "hz": 192.77,
+            "confidence": 0.991,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1552,
+            "hz": 192.77,
+            "confidence": 0.98,
+            "semitones": -3.182
+          },
+          {
+            "time_ms": 1598,
+            "hz": 213.33,
+            "confidence": 0.856,
+            "semitones": -1.427
+          },
+          {
+            "time_ms": 1612,
+            "hz": 210.53,
+            "confidence": 0.858,
+            "semitones": -1.656
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-08",
+      "order": 8,
+      "text": "夫妻俩非常喜欢这只熊。",
+      "verified_pinyin": "fūqī liǎ fēicháng xǐhuān zhè zhǐ xióng",
+      "translation_en": "The couple really liked this bear.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-08.wav",
+      "source_start_ms": 19140,
+      "source_end_ms": 22420,
+      "duration_ms": 3280,
+      "reference_pitch": {
+        "median_hz": 173.91,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 352,
+            "hz": 231.88,
+            "confidence": 0.919,
+            "semitones": 4.98
+          },
+          {
+            "time_ms": 368,
+            "hz": 231.88,
+            "confidence": 0.915,
+            "semitones": 4.98
+          },
+          {
+            "time_ms": 382,
+            "hz": 231.88,
+            "confidence": 0.853,
+            "semitones": 4.98
+          },
+          {
+            "time_ms": 532,
+            "hz": 242.42,
+            "confidence": 0.899,
+            "semitones": 5.75
+          },
+          {
+            "time_ms": 548,
+            "hz": 242.42,
+            "confidence": 0.87,
+            "semitones": 5.75
+          },
+          {
+            "time_ms": 562,
+            "hz": 238.81,
+            "confidence": 0.852,
+            "semitones": 5.49
+          },
+          {
+            "time_ms": 578,
+            "hz": 231.88,
+            "confidence": 0.859,
+            "semitones": 4.98
+          },
+          {
+            "time_ms": 608,
+            "hz": 222.22,
+            "confidence": 0.845,
+            "semitones": 4.244
+          },
+          {
+            "time_ms": 1612,
+            "hz": 181.82,
+            "confidence": 0.844,
+            "semitones": 0.77
+          },
+          {
+            "time_ms": 1628,
+            "hz": 188.24,
+            "confidence": 0.915,
+            "semitones": 1.371
+          },
+          {
+            "time_ms": 1642,
+            "hz": 190.48,
+            "confidence": 0.965,
+            "semitones": 1.576
+          },
+          {
+            "time_ms": 1658,
+            "hz": 192.77,
+            "confidence": 0.98,
+            "semitones": 1.782
+          },
+          {
+            "time_ms": 1672,
+            "hz": 190.48,
+            "confidence": 0.968,
+            "semitones": 1.576
+          },
+          {
+            "time_ms": 1688,
+            "hz": 190.48,
+            "confidence": 0.93,
+            "semitones": 1.576
+          },
+          {
+            "time_ms": 1868,
+            "hz": 148.15,
+            "confidence": 0.847,
+            "semitones": -2.775
+          },
+          {
+            "time_ms": 2018,
+            "hz": 173.91,
+            "confidence": 0.847,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2033,
+            "hz": 172.04,
+            "confidence": 0.906,
+            "semitones": -0.187
+          },
+          {
+            "time_ms": 2047,
+            "hz": 170.21,
+            "confidence": 0.948,
+            "semitones": -0.372
+          },
+          {
+            "time_ms": 2062,
+            "hz": 170.21,
+            "confidence": 0.954,
+            "semitones": -0.372
+          },
+          {
+            "time_ms": 2078,
+            "hz": 170.21,
+            "confidence": 0.943,
+            "semitones": -0.372
+          },
+          {
+            "time_ms": 2092,
+            "hz": 170.21,
+            "confidence": 0.911,
+            "semitones": -0.372
+          },
+          {
+            "time_ms": 2108,
+            "hz": 172.04,
+            "confidence": 0.914,
+            "semitones": -0.187
+          },
+          {
+            "time_ms": 2122,
+            "hz": 172.04,
+            "confidence": 0.945,
+            "semitones": -0.187
+          },
+          {
+            "time_ms": 2138,
+            "hz": 172.04,
+            "confidence": 0.915,
+            "semitones": -0.187
+          },
+          {
+            "time_ms": 2152,
+            "hz": 173.91,
+            "confidence": 0.896,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2168,
+            "hz": 173.91,
+            "confidence": 0.927,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2182,
+            "hz": 173.91,
+            "confidence": 0.955,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2198,
+            "hz": 173.91,
+            "confidence": 0.954,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2212,
+            "hz": 173.91,
+            "confidence": 0.91,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2228,
+            "hz": 177.78,
+            "confidence": 0.924,
+            "semitones": 0.381
+          },
+          {
+            "time_ms": 2242,
+            "hz": 181.82,
+            "confidence": 0.967,
+            "semitones": 0.77
+          },
+          {
+            "time_ms": 2258,
+            "hz": 183.91,
+            "confidence": 0.987,
+            "semitones": 0.968
+          },
+          {
+            "time_ms": 2272,
+            "hz": 186.05,
+            "confidence": 0.984,
+            "semitones": 1.168
+          },
+          {
+            "time_ms": 2288,
+            "hz": 188.24,
+            "confidence": 0.975,
+            "semitones": 1.371
+          },
+          {
+            "time_ms": 2378,
+            "hz": 175.82,
+            "confidence": 0.845,
+            "semitones": 0.189
+          },
+          {
+            "time_ms": 2392,
+            "hz": 175.82,
+            "confidence": 0.894,
+            "semitones": 0.189
+          },
+          {
+            "time_ms": 2528,
+            "hz": 173.91,
+            "confidence": 0.957,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2542,
+            "hz": 173.91,
+            "confidence": 0.948,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2558,
+            "hz": 173.91,
+            "confidence": 0.914,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 2572,
+            "hz": 177.78,
+            "confidence": 0.866,
+            "semitones": 0.381
+          },
+          {
+            "time_ms": 2782,
+            "hz": 136.75,
+            "confidence": 0.895,
+            "semitones": -4.162
+          },
+          {
+            "time_ms": 2798,
+            "hz": 136.75,
+            "confidence": 0.88,
+            "semitones": -4.162
+          },
+          {
+            "time_ms": 2812,
+            "hz": 136.75,
+            "confidence": 0.88,
+            "semitones": -4.162
+          },
+          {
+            "time_ms": 2828,
+            "hz": 136.75,
+            "confidence": 0.932,
+            "semitones": -4.162
+          },
+          {
+            "time_ms": 2842,
+            "hz": 136.75,
+            "confidence": 0.955,
+            "semitones": -4.162
+          },
+          {
+            "time_ms": 2858,
+            "hz": 136.75,
+            "confidence": 0.961,
+            "semitones": -4.162
+          },
+          {
+            "time_ms": 2872,
+            "hz": 139.13,
+            "confidence": 0.938,
+            "semitones": -3.863
+          },
+          {
+            "time_ms": 2888,
+            "hz": 142.86,
+            "confidence": 0.849,
+            "semitones": -3.405
+          }
+        ]
+      }
+    },
+    {
+      "id": "sentence-09",
+      "order": 9,
+      "text": "也注意到了安全。",
+      "verified_pinyin": "yě zhùyì dàole ānquán",
+      "translation_en": "And they also paid attention to safety.",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-09.wav",
+      "source_start_ms": 22420,
+      "source_end_ms": 24900,
+      "duration_ms": 2480,
+      "reference_pitch": {
+        "median_hz": 271.19,
+        "frame_step_ms": 15,
+        "points": [
+          {
+            "time_ms": 322,
+            "hz": 186.05,
+            "confidence": 0.934,
+            "semitones": -6.523
+          },
+          {
+            "time_ms": 338,
+            "hz": 186.05,
+            "confidence": 0.965,
+            "semitones": -6.523
+          },
+          {
+            "time_ms": 352,
+            "hz": 192.77,
+            "confidence": 0.957,
+            "semitones": -5.909
+          },
+          {
+            "time_ms": 368,
+            "hz": 195.12,
+            "confidence": 0.958,
+            "semitones": -5.699
+          },
+          {
+            "time_ms": 382,
+            "hz": 197.53,
+            "confidence": 0.96,
+            "semitones": -5.487
+          },
+          {
+            "time_ms": 398,
+            "hz": 197.53,
+            "confidence": 0.963,
+            "semitones": -5.487
+          },
+          {
+            "time_ms": 412,
+            "hz": 195.12,
+            "confidence": 0.957,
+            "semitones": -5.699
+          },
+          {
+            "time_ms": 428,
+            "hz": 192.77,
+            "confidence": 0.969,
+            "semitones": -5.909
+          },
+          {
+            "time_ms": 442,
+            "hz": 192.77,
+            "confidence": 0.976,
+            "semitones": -5.909
+          },
+          {
+            "time_ms": 458,
+            "hz": 190.48,
+            "confidence": 0.968,
+            "semitones": -6.116
+          },
+          {
+            "time_ms": 472,
+            "hz": 190.48,
+            "confidence": 0.94,
+            "semitones": -6.116
+          },
+          {
+            "time_ms": 488,
+            "hz": 186.05,
+            "confidence": 0.879,
+            "semitones": -6.523
+          },
+          {
+            "time_ms": 502,
+            "hz": 177.78,
+            "confidence": 0.914,
+            "semitones": -7.311
+          },
+          {
+            "time_ms": 518,
+            "hz": 175.82,
+            "confidence": 0.855,
+            "semitones": -7.502
+          },
+          {
+            "time_ms": 712,
+            "hz": 313.73,
+            "confidence": 0.874,
+            "semitones": 2.523
+          },
+          {
+            "time_ms": 728,
+            "hz": 313.73,
+            "confidence": 0.937,
+            "semitones": 2.523
+          },
+          {
+            "time_ms": 742,
+            "hz": 320.0,
+            "confidence": 0.963,
+            "semitones": 2.865
+          },
+          {
+            "time_ms": 758,
+            "hz": 320.0,
+            "confidence": 0.963,
+            "semitones": 2.865
+          },
+          {
+            "time_ms": 772,
+            "hz": 313.73,
+            "confidence": 0.903,
+            "semitones": 2.523
+          },
+          {
+            "time_ms": 788,
+            "hz": 301.89,
+            "confidence": 0.903,
+            "semitones": 1.857
+          },
+          {
+            "time_ms": 802,
+            "hz": 296.3,
+            "confidence": 0.906,
+            "semitones": 1.533
+          },
+          {
+            "time_ms": 818,
+            "hz": 290.91,
+            "confidence": 0.878,
+            "semitones": 1.215
+          },
+          {
+            "time_ms": 832,
+            "hz": 266.67,
+            "confidence": 0.866,
+            "semitones": -0.291
+          },
+          {
+            "time_ms": 848,
+            "hz": 266.67,
+            "confidence": 0.938,
+            "semitones": -0.291
+          },
+          {
+            "time_ms": 862,
+            "hz": 266.67,
+            "confidence": 0.958,
+            "semitones": -0.291
+          },
+          {
+            "time_ms": 878,
+            "hz": 266.67,
+            "confidence": 0.938,
+            "semitones": -0.291
+          },
+          {
+            "time_ms": 892,
+            "hz": 271.19,
+            "confidence": 0.938,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 908,
+            "hz": 271.19,
+            "confidence": 0.933,
+            "semitones": 0.0
+          },
+          {
+            "time_ms": 922,
+            "hz": 266.67,
+            "confidence": 0.842,
+            "semitones": -0.291
+          },
+          {
+            "time_ms": 968,
+            "hz": 320.0,
+            "confidence": 0.855,
+            "semitones": 2.865
+          },
+          {
+            "time_ms": 982,
+            "hz": 313.73,
+            "confidence": 0.885,
+            "semitones": 2.523
+          },
+          {
+            "time_ms": 998,
+            "hz": 307.69,
+            "confidence": 0.876,
+            "semitones": 2.186
+          },
+          {
+            "time_ms": 1012,
+            "hz": 301.89,
+            "confidence": 0.876,
+            "semitones": 1.857
+          },
+          {
+            "time_ms": 1028,
+            "hz": 296.3,
+            "confidence": 0.845,
+            "semitones": 1.533
+          },
+          {
+            "time_ms": 1808,
+            "hz": 400.0,
+            "confidence": 0.937,
+            "semitones": 6.728
+          },
+          {
+            "time_ms": 1822,
+            "hz": 400.0,
+            "confidence": 0.971,
+            "semitones": 6.728
+          },
+          {
+            "time_ms": 1838,
+            "hz": 400.0,
+            "confidence": 0.981,
+            "semitones": 6.728
+          },
+          {
+            "time_ms": 1852,
+            "hz": 390.24,
+            "confidence": 0.977,
+            "semitones": 6.301
+          },
+          {
+            "time_ms": 1868,
+            "hz": 390.24,
+            "confidence": 0.965,
+            "semitones": 6.301
+          },
+          {
+            "time_ms": 1882,
+            "hz": 372.09,
+            "confidence": 0.898,
+            "semitones": 5.476
+          }
+        ]
+      }
+    }
+  ]
+}
