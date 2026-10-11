@@ -7,7 +7,7 @@ import { assessWithCrepe } from './providers/crepe.js';
 import { pinyin } from 'pinyin-pro';
 
 const publicDir=new URL('../public/',import.meta.url);
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4'};
 
 function sendJson(response,status,data){
   response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
@@ -71,8 +71,21 @@ async function serveFile(request,response){
   const fileUrl=new URL(safe,publicDir);
   try{
     const data=await readFile(fileUrl);
-    response.writeHead(200,{'Content-Type':types[extname(safe)]||'application/octet-stream','Cache-Control':'no-store'});
-    response.end(data);
+    const contentType=types[extname(safe)]||'application/octet-stream';
+    const range=request.headers.range?.match(/^bytes=(\d*)-(\d*)$/);
+    if(range){
+      const start=range[1]?Number(range[1]):0;
+      const end=range[2]?Math.min(Number(range[2]),data.length-1):data.length-1;
+      if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<start||start>=data.length){
+        response.writeHead(416,{'Content-Range':`bytes */${data.length}`});
+        return response.end();
+      }
+      const chunk=data.subarray(start,end+1);
+      response.writeHead(206,{'Content-Type':contentType,'Content-Length':chunk.length,'Content-Range':`bytes ${start}-${end}/${data.length}`,'Accept-Ranges':'bytes','Cache-Control':'no-store'});
+      return request.method==='HEAD'?response.end():response.end(chunk);
+    }
+    response.writeHead(200,{'Content-Type':contentType,'Content-Length':data.length,'Accept-Ranges':'bytes','Cache-Control':'no-store'});
+    request.method==='HEAD'?response.end():response.end(data);
   }catch{
     response.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'});
     response.end('Not found');
@@ -83,7 +96,7 @@ createServer(async(request,response)=>{
   if(request.method==='GET'&&request.url==='/health')return sendJson(response,200,{status:'ok'});
   if(request.method==='POST'&&request.url==='/api/prepare')return handlePrepare(request,response);
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);
-  if(request.method==='GET')return serveFile(request,response);
+  if(request.method==='GET'||request.method==='HEAD')return serveFile(request,response);
   response.writeHead(405);response.end('Method not allowed');
 }).listen(config.port,'0.0.0.0',()=>{
   console.log(`Mandarin Tone Trainer: http://localhost:${config.port}`);

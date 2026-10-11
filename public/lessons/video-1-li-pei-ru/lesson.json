@@ -4,7 +4,7 @@
   "speaker": "Li Pei Ru",
   "language": "zh-CN",
   "source_document": "субтитры_видео1_draft2.docx",
-  "reference_audio": "/lessons/video-1-li-pei-ru/reference.wav",
+  "reference_audio": "/lessons/video-1-li-pei-ru/reference.m4a",
   "duration_ms": 25670,
   "segments": [
     {
@@ -13,7 +13,7 @@
       "text": "一对夫妻怕熊破坏院子里的围栏。",
       "verified_pinyin": "yī duì fūqī pà xióng pòhuài yuànzǐ lǐ de wéilán",
       "translation_en": "A couple were afraid that a bear would damage the fence in their yard.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-01.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-01.m4a",
       "source_start_ms": 550,
       "source_end_ms": 4650,
       "duration_ms": 4100,
@@ -646,7 +646,9 @@
             "semitones": -3.721
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-01.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-01.m4a"
     },
     {
       "id": "sentence-02",
@@ -654,7 +656,7 @@
       "text": "安装了一个熊门。",
       "verified_pinyin": "ānzhuāngle yīgè xióng mén",
       "translation_en": "So they installed a bear door.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-02.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-02.m4a",
       "source_start_ms": 4850,
       "source_end_ms": 6880,
       "duration_ms": 2030,
@@ -987,7 +989,9 @@
             "semitones": -0.205
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-02.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-02.m4a"
     },
     {
       "id": "sentence-03",
@@ -995,7 +999,7 @@
       "text": "原本担心没有用。",
       "verified_pinyin": "yuánběn dānxīn méiyǒu yòng",
       "translation_en": "At first, they were worried it would not work.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-03.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-03.m4a",
       "source_start_ms": 6880,
       "source_end_ms": 8780,
       "duration_ms": 1900,
@@ -1376,7 +1380,9 @@
             "semitones": -1.187
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-03.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-03.m4a"
     },
     {
       "id": "sentence-04",
@@ -1384,7 +1390,7 @@
       "text": "没想到这只熊非常的聪明。",
       "verified_pinyin": "méi xiǎngdào zhè zhǐ xióng fēicháng de cōngmíng",
       "translation_en": "But they did not expect the bear to be very smart.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-04.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-04.m4a",
       "source_start_ms": 8880,
       "source_end_ms": 11900,
       "duration_ms": 3020,
@@ -1765,7 +1771,9 @@
             "semitones": -6.713
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-04.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-04.m4a"
     },
     {
       "id": "sentence-05",
@@ -1773,7 +1781,7 @@
       "text": "直接就走了过去。",
       "verified_pinyin": "zhíjiē jiù zǒule guòqù",
       "translation_en": "It walked straight through.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-05.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-05.m4a",
       "source_start_ms": 12150,
       "source_end_ms": 14140,
       "duration_ms": 1990,
@@ -1908,7 +1916,9 @@
             "semitones": 5.115
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-05.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-05.m4a"
     },
     {
       "id": "sentence-06",
@@ -1916,7 +1926,7 @@
       "text": "这样一来，围栏不会坏了。",
       "verified_pinyin": "zhèyàng yī lái, wéilán bù huì huàile",
       "translation_en": "In this way, the fence would not be damaged.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-06.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-06.m4a",
       "source_start_ms": 14140,
       "source_end_ms": 16880,
       "duration_ms": 2740,
@@ -2321,7 +2331,9 @@
             "semitones": 7.493
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-06.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-06.m4a"
     },
     {
       "id": "sentence-07",
@@ -2329,7 +2341,7 @@
       "text": "熊走路也方便了。",
       "verified_pinyin": "xióng zǒulù yě fāngbiànle",
       "translation_en": "And it became easier for the bear to walk.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-07.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-07.m4a",
       "source_start_ms": 16880,
       "source_end_ms": 19140,
       "duration_ms": 2260,
@@ -2602,7 +2614,9 @@
             "semitones": -1.656
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-07.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-07.m4a"
     },
     {
       "id": "sentence-08",
@@ -2610,7 +2624,7 @@
       "text": "夫妻俩非常喜欢这只熊。",
       "verified_pinyin": "fūqī liǎ fēicháng xǐhuān zhè zhǐ xióng",
       "translation_en": "The couple really liked this bear.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-08.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-08.m4a",
       "source_start_ms": 19140,
       "source_end_ms": 22420,
       "duration_ms": 3280,
@@ -2907,7 +2921,9 @@
             "semitones": -3.405
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-08.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-08.m4a"
     },
     {
       "id": "sentence-09",
@@ -2915,7 +2931,7 @@
       "text": "也注意到了安全。",
       "verified_pinyin": "yě zhùyì dàole ānquán",
       "translation_en": "And they also paid attention to safety.",
-      "audio": "/lessons/video-1-li-pei-ru/sentence-09.wav",
+      "audio": "/lessons/video-1-li-pei-ru/sentence-09.m4a",
       "source_start_ms": 22420,
       "source_end_ms": 24900,
       "duration_ms": 2480,
@@ -3164,7 +3180,10 @@
             "semitones": 5.476
           }
         ]
-      }
+      },
+      "audio_wav": "/lessons/video-1-li-pei-ru/sentence-09.wav",
+      "audio_m4a": "/lessons/video-1-li-pei-ru/sentence-09.m4a"
     }
-  ]
+  ],
+  "reference_audio_wav": "/lessons/video-1-li-pei-ru/reference.wav"
 }
