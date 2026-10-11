@@ -57,7 +57,7 @@ createServer(async(request,response)=>{
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);
   if(request.method==='GET')return serveFile(request,response);
   response.writeHead(405);response.end('Method not allowed');
-}).listen(config.port,'127.0.0.1',()=>{
+}).listen(config.port,'0.0.0.0',()=>{
   console.log(`Mandarin Tone Trainer: http://localhost:${config.port}`);
   console.log(`AI provider: ${config.provider}`);
 });
