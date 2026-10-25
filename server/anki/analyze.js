@@ -203,7 +203,7 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,spk}){
   }
   const {spans,source}=spansFrom(tp,frames,target.length);
   const base={expected:{hanzi:chars.join(''),pinyin:target.map(s=>s.pinyin).join(' ')},
-    heard:{text:null,pinyin:(tp.heard?.syllables||null)},provider:'toneperfect',task:tp.task,model_version:tp.model_version,billing:tp.billing||null,tp_request:tp.id,span_source:source};
+    heard:{text:null,pinyin:Array.isArray(tp.heard?.syllables)?tp.heard.syllables.map(h=>typeof h==='string'?h:`${h.initial||''}${h.final||''}${h.tone??''}`):null},provider:'toneperfect',task:tp.task,model_version:tp.model_version,billing:tp.billing||null,tp_request:tp.id,span_source:source};
   if(!tp.assessable){
     const why={no_speech:'Голос не слышен — говори громче и ближе к микрофону.',no_audio:'Голос не слышен — говори громче.',too_short:'Слишком коротко — произнеси слово целиком.',different_content:'Похоже, прозвучало другое слово — попробуй ещё раз.'}[tp.reason]||'Запись не удалось оценить — попробуй ещё раз.';
     const syllables=target.map(s=>({...s,ok:false,verdict:'не оценено'}));
@@ -222,7 +222,7 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,spk}){
     if(t&&t.decision==='review'){parts.push(`тон ${heardTone} вместо ${expTone}`);const tip=tipFor(expTone,heardTone);if(tip)tips.push(`${s.hanzi} (${s.pinyin}): ${tip}`);}
     for(const p of [ini,fin])if(p&&p.decision==='review'){parts.push(`${DIM_RU[p.dimension]} «${p.heard||'—'}» вместо «${p.expected}»`);tips.push(`${s.hanzi} (${s.pinyin}): ${DIM_RU[p.dimension]} — прозвучало «${p.heard||'—'}», нужно «${p.expected}».`);}
     const unsure=[t,ini,fin].some(p=>p&&p.decision==='uncertain');
-    const alt=(comp.tone?.alternatives||[]).slice(0,3).map(a=>({tone:Number(a.label),p:+(+a.probability).toFixed(2)}));
+    const alt=(comp.tone?.alternatives||[]).map(a=>({tone:Number(a.label),p:+(+a.probability).toFixed(2)})).sort((x,y)=>y.p-x.p).slice(0,3);
     return {...s,heard_tone:heardTone,ok,unsure,verdict:ok?(unsure?'скорее верно':'верно'):parts.join(', '),
       score:w.score??null,tone_score:t?.score??null,tone_alternatives:alt.length?alt:null,start_ms:w.start_ms??null,end_ms:w.end_ms??null,
       initial:ini?{expected:ini.expected,heard:ini.heard,score:ini.score,decision:ini.decision}:null,
