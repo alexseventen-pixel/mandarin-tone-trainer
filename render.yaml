@@ -11,3 +11,7 @@ services:
         sync: false
       - key: CREPE_URL
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANKI_TOKEN
+        sync: false

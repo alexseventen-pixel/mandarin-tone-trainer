@@ -26,5 +26,7 @@ const crepeAddress=process.env.CREPE_URL||'http://127.0.0.1:8001/assess';
 export const config={
   port:Number(process.env.PORT||3000),
   tonePerfectKey:process.env.TONEPERFECT_API_KEY||'',
-  crepeUrl:normalizeCrepeUrl(crepeAddress)
+  crepeUrl:normalizeCrepeUrl(crepeAddress),
+  openaiKey:process.env.OPENAI_API_KEY||'',
+  ankiToken:process.env.ANKI_TOKEN||''
 };
