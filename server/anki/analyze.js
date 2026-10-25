@@ -25,10 +25,11 @@ export function trackPitch(x,rate,{minF=70,maxF=500,hop=0.01,win=0.04,thr=0.15}=
   for(let st=0;st+W+tMax<x.length;st+=H){
     let e=0;for(let i=0;i<W;i++)e+=x[st+i]*x[st+i];
     const rms=Math.sqrt(e/W),t=(st+W/2)/rate;
-    if(rms<Math.max(0.01,peak*0.05)){frames.push({t,f0:null,rms});continue;}
+    if(rms<Math.max(0.003,peak*0.04)){frames.push({t,f0:null,rms});continue;}
     d[0]=1;let run=0,tau=-1;
     for(let k=1;k<=tMax;k++){let s=0;for(let i=0;i<W;i++){const df=x[st+i]-x[st+i+k];s+=df*df;}run+=s;d[k]=run?s*k/run:1;}
     for(let k=tMin;k<=tMax;k++){if(d[k]<thr){while(k+1<=tMax&&d[k+1]<d[k])k++;tau=k;break;}}
+    if(tau<0){let mk=-1;for(let k=tMin;k<=tMax;k++)if(mk<0||d[k]<d[mk])mk=k;if(mk>0&&d[mk]<0.35)tau=mk;} // weaker but still periodic (real phone voice)
     if(tau<0){frames.push({t,f0:null,rms});continue;}
     const a=d[tau-1]??d[tau],b=d[tau],c=d[tau+1]??d[tau],den=a-2*b+c,p=den?tau+0.5*(a-c)/den:tau;
     frames.push({t,f0:rate/p,rms});
@@ -146,32 +147,36 @@ function chaoTarget(tone,i,n,prev){
   return {1:[5,5,5,5,5],2:[3,3.3,3.9,4.5,5],4:[5,4.4,3.4,2.2,1]}[tone];
 }
 export function buildContour(frames,spans,target,oks,spk){
-  const hop=0.01,st=frames.map(f=>f.f0?toSt(f.f0):null);
-  const vals=st.filter(v=>v!=null);if(vals.length<5)return null;
-  const med=pct(vals,0.5);
+  const hop=0.01,st=frames.map(f=>f.f0&&isFinite(f.f0)&&f.f0>0?toSt(f.f0):null);
+  const vals=st.filter(v=>v!=null);
+  const med=vals.length?pct(vals,0.5):12;
   for(let i=0;i<st.length;i++){let v=st[i];if(v==null)continue;while(v-med>7.5)v-=12;while(med-v>9)v+=12;st[i]=Math.abs(v-med)>10?null:v;} // octave errors
-  const mf=st.map((v,i)=>{if(v==null)return null;const w=st.slice(Math.max(0,i-3),i+4).filter(x=>x!=null).sort((a,b)=>a-b);return w.length>=3?w[w.length>>1]:null;}); // 7-pt median
-  // drop voiced islands shorter than 40 ms (glitches)
-  for(let i=0;i<mf.length;){if(mf[i]==null){i++;continue;}let j=i;while(j<mf.length&&mf[j]!=null)j++;if(j-i<4)for(let k=i;k<j;k++)mf[k]=null;i=j;}
-  // interpolate unvoiced gaps up to 150 ms
+  const clean=(medW,minIsland,avgW)=>{
+  const mf=st.map((v,i)=>{if(v==null)return null;if(!medW)return v;const w=st.slice(Math.max(0,i-medW),i+medW+1).filter(x=>x!=null).sort((a,b)=>a-b);return w.length>=Math.min(3,medW+1)?w[w.length>>1]:v;});
+  for(let i=0;i<mf.length;){if(mf[i]==null){i++;continue;}let j=i;while(j<mf.length&&mf[j]!=null)j++;if(j-i<minIsland)for(let k=i;k<j;k++)mf[k]=null;i=j;}
   const interp=mf.map(()=>false);
   for(let i=0;i<mf.length;){if(mf[i]!=null){i++;continue;}let j=i;while(j<mf.length&&mf[j]==null)j++;
     if(i>0&&j<mf.length&&j-i<=15){const a=mf[i-1],b=mf[j];for(let k=i;k<j;k++){mf[k]=a+(b-a)*(k-i+1)/(j-i+1);interp[k]=true;}}i=j;}
-  // 5-pt moving average inside voiced runs
-  const sm=mf.map((v,i)=>{if(v==null)return null;let s=0,n=0;for(let k=i-2;k<=i+2;k++)if(mf[k]!=null){s+=mf[k];n++;}return s/n;});
-  const good=sm.filter(v=>v!=null);let lo=pct(good,0.05),hi=pct(good,0.95);
+  const sm=mf.map((v,i)=>{if(v==null)return null;let s=0,n=0;for(let k=i-avgW;k<=i+avgW;k++)if(mf[k]!=null){s+=mf[k];n++;}return s/n;});
+  return {sm,interp};};
+  // heavy cleaning first; if it eats the voice (sparse real-mic pitch), fall back to lighter / raw — never drop the line
+  const need=Math.max(3,Math.round(vals.length*0.5));let level='heavy';
+  let {sm,interp}=clean(3,4,2);
+  if(sm.filter(v=>v!=null).length<need){({sm,interp}=clean(1,2,1));level='light';}
+  if(sm.filter(v=>v!=null).length<Math.min(need,vals.length)){sm=st.slice();interp=st.map(()=>false);level='raw';}
+  const good=sm.filter(v=>v!=null&&isFinite(v));let lo=good.length?pct(good,0.05):med-3.5,hi=good.length?pct(good,0.95):med+3.5;
   if(spk&&isFinite(spk.lo)&&isFinite(spk.hi)&&spk.hi-spk.lo>=5&&spk.hi-spk.lo<=18){lo=Math.min(lo,spk.lo);hi=Math.max(hi,spk.hi);}
   if(hi-lo<7){ // narrow recording (flat word): place it on a 7-st range so its mean height matches the expected tones' mean height
     let acc=0,n=0;target.forEach((s,i)=>{const seg=sm.filter((v,k)=>v!=null&&frames[k].t>=spans[i][0]&&frames[k].t<spans[i][1]);if(!seg.length)return;
       const u=seg.reduce((a,b)=>a+b,0)/seg.length,tg=chaoTarget(s.tone,i,target.length,i?target[i-1].tone:0),tm=tg.reduce((a,b)=>a+b,0)/tg.length;acc+=u-(tm-1)*7/4;n++;});
     const m=(hi+lo)/2;lo=n?Math.max(m-6,Math.min(m-1,acc/n)):m-3.5;hi=lo+7;}
-  const toC=v=>Math.max(0.6,Math.min(5.4,1+4*(v-lo)/(hi-lo)));
-  const user=[];sm.forEach((v,i)=>{if(v!=null)user.push({t:+frames[i].t.toFixed(3),c:+toC(v).toFixed(2),...(interp[i]?{g:1}:{})});else if(user.length&&user[user.length-1]!==null)user.push(null);});
+  const toC=v=>!isFinite(v)?3:Math.max(0.6,Math.min(5.4,1+4*(v-lo)/(hi-lo)));
+  const user=[];sm.forEach((v,i)=>{if(v!=null&&isFinite(v))user.push({t:+frames[i].t.toFixed(3),c:+toC(v).toFixed(2),...(interp[i]?{g:1}:{})});else if(user.length&&user[user.length-1]!==null)user.push(null);});
   while(user.length&&user[user.length-1]===null)user.pop();
   const syl=target.map((s,i)=>({hanzi:s.hanzi,pinyin:s.pinyin,tone:s.tone,ok:oks?oks[i]:null,start:+spans[i][0].toFixed(3),end:+spans[i][1].toFixed(3),
     target:chaoTarget(s.tone,i,target.length,i?target[i-1].tone:0)}));
   const t0=Math.max(0,Math.min(syl[0]?.start??0,user.find(p=>p)?.t??0)-0.05),t1=Math.max(syl[syl.length-1]?.end??0,[...user].reverse().find(p=>p)?.t??0)+0.05;
-  return {unit:'chao',t0:+t0.toFixed(3),t1:+t1.toFixed(3),user,syllables:syl,range:{lo:+lo.toFixed(2),hi:+hi.toFixed(2),obs_lo:+pct(good,0.05).toFixed(2),obs_hi:+pct(good,0.95).toFixed(2)}};
+  return {unit:'chao',t0:+t0.toFixed(3),t1:+t1.toFixed(3),user,syllables:syl,range:{lo:+lo.toFixed(2),hi:+hi.toFixed(2),obs_lo:good.length?+pct(good,0.05).toFixed(2):null,obs_hi:good.length?+pct(good,0.95).toFixed(2):null},voiced_frames:vals.length,clean_level:level,points:user.filter(Boolean).length};
 }
 
 function spansFrom(tp,frames,n){
