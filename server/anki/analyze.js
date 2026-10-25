@@ -77,12 +77,23 @@ function tonesFromPinyin(py){ // 'méi guānxi' -> [2,1,5]; uses pinyin-pro to s
 }
 
 function targetSyllables(text,py){
-  const chars=[...text].filter(c=>/\p{Script=Han}/u.test(c));
-  const num=pinyin(chars.join(''),{toneType:'num',type:'array',toneSandhi:{yi:true,bu:true,thirdTone:true}});
-  const mark=pinyin(chars.join(''),{toneType:'symbol',type:'array',toneSandhi:{yi:true,bu:true,thirdTone:true}});
-  const card=tonesFromPinyin(py);
-  if(card&&card.length===chars.length)return chars.map((c,i)=>({hanzi:c,pinyin:mark[i].normalize('NFD').replace(/[\u0300-\u036f]/g,'')===mark[i]?mark[i]:(card[i]===5?mark[i].normalize('NFD').replace(/[\u0300-\u036f]/g,'').normalize():mark[i]),tone:card[i]===5?5:(Number((num[i]||'').match(/[0-5]$/)?.[0]||card[i])||card[i])})); // card gives neutral tones, pinyin-pro gives sandhi
-  return chars.map((c,i)=>({hanzi:c,pinyin:mark[i],tone:(i>0&&chars[i-1]===c&&chars.length===2)?5:(Number((num[i]||'').match(/[0-5]$/)?.[0]||5)||5)})); // reduplication (谢谢, 妈妈) -> neutral
+  // display = dictionary (lexical) pinyin as on the card; tone = surface tone actually spoken (sandhi applied)
+  const chars=[...text].filter(c=>/\p{Script=Han}/u.test(c)),joined=chars.join('');
+  const sb={yi:true,bu:true,thirdTone:true};
+  const lexMark=pinyin(joined,{toneType:'symbol',type:'array',toneSandhi:false});
+  const lexNum=pinyin(joined,{toneType:'num',type:'array',toneSandhi:false});
+  const surfNum=pinyin(joined,{toneType:'num',type:'array',toneSandhi:sb});
+  const surfMark=pinyin(joined,{toneType:'symbol',type:'array',toneSandhi:sb});
+  const card=tonesFromPinyin(py),useCard=card&&card.length===chars.length;
+  const toneOf=p=>Number(String(p||'').match(/[0-5]$/)?.[0]||5)||5;
+  const strip=p=>p.normalize('NFD').replace(/[\u0300-\u036f]/g,'').normalize();
+  return chars.map((c,i)=>{
+    let lex=useCard?card[i]:toneOf(lexNum[i]);
+    if(!useCard&&i>0&&chars[i-1]===c&&chars.length===2)lex=5; // reduplication 谢谢/妈妈
+    const neutral=lex===5,surf=neutral?5:toneOf(surfNum[i]);
+    const disp=neutral?strip(lexMark[i]):lexMark[i];
+    return {hanzi:c,pinyin:disp,lexical_tone:lex,tone:surf,sandhi:surf!==lex?{tone:surf,pinyin:surfMark[i]}:null};
+  });
 }
 
 function tipFor(exp,got,feat){
@@ -117,7 +128,7 @@ export async function assessTonePerfect(wav,chars,cardTones,key){
   const form=new FormData();
   form.append('audio',new Blob([wav],{type:'audio/wav'}),'rec.wav');
   form.append('text',chars.join(''));form.append('pinyin',py);form.append('language','zh-CN');
-  form.append('task',chars.length<=4?'isolated_word':'connected_speech');
+  form.append('task',process.env.TP_TASK||'connected_speech'); // TonePerfect: correction decisions (review/uncertain) are calibrated only for connected_speech
   const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),30000);
   try{
     const r=await fetch('https://api.toneperfect.app/v1/assess',{method:'POST',signal:ctl.signal,headers:{Authorization:`Bearer ${key}`,'Idempotency-Key':`anki-${randomUUID()}`},body:form});
@@ -127,42 +138,103 @@ export async function assessTonePerfect(wav,chars,cardTones,key){
   }finally{clearTimeout(to);}
 }
 
-export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey}){
-  const res=await analyzeHeuristic({wav,hanzi,pinyin:py,apiKey});
-  const chars=[...hanzi].filter(c=>/\p{Script=Han}/u.test(c));
-  let tp;
-  try{tp=await assessTonePerfect(wav,chars,tonesFromPinyin(py),tpKey);}
-  catch(e){return {...res,provider:'fallback',provider_error:e.message};}
+// ---- clean contour: octave fix, median filter, gap interpolation, smoothing, Chao 1..5 normalisation ----
+const pct=(arr,p)=>{const v=[...arr].sort((a,b)=>a-b);return v[Math.min(v.length-1,Math.max(0,Math.round(p*(v.length-1))))];};
+function chaoTarget(tone,i,n,prev){
+  if(tone===3)return (n>1&&i<n-1)?[2,1.6,1.2,1.1,1.2]:[2,1.4,1,1.8,3.6]; // half-third inside a word, full 214 at the end
+  if(tone===5){const lv={1:2.2,2:3,3:3.8,4:1.6}[prev]||2.5;return [lv,lv,lv-0.2,lv-0.3,lv-0.4];}
+  return {1:[5,5,5,5,5],2:[3,3.3,3.9,4.5,5],4:[5,4.4,3.4,2.2,1]}[tone];
+}
+export function buildContour(frames,spans,target,oks,spk){
+  const hop=0.01,st=frames.map(f=>f.f0?toSt(f.f0):null);
+  const vals=st.filter(v=>v!=null);if(vals.length<5)return null;
+  const med=pct(vals,0.5);
+  for(let i=0;i<st.length;i++){let v=st[i];if(v==null)continue;while(v-med>7.5)v-=12;while(med-v>9)v+=12;st[i]=Math.abs(v-med)>10?null:v;} // octave errors
+  const mf=st.map((v,i)=>{if(v==null)return null;const w=st.slice(Math.max(0,i-3),i+4).filter(x=>x!=null).sort((a,b)=>a-b);return w.length>=3?w[w.length>>1]:null;}); // 7-pt median
+  // drop voiced islands shorter than 40 ms (glitches)
+  for(let i=0;i<mf.length;){if(mf[i]==null){i++;continue;}let j=i;while(j<mf.length&&mf[j]!=null)j++;if(j-i<4)for(let k=i;k<j;k++)mf[k]=null;i=j;}
+  // interpolate unvoiced gaps up to 150 ms
+  const interp=mf.map(()=>false);
+  for(let i=0;i<mf.length;){if(mf[i]!=null){i++;continue;}let j=i;while(j<mf.length&&mf[j]==null)j++;
+    if(i>0&&j<mf.length&&j-i<=15){const a=mf[i-1],b=mf[j];for(let k=i;k<j;k++){mf[k]=a+(b-a)*(k-i+1)/(j-i+1);interp[k]=true;}}i=j;}
+  // 5-pt moving average inside voiced runs
+  const sm=mf.map((v,i)=>{if(v==null)return null;let s=0,n=0;for(let k=i-2;k<=i+2;k++)if(mf[k]!=null){s+=mf[k];n++;}return s/n;});
+  const good=sm.filter(v=>v!=null);let lo=pct(good,0.05),hi=pct(good,0.95);
+  if(spk&&isFinite(spk.lo)&&isFinite(spk.hi)&&spk.hi-spk.lo>=5&&spk.hi-spk.lo<=18){lo=Math.min(lo,spk.lo);hi=Math.max(hi,spk.hi);}
+  if(hi-lo<7){ // narrow recording (flat word): place it on a 7-st range so its mean height matches the expected tones' mean height
+    let acc=0,n=0;target.forEach((s,i)=>{const seg=sm.filter((v,k)=>v!=null&&frames[k].t>=spans[i][0]&&frames[k].t<spans[i][1]);if(!seg.length)return;
+      const u=seg.reduce((a,b)=>a+b,0)/seg.length,tg=chaoTarget(s.tone,i,target.length,i?target[i-1].tone:0),tm=tg.reduce((a,b)=>a+b,0)/tg.length;acc+=u-(tm-1)*7/4;n++;});
+    const m=(hi+lo)/2;lo=n?Math.max(m-6,Math.min(m-1,acc/n)):m-3.5;hi=lo+7;}
+  const toC=v=>Math.max(0.6,Math.min(5.4,1+4*(v-lo)/(hi-lo)));
+  const user=[];sm.forEach((v,i)=>{if(v!=null)user.push({t:+frames[i].t.toFixed(3),c:+toC(v).toFixed(2),...(interp[i]?{g:1}:{})});else if(user.length&&user[user.length-1]!==null)user.push(null);});
+  while(user.length&&user[user.length-1]===null)user.pop();
+  const syl=target.map((s,i)=>({hanzi:s.hanzi,pinyin:s.pinyin,tone:s.tone,ok:oks?oks[i]:null,start:+spans[i][0].toFixed(3),end:+spans[i][1].toFixed(3),
+    target:chaoTarget(s.tone,i,target.length,i?target[i-1].tone:0)}));
+  const t0=Math.max(0,Math.min(syl[0]?.start??0,user.find(p=>p)?.t??0)-0.05),t1=Math.max(syl[syl.length-1]?.end??0,[...user].reverse().find(p=>p)?.t??0)+0.05;
+  return {unit:'chao',t0:+t0.toFixed(3),t1:+t1.toFixed(3),user,syllables:syl,range:{lo:+lo.toFixed(2),hi:+hi.toFixed(2),obs_lo:+pct(good,0.05).toFixed(2),obs_hi:+pct(good,0.95).toFixed(2)}};
+}
+
+function spansFrom(tp,frames,n){
+  const w=tp?.words||[],sy=tp?.syllables||[];
+  const sp=Array.from({length:n},(_,i)=>{
+    const a=w[i]?.start_ms??sy[i]?.span_ms?.[0],b=w[i]?.end_ms??sy[i]?.span_ms?.[1];
+    return a!=null&&b!=null&&b>a?[a/1000,b/1000]:null;});
+  if(sp.every(Boolean))return {spans:sp,source:'toneperfect'};
+  const v=frames.filter(f=>f.f0);const t0=v[0]?.t??0,t1=v[v.length-1]?.t??0.5,d=Math.max(0.1,t1-t0);
+  return {spans:Array.from({length:n},(_,i)=>[t0+d*i/n,t0+d*(i+1)/n]),source:'even'};
+}
+
+export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,spk}){
+  const T0=Date.now(),timings={};
+  const {samples,rate}=parseWav(wav);
+  if(samples.length<rate*0.2)throw new Error('Запись слишком короткая');
+  if(samples.length>rate*12)throw new Error('Запись слишком длинная (макс. 12 с)');
+  const target=targetSyllables(hanzi,py);
+  if(!target.length)throw new Error('No Chinese characters in expected text');
+  const chars=target.map(s=>s.hanzi);
+  // TonePerfect runs in parallel with local pitch tracking; OpenAI transcription only as fallback
+  const tpP=(async()=>{const t=Date.now();try{return await assessTonePerfect(wav,chars,target.map(s=>s.lexical_tone),tpKey);}catch(e){return {error:e.message};}finally{timings.toneperfect_ms=Date.now()-t;}})();
+  let t=Date.now();const frames=trackPitch(samples,rate);timings.pitch_ms=Date.now()-t;
+  const tp=await tpP;
+  if(tp.error){
+    t=Date.now();const res=await analyzeHeuristic({wav,hanzi,pinyin:py,apiKey});timings.fallback_ms=Date.now()-t;
+    const {spans}=spansFrom(null,frames,target.length);
+    return {...res,provider:'fallback',provider_error:tp.error,contour:buildContour(frames,spans,target,res.syllables.map(s=>s.ok),spk),timings:{...timings,server_ms:Date.now()-T0}};
+  }
+  const {spans,source}=spansFrom(tp,frames,target.length);
+  const base={expected:{hanzi:chars.join(''),pinyin:target.map(s=>s.pinyin).join(' ')},
+    heard:{text:null,pinyin:(tp.heard?.syllables||null)},provider:'toneperfect',task:tp.task,model_version:tp.model_version,billing:tp.billing||null,tp_request:tp.id,span_source:source};
   if(!tp.assessable){
     const why={no_speech:'Голос не слышен — говори громче и ближе к микрофону.',no_audio:'Голос не слышен — говори громче.',too_short:'Слишком коротко — произнеси слово целиком.',different_content:'Похоже, прозвучало другое слово — попробуй ещё раз.'}[tp.reason]||'Запись не удалось оценить — попробуй ещё раз.';
-    return {...res,provider:'toneperfect',score:0,assessable:false,reason:tp.reason,tips:[why],syllables:res.syllables.map(s=>({...s,ok:false,verdict:'не оценено'})),billing:tp.billing};
+    const syllables=target.map(s=>({...s,ok:false,verdict:'не оценено'}));
+    return {...base,score:0,assessable:false,reason:tp.reason,tips:[why],syllables,contour:buildContour(frames,spans,target,null,spk),timings:{...timings,server_ms:Date.now()-T0}};
   }
   const tips=[];
-  const syllables=res.syllables.map((s,i)=>{
-    const w=(tp.words||[])[i];if(!w)return s;
+  const syllables=target.map((s,i)=>{
+    const w=(tp.words||[])[i]||{},comp=(tp.syllables||[])[i]?.components||{};
     const ph=d=>(w.phones||[]).find(p=>p.dimension===d)||null;
     const t=ph('tone'),ini=ph('initial'),fin=ph('final');
     const bad=[t,ini,fin].filter(p=>p&&p.decision==='review');
     const ok=!bad.length;
-    const heardTone=t&&t.heard!=null?Number(t.heard):s.heard_tone;
+    const heardTone=t&&t.heard!=null?Number(t.heard):null;
     const expTone=t&&t.expected!=null?Number(t.expected):s.tone;
     const parts=[];
     if(t&&t.decision==='review'){parts.push(`тон ${heardTone} вместо ${expTone}`);const tip=tipFor(expTone,heardTone);if(tip)tips.push(`${s.hanzi} (${s.pinyin}): ${tip}`);}
     for(const p of [ini,fin])if(p&&p.decision==='review'){parts.push(`${DIM_RU[p.dimension]} «${p.heard||'—'}» вместо «${p.expected}»`);tips.push(`${s.hanzi} (${s.pinyin}): ${DIM_RU[p.dimension]} — прозвучало «${p.heard||'—'}», нужно «${p.expected}».`);}
     const unsure=[t,ini,fin].some(p=>p&&p.decision==='uncertain');
-    return {...s,heard_tone:heardTone,ok,verdict:ok?(unsure?'скорее верно':'верно'):parts.join(', '),
-      score:w.score??null,tone_score:t?.score??null,
+    const alt=(comp.tone?.alternatives||[]).slice(0,3).map(a=>({tone:Number(a.label),p:+(+a.probability).toFixed(2)}));
+    return {...s,heard_tone:heardTone,ok,unsure,verdict:ok?(unsure?'скорее верно':'верно'):parts.join(', '),
+      score:w.score??null,tone_score:t?.score??null,tone_alternatives:alt.length?alt:null,start_ms:w.start_ms??null,end_ms:w.end_ms??null,
       initial:ini?{expected:ini.expected,heard:ini.heard,score:ini.score,decision:ini.decision}:null,
-      final:fin?{expected:fin.expected,heard:fin.heard,score:fin.score,decision:fin.decision}:null,
-      tone_decision:t?.decision||null,features:undefined};
+      final:fin?{expected:fin.expected,heard:fin.heard,score:fin.score,decision:fin.decision}:null,tone_decision:t?.decision||null};
   });
-  const score=Math.round(tp.scores?.overall??res.score);
-  if(!tips.length)tips.push(score>=85?'Отлично! Тоны и звуки на месте.':'Ошибок не найдено, но можно произнести чётче и увереннее.');
-  return {...res,provider:'toneperfect',score,syllables,tips,
+  const score=Math.round(tp.scores?.overall??0);
+  if(!tips.length)tips.push(score>=85?'Отлично! Тоны и звуки на месте.':syllables.some(s=>s.unsure)?'Явных ошибок нет, но в некоторых слогах ИИ не уверен — произнеси чётче.':'Ошибок не найдено, но можно произнести чётче и увереннее.');
+  t=Date.now();const contour=buildContour(frames,spans,target,syllables.map(s=>s.ok),spk);timings.contour_ms=Date.now()-t;
+  timings.server_ms=Date.now()-T0;
+  return {...base,assessable:true,score,syllables,tips,
     scores:{overall:tp.scores?.overall??null,initial:tp.scores?.initial??null,final:tp.scores?.final??null,tone:tp.scores?.tone??null},
-    heard:{...res.heard,tp_syllables:tp.heard?.syllables||null},
-    billing:tp.billing||null,tp_request:tp.id,
-    note:'Scores and verdicts: TonePerfect (errors only when decision=review). Contour chart: YIN pitch.'};
+    contour,timings,note:'Scores and verdicts: TonePerfect (errors only when decision=review). Contour: YIN pitch, cleaned, Chao 1-5, segmented by TonePerfect syllable timings.'};
 }
 
 async function analyzeHeuristic({wav,hanzi,pinyin:py,apiKey}){

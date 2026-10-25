@@ -71,12 +71,14 @@ async function handleAnkiAnalyze(request,response){
   const send=(status,data)=>{response.writeHead(status,{...CORS,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});response.end(JSON.stringify(data));};
   try{
     if(config.ankiToken&&request.headers['x-anki-token']!==config.ankiToken)return send(401,{error:'Bad token'});
-    const chunks=[];let size=0;
+    const tStart=Date.now();const chunks=[];let size=0;
     for await(const chunk of request){size+=chunk.length;if(size>8_000_000)return send(413,{error:'Recording is too large'});chunks.push(chunk);}
+    const tUp=Date.now()-tStart;
     const form=await new Request('http://local/',{method:'POST',headers:{'content-type':request.headers['content-type']||''},body:Buffer.concat(chunks)}).formData();
     const audio=form.get('audio'),hanzi=String(form.get('hanzi')||'');
     if(!audio||typeof audio==='string'||!hanzi||hanzi.length>40)return send(400,{error:'Need audio file and hanzi'});
-    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi,pinyin:String(form.get('pinyin')||'').slice(0,200),apiKey:config.openaiKey,tpKey:config.tonePerfectKey});
+    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi,pinyin:String(form.get('pinyin')||'').slice(0,200),apiKey:config.openaiKey,tpKey:config.tonePerfectKey,spk:{lo:Number(form.get('spk_lo')),hi:Number(form.get('spk_hi'))}});
+    data.timings={...(data.timings||{}),upload_read_ms:tUp};
     send(200,data);
   }catch(error){send(422,{error:error.message||'Analysis failed'});}
 }
