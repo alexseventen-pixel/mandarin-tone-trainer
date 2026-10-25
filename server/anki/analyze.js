@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 // Anki card pronunciation analysis: WAV (16-bit PCM, sent by the card) -> transcript + pitch + tone verdicts.
 import { pinyin } from 'pinyin-pro';
 
@@ -107,7 +108,64 @@ export async function transcribe(wavBuf,apiKey,prompt){
   return (j.text||'').trim();
 }
 
-export async function analyze({wav,hanzi,pinyin:py,apiKey}){
+// TonePerfect: per-syllable initial/final/tone assessment (sandhi-aware)
+const DIM_RU={initial:'начальный согласный',final:'гласная/финаль'};
+export async function assessTonePerfect(wav,chars,cardTones,key){
+  if(!key)throw new Error('TONEPERFECT_API_KEY not set');
+  const base=pinyin(chars.join(''),{toneType:'num',type:'array'}); // no sandhi: TonePerfect applies it
+  const py=base.map((p,i)=>{const t=cardTones&&cardTones.length===chars.length?cardTones[i]:Number(p.slice(-1))||5;return p.replace(/[0-5]$/,'').replace(/ü/g,'v')+t;}).join(' ');
+  const form=new FormData();
+  form.append('audio',new Blob([wav],{type:'audio/wav'}),'rec.wav');
+  form.append('text',chars.join(''));form.append('pinyin',py);form.append('language','zh-CN');
+  form.append('task',chars.length<=4?'isolated_word':'connected_speech');
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),30000);
+  try{
+    const r=await fetch('https://api.toneperfect.app/v1/assess',{method:'POST',signal:ctl.signal,headers:{Authorization:`Bearer ${key}`,'Idempotency-Key':`anki-${randomUUID()}`},body:form});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(`${r.status} ${j?.error?.code||''}: ${j?.error?.message||'TonePerfect error'}`);
+    return {...j,sent_pinyin:py};
+  }finally{clearTimeout(to);}
+}
+
+export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey}){
+  const res=await analyzeHeuristic({wav,hanzi,pinyin:py,apiKey});
+  const chars=[...hanzi].filter(c=>/\p{Script=Han}/u.test(c));
+  let tp;
+  try{tp=await assessTonePerfect(wav,chars,tonesFromPinyin(py),tpKey);}
+  catch(e){return {...res,provider:'fallback',provider_error:e.message};}
+  if(!tp.assessable){
+    const why={no_speech:'Голос не слышен — говори громче и ближе к микрофону.',no_audio:'Голос не слышен — говори громче.',too_short:'Слишком коротко — произнеси слово целиком.',different_content:'Похоже, прозвучало другое слово — попробуй ещё раз.'}[tp.reason]||'Запись не удалось оценить — попробуй ещё раз.';
+    return {...res,provider:'toneperfect',score:0,assessable:false,reason:tp.reason,tips:[why],syllables:res.syllables.map(s=>({...s,ok:false,verdict:'не оценено'})),billing:tp.billing};
+  }
+  const tips=[];
+  const syllables=res.syllables.map((s,i)=>{
+    const w=(tp.words||[])[i];if(!w)return s;
+    const ph=d=>(w.phones||[]).find(p=>p.dimension===d)||null;
+    const t=ph('tone'),ini=ph('initial'),fin=ph('final');
+    const bad=[t,ini,fin].filter(p=>p&&p.decision==='review');
+    const ok=!bad.length;
+    const heardTone=t&&t.heard!=null?Number(t.heard):s.heard_tone;
+    const expTone=t&&t.expected!=null?Number(t.expected):s.tone;
+    const parts=[];
+    if(t&&t.decision==='review'){parts.push(`тон ${heardTone} вместо ${expTone}`);const tip=tipFor(expTone,heardTone);if(tip)tips.push(`${s.hanzi} (${s.pinyin}): ${tip}`);}
+    for(const p of [ini,fin])if(p&&p.decision==='review'){parts.push(`${DIM_RU[p.dimension]} «${p.heard||'—'}» вместо «${p.expected}»`);tips.push(`${s.hanzi} (${s.pinyin}): ${DIM_RU[p.dimension]} — прозвучало «${p.heard||'—'}», нужно «${p.expected}».`);}
+    const unsure=[t,ini,fin].some(p=>p&&p.decision==='uncertain');
+    return {...s,heard_tone:heardTone,ok,verdict:ok?(unsure?'скорее верно':'верно'):parts.join(', '),
+      score:w.score??null,tone_score:t?.score??null,
+      initial:ini?{expected:ini.expected,heard:ini.heard,score:ini.score,decision:ini.decision}:null,
+      final:fin?{expected:fin.expected,heard:fin.heard,score:fin.score,decision:fin.decision}:null,
+      tone_decision:t?.decision||null,features:undefined};
+  });
+  const score=Math.round(tp.scores?.overall??res.score);
+  if(!tips.length)tips.push(score>=85?'Отлично! Тоны и звуки на месте.':'Ошибок не найдено, но можно произнести чётче и увереннее.');
+  return {...res,provider:'toneperfect',score,syllables,tips,
+    scores:{overall:tp.scores?.overall??null,initial:tp.scores?.initial??null,final:tp.scores?.final??null,tone:tp.scores?.tone??null},
+    heard:{...res.heard,tp_syllables:tp.heard?.syllables||null},
+    billing:tp.billing||null,tp_request:tp.id,
+    note:'Scores and verdicts: TonePerfect (errors only when decision=review). Contour chart: YIN pitch.'};
+}
+
+async function analyzeHeuristic({wav,hanzi,pinyin:py,apiKey}){
   const {samples,rate}=parseWav(wav);
   if(samples.length<rate*0.25)throw new Error('Запись слишком короткая');
   if(samples.length>rate*12)throw new Error('Запись слишком длинная (макс. 12 с)');

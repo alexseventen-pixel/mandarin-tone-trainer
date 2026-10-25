@@ -76,7 +76,7 @@ async function handleAnkiAnalyze(request,response){
     const form=await new Request('http://local/',{method:'POST',headers:{'content-type':request.headers['content-type']||''},body:Buffer.concat(chunks)}).formData();
     const audio=form.get('audio'),hanzi=String(form.get('hanzi')||'');
     if(!audio||typeof audio==='string'||!hanzi||hanzi.length>40)return send(400,{error:'Need audio file and hanzi'});
-    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi,pinyin:String(form.get('pinyin')||'').slice(0,200),apiKey:config.openaiKey});
+    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi,pinyin:String(form.get('pinyin')||'').slice(0,200),apiKey:config.openaiKey,tpKey:config.tonePerfectKey});
     send(200,data);
   }catch(error){send(422,{error:error.message||'Analysis failed'});}
 }
