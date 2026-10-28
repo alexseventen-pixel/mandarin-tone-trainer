@@ -189,7 +189,25 @@ function spansFrom(tp,frames,n){
   return {spans:Array.from({length:n},(_,i)=>[t0+d*i/n,t0+d*(i+1)/n]),source:'even'};
 }
 
-export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,spk}){
+// CREPE (neural pitch, Veesp VPS): second-opinion tone check, numbered surface-tone pinyin, 20 s timeout
+export async function assessCrepe(wav,target,url){
+  if(!url)throw new Error('CREPE_URL not set');
+  const py=pinyin(target.map(s=>s.hanzi).join(''),{toneType:'none',type:'array'}).map((p,i)=>p.replace(/ü/g,'v')+target[i].tone).join(' ');
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),Number(process.env.CREPE_TIMEOUT_MS||20000));
+  try{
+    const r=await fetch(url,{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({audioBase64:wav.toString('base64'),text:target.map(s=>s.hanzi).join(''),pinyin:py,language:'zh-CN'})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j?.error?.message||j?.error||`CREPE ${r.status}`);
+    const words=j.words||[];
+    return {used:true,model_version:j.model_version||null,scores:j.scores||null,sent_pinyin:py,mean_confidence:j.audio?.mean_crepe_confidence??null,
+      syllables:target.map((s,i)=>{const w=words[i]||{},t=(w.phones||[]).find(p=>p.dimension==='tone')||{};
+        return {hanzi:s.hanzi,expected:s.tone,heard_tone:t.heard??null,score:w.score??null,decision:t.decision||w.decision||null,confidence:w.analysis?.mean_crepe_confidence??null,start_ms:w.start_ms??null,end_ms:w.end_ms??null};})};
+  }catch(e){return {used:false,error:e.name==='AbortError'?'CREPE timeout':e.message};}
+  finally{clearTimeout(to);}
+}
+const crepeNote=c=>c?.used?c.syllables:null;
+
+export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
   const T0=Date.now(),timings={};
   const {samples,rate}=parseWav(wav);
   if(samples.length<rate*0.2)throw new Error('Запись слишком короткая');
@@ -199,16 +217,23 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,spk}){
   const chars=target.map(s=>s.hanzi);
   // TonePerfect runs in parallel with local pitch tracking; OpenAI transcription only as fallback
   const tpP=(async()=>{const t=Date.now();try{return await assessTonePerfect(wav,chars,target.map(s=>s.lexical_tone),tpKey);}catch(e){return {error:e.message};}finally{timings.toneperfect_ms=Date.now()-t;}})();
+  const crP=(async()=>{const t=Date.now();try{return await assessCrepe(wav,target,crepeUrl);}finally{timings.crepe_ms=Date.now()-t;}})();
   let t=Date.now();const frames=trackPitch(samples,rate);timings.pitch_ms=Date.now()-t;
-  const tp=await tpP;
+  const [tp,crepe]=await Promise.all([tpP,crP]);
+  const pitch_source=crepe.used?'yin+crepe':'yin';
+  const addCrepe=syls=>syls.map((s,i)=>{const c=crepe.used?crepe.syllables[i]:null;return c?{...s,crepe_tone:c.heard_tone,crepe_score:c.score,crepe_decision:c.decision}:s;});
   if(tp.error){
     t=Date.now();const res=await analyzeHeuristic({wav,hanzi,pinyin:py,apiKey});timings.fallback_ms=Date.now()-t;
+    if(crepe.used&&res.syllables?.length===target.length){
+      res.syllables=res.syllables.map((s,i)=>{const c=crepe.syllables[i];if(!c||c.heard_tone==null||c.decision==='uncertain')return s;
+        const ok=c.decision!=='review';return {...s,heard_tone:Number(c.heard_tone),ok,verdict:ok?'верно':`похоже на ${c.heard_tone}-й`,tone_source:'crepe'};});
+    }
     const {spans}=spansFrom(null,frames,target.length);
-    return {...res,provider:'fallback',provider_error:tp.error,contour:buildContour(frames,spans,target,res.syllables.map(s=>s.ok),spk),timings:{...timings,server_ms:Date.now()-T0}};
+    return {...res,syllables:addCrepe(res.syllables||[]),provider:'fallback',provider_error:tp.error,crepe,pitch_source,contour:buildContour(frames,spans,target,res.syllables.map(s=>s.ok),spk),timings:{...timings,server_ms:Date.now()-T0}};
   }
   const {spans,source}=spansFrom(tp,frames,target.length);
   const base={expected:{hanzi:chars.join(''),pinyin:target.map(s=>s.pinyin).join(' ')},
-    heard:{text:null,pinyin:Array.isArray(tp.heard?.syllables)?tp.heard.syllables.map(h=>typeof h==='string'?h:`${h.initial||''}${h.final||''}${h.tone??''}`):null},provider:'toneperfect',task:tp.task,model_version:tp.model_version,billing:tp.billing||null,tp_request:tp.id,span_source:source};
+    heard:{text:null,pinyin:Array.isArray(tp.heard?.syllables)?tp.heard.syllables.map(h=>typeof h==='string'?h:`${h.initial||''}${h.final||''}${h.tone??''}`):null},provider:'toneperfect',task:tp.task,model_version:tp.model_version,billing:tp.billing||null,tp_request:tp.id,span_source:source,crepe,pitch_source};
   if(!tp.assessable){
     const why={no_speech:'Голос не слышен — говори громче и ближе к микрофону.',no_audio:'Голос не слышен — говори громче.',too_short:'Слишком коротко — произнеси слово целиком.',different_content:'Похоже, прозвучало другое слово — попробуй ещё раз.'}[tp.reason]||'Запись не удалось оценить — попробуй ещё раз.';
     const syllables=target.map(s=>({...s,ok:false,verdict:'не оценено'}));
@@ -237,9 +262,9 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,spk}){
   if(!tips.length)tips.push(score>=85?'Отлично! Тоны и звуки на месте.':syllables.some(s=>s.unsure)?'Явных ошибок нет, но в некоторых слогах ИИ не уверен — произнеси чётче.':'Ошибок не найдено, но можно произнести чётче и увереннее.');
   t=Date.now();const contour=buildContour(frames,spans,target,syllables.map(s=>s.ok),spk);timings.contour_ms=Date.now()-t;
   timings.server_ms=Date.now()-T0;
-  return {...base,assessable:true,score,syllables,tips,
+  return {...base,assessable:true,score,syllables:addCrepe(syllables),tips,
     scores:{overall:tp.scores?.overall??null,initial:tp.scores?.initial??null,final:tp.scores?.final??null,tone:tp.scores?.tone??null},
-    contour,timings,note:'Scores and verdicts: TonePerfect (errors only when decision=review). Contour: YIN pitch, cleaned, Chao 1-5, segmented by TonePerfect syllable timings.'};
+    contour,timings,note:'Scores and verdicts: TonePerfect (errors only when decision=review). Second-opinion tone per syllable: CREPE (crepe_tone/crepe_score). Contour: YIN pitch, cleaned, Chao 1-5, segmented by TonePerfect syllable timings.'};
 }
 
 async function analyzeHeuristic({wav,hanzi,pinyin:py,apiKey}){
