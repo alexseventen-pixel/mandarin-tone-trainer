@@ -205,7 +205,22 @@ export async function assessCrepe(wav,target,url){
   }catch(e){return {used:false,error:e.name==='AbortError'?'CREPE timeout':e.message};}
   finally{clearTimeout(to);}
 }
-const crepeNote=c=>c?.used?c.syllables:null;
+// Per-service answers in fixed order for the card: 1) TonePerfect 2) CREPE 3) local pitch / OpenAI
+function buildServices({tp,crepe,timings,frames,tpSyl,local}){
+  const tpOk=!tp.error;
+  return [
+    {name:'TonePerfect',ok:tpOk&&tp.assessable!==false,score:tpOk?(tp.scores?.overall!=null?Math.round(tp.scores.overall):null):null,
+      tones_per_syllable:tpSyl?tpSyl.map(s=>({hanzi:s.hanzi,expected:s.tone,heard:s.heard_tone??null,ok:s.ok??null,decision:s.tone_decision??null})):null,
+      heard:tpOk&&Array.isArray(tp.heard?.syllables)?tp.heard.syllables.map(h=>typeof h==='string'?h:`${h.initial||''}${h.final||''}${h.tone??''}`).join(' '):null,
+      note:tpOk&&tp.assessable===false?`not assessable: ${tp.reason}`:null,ms:timings.toneperfect_ms??null,error:tp.error||null},
+    {name:'CREPE',ok:!!crepe.used,score:crepe.used?(crepe.scores?.overall??null):null,
+      tones_per_syllable:crepe.used?crepe.syllables.map(c=>({hanzi:c.hanzi,expected:c.expected,heard:c.heard_tone,ok:c.decision==='uncertain'?null:c.decision!=='review',decision:c.decision,score:c.score})):null,
+      heard:null,note:crepe.used?`${crepe.model_version||'CREPE'}, confidence ${crepe.mean_confidence??'?'}`:null,ms:timings.crepe_ms??null,error:crepe.error||null},
+    {name:local?'Local pitch + OpenAI':'Local pitch (YIN)',ok:frames.some(f=>f.f0),score:local?.score??null,
+      tones_per_syllable:local?local.syllables.map(s=>({hanzi:s.hanzi,expected:s.tone,heard:s.heard_tone??null,ok:s.ok??null})):null,
+      heard:local?.heard?.text??null,note:local?(local.heard?.error?`OpenAI: ${local.heard.error}`:'heuristic tone check'):`contour only, ${frames.filter(f=>f.f0).length} voiced frames`,
+      ms:(timings.pitch_ms??0)+(timings.fallback_ms??0),error:null}];
+}
 
 export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
   const T0=Date.now(),timings={};
@@ -224,12 +239,13 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
   const addCrepe=syls=>syls.map((s,i)=>{const c=crepe.used?crepe.syllables[i]:null;return c?{...s,crepe_tone:c.heard_tone,crepe_score:c.score,crepe_decision:c.decision}:s;});
   if(tp.error){
     t=Date.now();const res=await analyzeHeuristic({wav,hanzi,pinyin:py,apiKey});timings.fallback_ms=Date.now()-t;
+    const local=JSON.parse(JSON.stringify(res));
     if(crepe.used&&res.syllables?.length===target.length){
       res.syllables=res.syllables.map((s,i)=>{const c=crepe.syllables[i];if(!c||c.heard_tone==null||c.decision==='uncertain')return s;
         const ok=c.decision!=='review';return {...s,heard_tone:Number(c.heard_tone),ok,verdict:ok?'верно':`похоже на ${c.heard_tone}-й`,tone_source:'crepe'};});
     }
     const {spans}=spansFrom(null,frames,target.length);
-    return {...res,syllables:addCrepe(res.syllables||[]),provider:'fallback',provider_error:tp.error,crepe,pitch_source,contour:buildContour(frames,spans,target,res.syllables.map(s=>s.ok),spk),timings:{...timings,server_ms:Date.now()-T0}};
+    return {...res,syllables:addCrepe(res.syllables||[]),provider:'fallback',provider_error:tp.error,crepe,pitch_source,services:buildServices({tp,crepe,timings,frames,tpSyl:null,local}),contour:buildContour(frames,spans,target,res.syllables.map(s=>s.ok),spk),timings:{...timings,server_ms:Date.now()-T0}};
   }
   const {spans,source}=spansFrom(tp,frames,target.length);
   const base={expected:{hanzi:chars.join(''),pinyin:target.map(s=>s.pinyin).join(' ')},
@@ -237,7 +253,7 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
   if(!tp.assessable){
     const why={no_speech:'Голос не слышен — говори громче и ближе к микрофону.',no_audio:'Голос не слышен — говори громче.',too_short:'Слишком коротко — произнеси слово целиком.',different_content:'Похоже, прозвучало другое слово — попробуй ещё раз.'}[tp.reason]||'Запись не удалось оценить — попробуй ещё раз.';
     const syllables=target.map(s=>({...s,ok:false,verdict:'не оценено'}));
-    return {...base,score:0,assessable:false,reason:tp.reason,tips:[why],syllables,contour:buildContour(frames,spans,target,null,spk),timings:{...timings,server_ms:Date.now()-T0}};
+    return {...base,score:0,assessable:false,reason:tp.reason,tips:[why],syllables,services:buildServices({tp,crepe,timings,frames,tpSyl:null,local:null}),contour:buildContour(frames,spans,target,null,spk),timings:{...timings,server_ms:Date.now()-T0}};
   }
   const tips=[];
   const syllables=target.map((s,i)=>{
@@ -262,7 +278,7 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
   if(!tips.length)tips.push(score>=85?'Отлично! Тоны и звуки на месте.':syllables.some(s=>s.unsure)?'Явных ошибок нет, но в некоторых слогах ИИ не уверен — произнеси чётче.':'Ошибок не найдено, но можно произнести чётче и увереннее.');
   t=Date.now();const contour=buildContour(frames,spans,target,syllables.map(s=>s.ok),spk);timings.contour_ms=Date.now()-t;
   timings.server_ms=Date.now()-T0;
-  return {...base,assessable:true,score,syllables:addCrepe(syllables),tips,
+  return {...base,assessable:true,score,syllables:addCrepe(syllables),tips,services:buildServices({tp,crepe,timings,frames,tpSyl:syllables,local:null}),
     scores:{overall:tp.scores?.overall??null,initial:tp.scores?.initial??null,final:tp.scores?.final??null,tone:tp.scores?.tone??null},
     contour,timings,note:'Scores and verdicts: TonePerfect (errors only when decision=review). Second-opinion tone per syllable: CREPE (crepe_tone/crepe_score). Contour: YIN pitch, cleaned, Chao 1-5, segmented by TonePerfect syllable timings.'};
 }
