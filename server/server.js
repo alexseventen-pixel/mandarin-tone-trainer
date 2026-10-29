@@ -6,6 +6,7 @@ import { assessWithTonePerfect } from './providers/toneperfect.js';
 import { assessWithCrepe } from './providers/crepe.js';
 import { pinyin } from 'pinyin-pro';
 import { analyze as analyzeAnki } from './anki/analyze.js';
+import { answer as answerAnki } from './anki/answer.js';
 
 const publicDir=new URL('../public/',import.meta.url);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4'};
@@ -83,6 +84,21 @@ async function handleAnkiAnalyze(request,response){
   }catch(error){send(422,{error:error.message||'Analysis failed'});}
 }
 
+// POST /api/anki/answer  multipart: audio (WAV), expected (hanzi; "a|b" = several words), mode (free|ordered), tones (0|1)
+async function handleAnkiAnswer(request,response){
+  const send=(status,data)=>{response.writeHead(status,{...CORS,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});response.end(JSON.stringify(data));};
+  try{
+    if(config.ankiToken&&request.headers['x-anki-token']!==config.ankiToken)return send(401,{error:'Bad token'});
+    const chunks=[];let size=0;
+    for await(const chunk of request){size+=chunk.length;if(size>8_000_000)return send(413,{error:'Recording is too large'});chunks.push(chunk);}
+    const form=await new Request('http://local/',{method:'POST',headers:{'content-type':request.headers['content-type']||''},body:Buffer.concat(chunks)}).formData();
+    const audio=form.get('audio'),expected=String(form.get('expected')||form.get('hanzi')||'');
+    if(!audio||typeof audio==='string'||!expected||expected.length>600)return send(400,{error:'Need audio file and expected'});
+    const data=await answerAnki({wav:Buffer.from(await audio.arrayBuffer()),expected,mode:String(form.get('mode')||'free'),tones:String(form.get('tones')??'1')!=='0',apiKey:config.openaiKey,tpKey:config.tonePerfectKey,crepeUrl:config.crepeUrl});
+    send(200,data);
+  }catch(error){send(422,{error:error.message||'Answer check failed'});}
+}
+
 async function serveFile(request,response){
   const url=new URL(request.url,'http://localhost');
   const requested=url.pathname==='/'?'index.html':url.pathname.slice(1);
@@ -115,6 +131,8 @@ createServer(async(request,response)=>{
   if(request.method==='GET'&&request.url==='/health')return sendJson(response,200,{status:'ok'});
   if(request.url==='/api/anki/analyze'&&request.method==='OPTIONS'){response.writeHead(204,CORS);return response.end();}
   if(request.method==='POST'&&request.url==='/api/anki/analyze')return handleAnkiAnalyze(request,response);
+  if(request.url==='/api/anki/answer'&&request.method==='OPTIONS'){response.writeHead(204,CORS);return response.end();}
+  if(request.method==='POST'&&request.url==='/api/anki/answer')return handleAnkiAnswer(request,response);
   if(request.method==='POST'&&request.url==='/api/prepare')return handlePrepare(request,response);
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);
   if(request.method==='GET'||request.method==='HEAD')return serveFile(request,response);
