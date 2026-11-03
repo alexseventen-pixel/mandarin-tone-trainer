@@ -9,7 +9,7 @@ import { analyze as analyzeAnki } from './anki/analyze.js';
 import { answer as answerAnki } from './anki/answer.js';
 
 const publicDir=new URL('../public/',import.meta.url);
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4','.mp3':'audio/mpeg'};
 
 function sendJson(response,status,data){
   response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
@@ -99,9 +99,29 @@ async function handleAnkiAnswer(request,response){
   }catch(error){send(422,{error:error.message||'Answer check failed'});}
 }
 
+
+// Bear Door drill (Anki deck "Say it" buttons open /drill?card=...): analyze only texts from public/bear/catalog.json
+let bearCatalog=null;
+async function bearCards(){if(!bearCatalog)bearCatalog=JSON.parse(await readFile(new URL('bear/catalog.json',publicDir),'utf8')).cards;return bearCatalog;}
+async function handleDrillAnalyze(request,response){
+  try{
+    const chunks=[];let size=0;
+    for await(const chunk of request){size+=chunk.length;if(size>8_000_000)return sendJson(response,413,{error:'Recording is too large'});chunks.push(chunk);}
+    const form=await new Request('http://local/',{method:'POST',headers:{'content-type':request.headers['content-type']||''},body:Buffer.concat(chunks)}).formData();
+    const audio=form.get('audio'),cardId=String(form.get('card')||'');
+    const card=(await bearCards()).find(c=>c.id===cardId);
+    if(!card)return sendJson(response,400,{error:'Unknown card'});
+    if(!audio||typeof audio==='string')return sendJson(response,400,{error:'Need audio'});
+    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi:card.text,pinyin:'',apiKey:config.openaiKey,tpKey:config.tonePerfectKey,crepeUrl:config.crepeUrl,spk:{lo:Number(form.get('spk_lo')),hi:Number(form.get('spk_hi'))}});
+    console.log(JSON.stringify({drill:card.id,score:data.score,provider:data.provider,at:new Date().toISOString()}));
+    sendJson(response,200,{card:card.id,...data});
+  }catch(error){sendJson(response,422,{error:error.message||'Analysis failed'});}
+}
+
 async function serveFile(request,response){
   const url=new URL(request.url,'http://localhost');
-  const requested=url.pathname==='/'?'index.html':url.pathname.slice(1);
+  const pages={'/drill':'drill.html','/stats':'stats.html'};
+  const requested=url.pathname==='/'?'index.html':pages[url.pathname]||url.pathname.slice(1);
   const safe=normalize(requested).replace(/^(\.\.(\/|\\|$))+/,'');
   const fileUrl=new URL(safe,publicDir);
   try{
@@ -133,6 +153,7 @@ createServer(async(request,response)=>{
   if(request.method==='POST'&&request.url==='/api/anki/analyze')return handleAnkiAnalyze(request,response);
   if(request.url==='/api/anki/answer'&&request.method==='OPTIONS'){response.writeHead(204,CORS);return response.end();}
   if(request.method==='POST'&&request.url==='/api/anki/answer')return handleAnkiAnswer(request,response);
+  if(request.method==='POST'&&request.url==='/api/drill/analyze')return handleDrillAnalyze(request,response);
   if(request.method==='POST'&&request.url==='/api/prepare')return handlePrepare(request,response);
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);
   if(request.method==='GET'||request.method==='HEAD')return serveFile(request,response);

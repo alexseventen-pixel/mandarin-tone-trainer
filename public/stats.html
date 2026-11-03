@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stats · Bear Door</title><link rel="stylesheet" href="/bear/drill.css"></head><body><div class="wrap">
+<div class="tag">Bear Door · Part 1 · Sentence 1 · Stats</div>
+<div id="out" class="box muted">Loading…</div>
+<div class="row"><a class="btn" href="anki://">↩ Back to Anki</a><a class="btn" href="/drill?card=final">🎯 Try the full sentence</a><button id="exp">⬇ Export JSON</button></div>
+<div class="sub">Stats are stored on this phone (Safari localStorage). Export to keep a copy.</div></div>
+<script src="/bear/common.js"></script><script>
+(async()=>{
+ const cards=await BD.catalog(),all=BD.load(),out=document.getElementById('out');
+ const parts=cards.filter(c=>c.id!=='final'),done=parts.filter(c=>(BD.best(all[c.id])??0)>=80).length;
+ const fin=all.final||[],tried=parts.filter(c=>all[c.id]?.length).length,tot=Object.values(all).reduce((a,b)=>a+b.length,0);
+ // per-character tone accuracy across every attempt
+ const ch={};for(const a of Object.values(all))for(const at of a)for(const t of at.tones||[]){const k=t.h;ch[k]=ch[k]||{n:0,ok:0,miss:{}};ch[k].n++;if(t.ok)ch[k].ok++;else if(t.heard!=null)ch[k].miss[t.heard]=(ch[k].miss[t.heard]||0)+1;}
+ let h=`<div style="color:#08003f"><div class="sec">Road to the full sentence</div>
+  <div class="blk"><div class="bar"><i style="width:${Math.round(100*done/parts.length)}%"></i></div><div class="muted">${done}/${parts.length} building cards at 80+ · ${tried} tried · ${tot} recordings</div></div>
+  <div style="margin:10px 0 14px">🎯 Full sentence: best <b>${BD.best(fin)??'—'}</b> · ${fin.length} attempts</div>`;
+ for(const b of 'ABCD'){h+=`<div class="sec" style="margin-top:12px">Block ${b}</div><table><tr><th style="text-align:left">card</th><th>tries</th><th>best</th><th>last</th><th></th></tr>`;
+  for(const c of cards.filter(c=>c.block===b)){const a=all[c.id]||[],bs=BD.best(a),ls=a.length?a[a.length-1].score:null;
+   h+=`<tr><td style="text-align:left">${c.kind==='final'?'🎯 ':''}${c.label}</td><td>${a.length}</td><td style="color:${BD.col(bs)};font-weight:600">${bs??'—'}</td><td>${ls??'—'}</td><td><a href="/drill?card=${c.id}">▶</a></td></tr>`;}
+  h+='</table>';}
+ const keys=Object.keys(ch);
+ h+=`<div class="sec" style="margin-top:14px">Tone accuracy per character</div>`+(keys.length?keys.map(k=>{const p=Math.round(100*ch[k].ok/ch[k].n),m=Object.entries(ch[k].miss).sort((a,b)=>b[1]-a[1])[0];return `<span class="chip" title="${ch[k].ok}/${ch[k].n}" style="background:${BD.col(p)}22;color:${BD.col(p)}">${k}<small style="font-size:11px"> ${p}%${m?' →'+m[0]:''}</small></span>`}).join(''):'<div class="muted">No recordings yet.</div>')+'</div>';
+ out.className='box';out.innerHTML=h;
+ document.getElementById('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(all,null,1)],{type:'application/json'}));a.download='bear-door-stats.json';a.click()};
+})();
+</script></body></html>

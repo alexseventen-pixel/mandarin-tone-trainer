@@ -77,7 +77,7 @@ function tonesFromPinyin(py){ // 'méi guānxi' -> [2,1,5]; uses pinyin-pro to s
   return out;
 }
 
-function targetSyllables(text,py){
+export function targetSyllables(text,py){
   // display = dictionary (lexical) pinyin as on the card; tone = surface tone actually spoken (sandhi applied)
   const chars=[...text].filter(c=>/\p{Script=Han}/u.test(c)),joined=chars.join('');
   const sb={yi:true,bu:true,thirdTone:true};

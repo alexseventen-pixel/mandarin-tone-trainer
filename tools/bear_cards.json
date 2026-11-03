@@ -1,0 +1,322 @@
+[
+ {
+  "id": "w-fuqi",
+  "block": "A",
+  "kind": "word",
+  "label": "Say it · 夫妻",
+  "text": "夫妻",
+  "pinyin": "fūqī",
+  "en": "married couple; husband and wife",
+  "audio": "bd1_fuqi.mp3"
+ },
+ {
+  "id": "p-fuqi",
+  "block": "A",
+  "kind": "phrase",
+  "label": "Phrase · 一对夫妻",
+  "text": "一对夫妻",
+  "pinyin": "yí duì fūqī",
+  "en": "a married couple",
+  "audio": "bd1_x_yiduifuqi.mp3"
+ },
+ {
+  "id": "w-yidui",
+  "block": "A",
+  "kind": "word",
+  "label": "Say it · 一对",
+  "text": "一对",
+  "pinyin": "yí duì",
+  "en": "a pair; a couple",
+  "audio": "bd1_yidui.mp3"
+ },
+ {
+  "id": "p-yidui",
+  "block": "A",
+  "kind": "phrase",
+  "label": "Phrase · 一对夫妻",
+  "text": "一对夫妻",
+  "pinyin": "yí duì fūqī",
+  "en": "a married couple",
+  "audio": "bd1_x_yiduifuqi.mp3"
+ },
+ {
+  "id": "c-A",
+  "block": "A",
+  "kind": "example",
+  "label": "Block A · example",
+  "text": "一对夫妻",
+  "pinyin": "yí duì fūqī",
+  "en": "a married couple",
+  "audio": "bd1_x_yiduifuqi.mp3"
+ },
+ {
+  "id": "w-pa",
+  "block": "B",
+  "kind": "word",
+  "label": "Say it · 怕",
+  "text": "怕",
+  "pinyin": "pà",
+  "en": "to be afraid; to fear",
+  "audio": "bd1_pa.mp3"
+ },
+ {
+  "id": "p-pa",
+  "block": "B",
+  "kind": "phrase",
+  "label": "Phrase · 怕熊",
+  "text": "怕熊",
+  "pinyin": "pà xióng",
+  "en": "to be afraid of bears",
+  "audio": "bd1_x_paxiong.mp3"
+ },
+ {
+  "id": "w-xiong",
+  "block": "B",
+  "kind": "word",
+  "label": "Say it · 熊",
+  "text": "熊",
+  "pinyin": "xióng",
+  "en": "bear",
+  "audio": "bd1_xiong.mp3"
+ },
+ {
+  "id": "p-xiong",
+  "block": "B",
+  "kind": "phrase",
+  "label": "Phrase · 怕熊",
+  "text": "怕熊",
+  "pinyin": "pà xióng",
+  "en": "to be afraid of bears",
+  "audio": "bd1_x_paxiong.mp3"
+ },
+ {
+  "id": "c-B",
+  "block": "B",
+  "kind": "example",
+  "label": "Block B · example",
+  "text": "怕熊",
+  "pinyin": "pà xióng",
+  "en": "afraid of bears",
+  "audio": "bd1_x_paxiong.mp3"
+ },
+ {
+  "id": "w-pohuai",
+  "block": "C",
+  "kind": "word",
+  "label": "Say it · 破坏",
+  "text": "破坏",
+  "pinyin": "pòhuài",
+  "en": "to damage; to wreck",
+  "audio": "bd1_pohuai.mp3"
+ },
+ {
+  "id": "p-pohuai",
+  "block": "C",
+  "kind": "phrase",
+  "label": "Phrase · 破坏院子里的围栏",
+  "text": "破坏院子里的围栏",
+  "pinyin": "pòhuài yuànzi lǐ de wéilán",
+  "en": "damage the fence in the yard",
+  "audio": "bd1_x_pohuai_chunk.mp3"
+ },
+ {
+  "id": "w-yuanzi",
+  "block": "C",
+  "kind": "word",
+  "label": "Say it · 院子",
+  "text": "院子",
+  "pinyin": "yuànzi",
+  "en": "courtyard; yard",
+  "audio": "bd1_yuanzi.mp3"
+ },
+ {
+  "id": "p-yuanzi",
+  "block": "C",
+  "kind": "phrase",
+  "label": "Phrase · 院子里",
+  "text": "院子里",
+  "pinyin": "yuànzi lǐ",
+  "en": "in the yard",
+  "audio": "bd1_x_yuanzili.mp3"
+ },
+ {
+  "id": "w-li",
+  "block": "C",
+  "kind": "word",
+  "label": "Say it · 里",
+  "text": "里",
+  "pinyin": "lǐ",
+  "en": "in; inside",
+  "audio": "bd1_li.mp3"
+ },
+ {
+  "id": "p-li",
+  "block": "C",
+  "kind": "phrase",
+  "label": "Phrase · 院子里",
+  "text": "院子里",
+  "pinyin": "yuànzi lǐ",
+  "en": "in the yard",
+  "audio": "bd1_x_yuanzili.mp3"
+ },
+ {
+  "id": "w-de",
+  "block": "C",
+  "kind": "word",
+  "label": "Say it · 的",
+  "text": "的",
+  "pinyin": "de",
+  "en": "(possessive particle, like ’s / of)",
+  "audio": "bd1_de.mp3"
+ },
+ {
+  "id": "p-de",
+  "block": "C",
+  "kind": "phrase",
+  "label": "Phrase · 院子里的围栏",
+  "text": "院子里的围栏",
+  "pinyin": "yuànzi lǐ de wéilán",
+  "en": "the fence in the yard",
+  "audio": "bd1_x_yuanzilideweilan.mp3"
+ },
+ {
+  "id": "w-weilan",
+  "block": "C",
+  "kind": "word",
+  "label": "Say it · 围栏",
+  "text": "围栏",
+  "pinyin": "wéilán",
+  "en": "fence; railings",
+  "audio": "bd1_weilan.mp3"
+ },
+ {
+  "id": "p-weilan",
+  "block": "C",
+  "kind": "phrase",
+  "label": "Phrase · 院子里的围栏",
+  "text": "院子里的围栏",
+  "pinyin": "yuànzi lǐ de wéilán",
+  "en": "the fence in the yard",
+  "audio": "bd1_x_yuanzilideweilan.mp3"
+ },
+ {
+  "id": "c-C",
+  "block": "C",
+  "kind": "example",
+  "label": "Block C · example",
+  "text": "破坏院子里的围栏",
+  "pinyin": "pòhuài yuànzi lǐ de wéilán",
+  "en": "damage the fence in the yard",
+  "audio": "bd1_x_pohuai_chunk.mp3"
+ },
+ {
+  "id": "x-C",
+  "block": "C",
+  "kind": "exercise",
+  "label": "Exercise · first half",
+  "text": "一对夫妻怕熊破坏院子里的围栏",
+  "pinyin": "yí duì fūqī pà xióng pòhuài yuànzi lǐ de wéilán",
+  "en": "A couple were afraid that a bear would damage the fence in their yard.",
+  "audio": "bd1_x_s1.mp3"
+ },
+ {
+  "id": "w-anzhuang",
+  "block": "D",
+  "kind": "word",
+  "label": "Say it · 安装",
+  "text": "安装",
+  "pinyin": "ānzhuāng",
+  "en": "to install; to fit",
+  "audio": "bd1_anzhuang.mp3"
+ },
+ {
+  "id": "p-anzhuang",
+  "block": "D",
+  "kind": "phrase",
+  "label": "Phrase · 安装了一个熊门",
+  "text": "安装了一个熊门",
+  "pinyin": "ānzhuāng le yí gè xióng mén",
+  "en": "installed a bear door",
+  "audio": "bd1_x_s2.mp3"
+ },
+ {
+  "id": "w-yige",
+  "block": "D",
+  "kind": "word",
+  "label": "Say it · 一个",
+  "text": "一个",
+  "pinyin": "yí gè",
+  "en": "one; a (general measure word)",
+  "audio": "bd1_yige.mp3"
+ },
+ {
+  "id": "p-yige",
+  "block": "D",
+  "kind": "phrase",
+  "label": "Phrase · 一个熊门",
+  "text": "一个熊门",
+  "pinyin": "yí gè xióng mén",
+  "en": "a bear door",
+  "audio": "bd1_x_yigexiongmen.mp3"
+ },
+ {
+  "id": "w-men",
+  "block": "D",
+  "kind": "word",
+  "label": "Say it · 门",
+  "text": "门",
+  "pinyin": "mén",
+  "en": "door; gate",
+  "audio": "bd1_men.mp3"
+ },
+ {
+  "id": "p-men",
+  "block": "D",
+  "kind": "phrase",
+  "label": "Phrase · 一个熊门",
+  "text": "一个熊门",
+  "pinyin": "yí gè xióng mén",
+  "en": "a bear door",
+  "audio": "bd1_x_yigexiongmen.mp3"
+ },
+ {
+  "id": "w-xiongmen",
+  "block": "D",
+  "kind": "word",
+  "label": "Say it · 熊门",
+  "text": "熊门",
+  "pinyin": "xióng mén",
+  "en": "bear door",
+  "audio": "bd1_xiongmen.mp3"
+ },
+ {
+  "id": "p-xiongmen",
+  "block": "D",
+  "kind": "phrase",
+  "label": "Phrase · 安装了一个熊门",
+  "text": "安装了一个熊门",
+  "pinyin": "ānzhuāng le yí gè xióng mén",
+  "en": "installed a bear door",
+  "audio": "bd1_x_s2.mp3"
+ },
+ {
+  "id": "c-D",
+  "block": "D",
+  "kind": "example",
+  "label": "Block D · example",
+  "text": "安装了一个熊门。",
+  "pinyin": "ānzhuāng le yí gè xióng mén",
+  "en": "(They) installed a bear door.",
+  "audio": "bd1_x_s2.mp3"
+ },
+ {
+  "id": "final",
+  "block": "D",
+  "kind": "final",
+  "label": "Final goal · full sentence",
+  "text": "一对夫妻怕熊破坏院子里的围栏，安装了一个熊门。",
+  "pinyin": "yí duì fūqī pà xióng pòhuài yuànzi lǐ de wéilán, ānzhuāng le yí gè xióng mén.",
+  "en": "A couple were afraid a bear would damage the fence in their yard, so they installed a bear door.",
+  "audio": "bd1_x_full.mp3"
+ }
+]

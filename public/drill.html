@@ -1,0 +1,101 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tone listener · Bear Door</title><link rel="stylesheet" href="/bear/drill.css"></head><body><div class="wrap">
+<div class="tag" id="tag">Tone listener</div>
+<div class="box" id="target"><div class="muted" style="text-align:center">Loading…</div></div>
+<div class="box" style="text-align:center">
+ <div class="row" style="margin-top:0"><button id="her">▶ Her voice</button><button id="mine" disabled>▶ My voice</button></div>
+ <div class="row"><button class="rec" id="rec">🎤 Tap to record</button></div>
+ <div class="sub" id="status">Listen to her first, then record. Tap again to stop.</div>
+</div>
+<div id="result"></div>
+<div class="box"><div class="sec">This card · history</div><div id="hist" class="muted">No attempts yet.</div></div>
+<div class="row"><a class="btn" href="anki://">↩ Back to Anki</a><a class="btn" href="/stats">📊 All stats</a></div>
+<div class="sub">Results are saved on this phone (Safari). Analysis: TonePerfect + CREPE + pitch tracker.</div>
+</div>
+<script src="/bear/common.js"></script>
+<script>
+const q=new URLSearchParams(location.search),cardId=q.get('card');let card,herAudio,myUrl,wavBlob;
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+(async()=>{
+  const cards=await BD.catalog();card=cards.find(c=>c.id===cardId);
+  if(!card){ // fallback: text passed by URL but not in catalog
+    $('target').innerHTML='<div class="err">Unknown card “'+esc(cardId)+'”. Open it from the Anki deck.</div>';$('rec').disabled=true;return;}
+  $('tag').textContent='Bear Door · Part 1 · '+card.label;
+  $('target').innerHTML=BD.sylHtml(card.ref.syllables,card.ref.syllables.length>8)+`<div class="en">${esc(card.en)}</div>`;
+  herAudio=new Audio('/bear/'+card.audio);showHist();
+})();
+$('her').onclick=()=>{herAudio&&(herAudio.currentTime=0,herAudio.play())};
+$('mine').onclick=()=>{myUrl&&new Audio(myUrl).play()};
+// ---- recording: raw PCM -> 16 kHz mono 16-bit WAV ----
+let ctx,stream,proc,src,bufs=[],recording=false,timer;
+$('rec').onclick=async()=>{
+  if(recording)return stop();
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:true}});}
+  catch(e){$('status').textContent='Microphone blocked: allow it for this site in Safari (aA → Website Settings → Microphone).';return;}
+  ctx=new (window.AudioContext||window.webkitAudioContext)();src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(4096,1,1);bufs=[];
+  proc.onaudioprocess=e=>bufs.push(new Float32Array(e.inputBuffer.getChannelData(0)));src.connect(proc);proc.connect(ctx.destination);
+  recording=true;$('rec').classList.add('on');$('rec').textContent='■ Stop';$('status').textContent='Recording… say it now';
+  timer=setTimeout(stop,card&&card.text.length>12?11000:6000);
+};
+function stop(){
+  clearTimeout(timer);recording=false;$('rec').classList.remove('on');$('rec').textContent='🎤 Record again';
+  proc.disconnect();src.disconnect();stream.getTracks().forEach(t=>t.stop());
+  const rate=ctx.sampleRate;ctx.close();
+  let n=bufs.reduce((a,b)=>a+b.length,0),all=new Float32Array(n),o=0;for(const b of bufs){all.set(b,o);o+=b.length;}
+  // trim silence at the edges
+  let peak=0;for(const v of all)peak=Math.max(peak,Math.abs(v));const th=peak*0.06,W=Math.round(rate*0.02);
+  let a=0,z=all.length;while(a<z&&Math.abs(all[a])<th)a++;while(z>a&&Math.abs(all[z-1])<th)z--;
+  all=all.subarray(Math.max(0,a-W*10),Math.min(all.length,z+W*10));
+  const R=16000,m=Math.floor(all.length*R/rate),out=new Int16Array(m);
+  for(let i=0;i<m;i++){const p=i*rate/R,k=Math.floor(p),f=p-k;const v=(all[k]||0)*(1-f)+(all[k+1]||0)*f;out[i]=Math.max(-1,Math.min(1,v))*32767;}
+  const h=new DataView(new ArrayBuffer(44)),w=(o,s)=>[...s].forEach((c,i)=>h.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');h.setUint32(4,36+m*2,true);w(8,'WAVE');w(12,'fmt ');h.setUint32(16,16,true);h.setUint16(20,1,true);h.setUint16(22,1,true);h.setUint32(24,R,true);h.setUint32(28,R*2,true);h.setUint16(32,2,true);h.setUint16(34,16,true);w(36,'data');h.setUint32(40,m*2,true);
+  wavBlob=new Blob([h,out],{type:'audio/wav'});myUrl&&URL.revokeObjectURL(myUrl);myUrl=URL.createObjectURL(wavBlob);$('mine').disabled=false;
+  if(m<R*0.25){$('status').textContent='Too short — try again, a bit louder.';return;}
+  analyze();
+}
+async function analyze(){
+  $('status').textContent='Analyzing your tones… (first call after a pause can take ~30 s while the server wakes up)';$('rec').disabled=true;
+  const fd=new FormData();fd.append('audio',wavBlob,'rec.wav');fd.append('card',card.id);
+  try{const r=await fetch('/api/drill/analyze',{method:'POST',body:fd});const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);render(j);$('status').textContent='Done. Record again to improve.';}
+  catch(e){$('result').innerHTML='<div class="box err">Analysis failed: '+esc(e.message)+'</div>';$('status').textContent='';}
+  $('rec').disabled=false;
+}
+// contour similarity: both on Chao 1..5, each time-normalised to its voiced span
+function series(pts,n=60){const p=(pts||[]).filter(Boolean);if(p.length<3)return null;const t0=p[0].t,t1=p[p.length-1].t;return Array.from({length:n},(_,i)=>{const t=t0+(t1-t0)*i/(n-1);let k=p.findIndex(x=>x.t>=t);if(k<=0)return p[Math.max(0,k)].c;const a=p[k-1],b=p[k];return a.c+(b.c-a.c)*(t-a.t)/((b.t-a.t)||1)})}
+function match(u,r){const a=series(u),b=series(r);if(!a||!b)return null;let s=0;for(let i=0;i<a.length;i++)s+=Math.abs(a[i]-b[i]);return Math.max(0,Math.round(100-28*s/a.length))}
+function plot(u,ref){
+  const W=400,H=190,L=26,T=10,B=24,uu=(u.user||[]),rr=(ref.user||[]);
+  const span=(pts,c)=>{const p=pts.filter(Boolean);return p.length?[p[0].t,p[p.length-1].t]:[c.t0,c.t1]};
+  const [ua,ub]=span(uu,u),[ra,rb]=span(rr,ref);
+  const X=x=>L+(W-L-6)*Math.max(0,Math.min(1,x)),Y=c=>T+(H-T-B)*(5.4-c)/4.8;
+  const path=(pts,a,b)=>{let d='',pen=false;for(const p of pts){if(!p){pen=false;continue}d+=(pen?'L':'M')+X((p.t-a)/((b-a)||1)).toFixed(1)+' '+Y(p.c).toFixed(1);pen=true}return d};
+  let g='';for(let c=1;c<=5;c++)g+=`<line x1="${L}" x2="${W-6}" y1="${Y(c)}" y2="${Y(c)}" stroke="#eef2f5"/><text x="4" y="${Y(c)+4}" font-size="10" fill="#8290a2">${c}</text>`;
+  (u.syllables||[]).forEach((s,i)=>{const a=(s.start-ua)/((ub-ua)||1),b=(s.end-ua)/((ub-ua)||1);
+    g+=`<line x1="${X(a)}" x2="${X(a)}" y1="${T}" y2="${H-B}" stroke="#e2e8ed" stroke-dasharray="3 3"/>`;
+    const tg=s.target||[];g+=`<polyline fill="none" stroke="#2aa84a" stroke-opacity=".35" stroke-width="6" stroke-linecap="round" points="${tg.map((c,k)=>X(a+(b-a)*(0.1+0.8*k/(tg.length-1||1))).toFixed(1)+','+Y(c).toFixed(1)).join(' ')}"/>`;
+    g+=`<text x="${X((a+b)/2)}" y="${H-6}" font-size="13" text-anchor="middle" fill="${s.ok===false?'#e5484d':'#08003f'}">${s.hanzi}</text>`});
+  g+=`<path d="${path(rr,ra,rb)}" fill="none" stroke="#b07cc6" stroke-width="2.5" stroke-dasharray="5 3"/><path d="${path(uu,ua,ub)}" fill="none" stroke="#1676d2" stroke-width="3"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}">${g}</svg><div class="legend"><span><i style="background:#1676d2"></i>You</span><span><i style="background:#b07cc6"></i>Li Pei Ru</span><span><i style="background:#2aa84a55;height:6px"></i>ideal tone shape</span></div>`;
+}
+function render(j){
+  const syl=j.syllables||[],m=match(j.contour?.user,card.ref.user),sc=j.score??0;
+  const okN=syl.filter(s=>s.ok).length;
+  let h=`<div class="box"><div class="score"><div class="ring" style="background:conic-gradient(${BD.col(sc)} ${sc*3.6}deg,#eef2f5 0);"><div style="background:#fff;border-radius:50%;width:74px;height:74px;display:flex;align-items:center;justify-content:center">${sc}</div></div>
+   <div class="kv"><div><b>${okN}/${syl.length}</b> syllables correct</div>${j.scores?`<div>Tones <b>${Math.round(j.scores.tone??0)}</b> · Initials <b>${Math.round(j.scores.initial??0)}</b> · Finals <b>${Math.round(j.scores.final??0)}</b></div>`:''}<div>Contour match with her: <b>${m??'—'}${m!=null?'%':''}</b></div>${j.assessable===false?'<div class="bad">Not assessable: '+esc(j.reason)+'</div>':''}</div></div></div>`;
+  h+=`<div class="box"><div class="sec">Pitch contour · you vs her</div>${plot(j.contour||{},card.ref)}</div>`;
+  h+=`<div class="box"><div class="sec">Per syllable</div><table><tr><th></th><th>pinyin</th><th>tone<br>need</th><th>tone<br>heard</th><th>CREPE</th><th>score</th><th>verdict</th></tr>`+
+   syl.map(s=>`<tr><td style="font-size:20px">${s.hanzi}</td><td class="t${s.tone}">${esc(s.sandhi?s.sandhi.pinyin:s.pinyin)}</td><td>${s.tone}</td><td class="${s.heard_tone==null?'':(s.heard_tone==s.tone?'ok':'bad')}">${s.heard_tone??'—'}</td><td>${s.crepe_tone??'—'}</td><td>${s.score!=null?Math.round(s.score):'—'}</td><td class="${s.ok?(s.unsure?'uns':'ok'):'bad'}">${s.ok?(s.unsure?'probably ✓':'✓'):'✗'}${s.ok?'':'<div style="font-weight:400;font-size:11px">'+esc(s.verdict)+'</div>'}</td></tr>`).join('')+`</table>`+
+   (syl.some(s=>s.sandhi)?'<div class="muted" style="margin-top:6px">Tone change (sandhi) applied: the spoken tone is checked.</div>':'')+`</div>`;
+  if(j.tips?.length)h+=`<div class="box"><div class="sec">Tips</div><ul class="tips">${j.tips.map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`;
+  $('result').innerHTML=h;
+  const all=BD.load();(all[card.id]=all[card.id]||[]).push({ts:Date.now(),score:sc,match:m,tones:syl.map(s=>({h:s.hanzi,t:s.tone,heard:s.heard_tone??null,ok:!!s.ok}))});
+  all[card.id]=all[card.id].slice(-50);BD.save(all);showHist();
+}
+function showHist(){
+  const a=(BD.load()[cardId]||[]);if(!a.length)return;
+  $('hist').innerHTML=`<div class="hist">${a.slice(-20).map(x=>`<div title="${x.score}" style="height:${Math.max(4,x.score)}%;background:${BD.col(x.score)}"></div>`).join('')}</div>
+   <div class="muted" style="margin-top:6px">${a.length} attempts · best <b>${BD.best(a)}</b> · last <b>${a[a.length-1].score}</b>${a[a.length-1].match!=null?' · contour match '+a[a.length-1].match+'%':''}</div>`;
+}
+</script></body></html>
