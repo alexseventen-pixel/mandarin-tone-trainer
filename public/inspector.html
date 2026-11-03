@@ -1,0 +1,176 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Deck Inspector</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#f4f8fb,#eef6fb);color:#08003f;font-size:14px}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#fff;box-shadow:0 2px 14px rgba(8,0,63,.06);position:sticky;top:0;z-index:5}
+header h1{font-size:18px;margin:0}header .sp{flex:1}
+.btn{border:none;background:linear-gradient(135deg,#00cfff,#1676d2);color:#fff;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(22,118,210,.25)}
+.btn.alt{background:#fff;color:#1676d2;box-shadow:inset 0 0 0 1.5px #b9d7ea}.btn:disabled{opacity:.4;cursor:not-allowed}.btn.sm{padding:5px 9px;font-size:12px;border-radius:9px}
+.wrap{display:flex;gap:16px;padding:16px;align-items:flex-start}
+aside{width:270px;flex:none;position:sticky;top:70px}main{flex:1;min-width:0}
+.box{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(8,0,63,.07);padding:14px;margin-bottom:14px}
+.muted{color:#7a8794}.sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7a8794;margin:10px 0 6px}
+.dk{display:block;width:100%;text-align:left;border:none;background:#f4f8fb;border-radius:10px;padding:8px 10px;margin:4px 0;cursor:pointer;font-size:13px;color:#08003f}.dk.on{background:#e0f2fe;box-shadow:inset 0 0 0 1.5px #7cc7f0}.dk small{display:block;color:#7a8794}
+.stats{display:flex;gap:10px;flex-wrap:wrap}.stat{background:#f4f8fb;border-radius:12px;padding:8px 12px}.stat b{font-size:18px;display:block}
+.stat.bad b{color:#dc2626}.stat.ok b{color:#16a34a}
+.grp{font-weight:700;font-size:16px;margin:18px 4px 8px}
+.note{background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(8,0,63,.06);padding:12px;margin-bottom:12px}
+.nh{display:flex;align-items:center;gap:10px}.nh .t{font-size:20px;font-weight:700}.nh .sp{flex:1}
+.star{font-size:20px;cursor:pointer;border:none;background:none;color:#cbd5e1}.star.on{color:#f59e0b}
+.mark{width:100%;border:1px solid #e2e8ed;border-radius:10px;padding:6px 8px;font:inherit;margin-top:6px;display:none}.note.starred .mark,.mark.has{display:block}
+.flds{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font-size:12.5px;margin-top:8px}.flds .k{color:#7a8794}.flds .v{max-height:90px;overflow:auto;word-break:break-word}
+.imgs img{height:90px;border-radius:10px;margin:6px 6px 0 0}
+.chip{display:inline-block;border-radius:8px;padding:1px 7px;font-size:11.5px;margin:1px 2px;background:#eef2f5}.chip.bad{background:#fee2e2;color:#b91c1c}.chip.warn{background:#fef3c7;color:#92400e}.chip.ok{background:#dcfce7;color:#15803d}.chip.ed{background:#e0f2fe;color:#0b6fa8}
+.au{border-top:1px solid #eef2f5;padding:8px 0}.au .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.au .nm{font-weight:600;font-size:12.5px}
+.wf{position:relative;height:64px;margin:6px 0;background:#f4f8fb;border-radius:10px;cursor:crosshair;user-select:none;touch-action:none}.wf canvas{width:100%;height:100%;display:block}
+.prevs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+dialog{border:none;border-radius:18px;box-shadow:0 20px 60px rgba(8,0,63,.25);padding:14px;max-width:96vw}dialog::backdrop{background:rgba(8,0,63,.25)}
+iframe.card{width:390px;height:720px;border:1px solid #e2e8ed;border-radius:14px;background:#fff}
+#login{max-width:360px;margin:12vh auto}input[type=password],input[type=text],select{border:1px solid #d5e2ec;border-radius:10px;padding:8px 10px;font:inherit}
+.filters label{margin-right:12px;font-size:13px}.hide{display:none!important}
+</style></head><body>
+<header><h1>🔎 Deck Inspector</h1><span class="muted" id="dname"></span><span class="sp"></span>
+<button class="btn alt sm" id="exp" disabled>⬇ Export edits & marks</button><button class="btn sm" id="rebuild" disabled>🛠 Rebuild deck (.apkg)</button></header>
+<div id="login" class="box"><b>Enter passcode</b><p class="muted">This tool is private. Deck files are only opened in your browser.</p>
+<form id="lf"><input type="password" id="code" placeholder="Passcode" autocomplete="current-password" style="width:100%"><div style="margin-top:10px"><button class="btn">Unlock</button> <span id="lerr" style="color:#dc2626"></span></div></form></div>
+<div class="wrap hide" id="app">
+<aside><div class="box"><div class="sec" style="margin-top:0">Open a deck</div><input type="file" id="file" accept=".apkg,.colpkg"><div class="muted" style="font-size:12px;margin-top:6px">Any Anki .apkg (legacy collection.anki2/anki21). Parsed only in this browser.</div>
+<div class="sec">Our decks</div><div id="decks" class="muted">Loading…</div></div></aside>
+<main id="main"><div class="box muted">Pick a deck on the left or open an .apkg file.</div></main></div>
+<dialog id="dlg"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><b id="dt"></b><span style="flex:1"></span><button class="btn alt sm" onclick="dlg.close()">Close</button></div><div id="db"></div></dialog>
+<script src="/inspector/lib/jszip.min.js"></script><script src="/inspector/lib/sql-wasm.js"></script><script src="/inspector/lib/lame.min.js"></script>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let TOKEN=sessionStorage.getItem('insp.t')||'',SQL,D=null,AC;
+const api=(p,o={})=>fetch(p,{...o,headers:{...(o.headers||{}),'X-Insp-Token':TOKEN}});
+$('lf').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/inspector/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('code').value})});const j=await r.json();if(!r.ok){$('lerr').textContent=j.error;return;}TOKEN=j.token;sessionStorage.setItem('insp.t',TOKEN);start();};
+async function start(){const r=await api('/api/inspector/decks');if(r.status===401){$('login').classList.remove('hide');return;}if(!r.ok){$('login').classList.remove('hide');$('lerr').textContent=(await r.json()).error;return;}
+ $('login').classList.add('hide');$('app').classList.remove('hide');const j=await r.json();let g='';
+ $('decks').innerHTML=j.decks.length?j.decks.map(d=>{const h=(d.group!==g?'<div class="sec">'+esc(g=d.group)+'</div>':'');return h+`<button class="dk" data-id="${d.id}">${esc(d.name)}<small>${(d.size/1048576).toFixed(1)} MB</small></button>`}).join(''):'No preloaded decks.';
+ document.querySelectorAll('.dk').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.dk').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('main').innerHTML='<div class="box muted">Loading deck…</div>';const r=await api('/api/inspector/deck?id='+b.dataset.id);if(!r.ok){$('main').innerHTML='<div class="box">Could not load: '+esc((await r.json()).error)+'</div>';return;}openDeck(await r.arrayBuffer(),b.dataset.id+'.apkg',b.firstChild.textContent);});}
+$('file').onchange=async e=>{const f=e.target.files[0];if(f)openDeck(await f.arrayBuffer(),f.name,f.name);};
+if(TOKEN)start();
+// ---------- parse ----------
+async function openDeck(buf,file,title){
+ SQL=SQL||await initSqlJs({locateFile:f=>'/inspector/lib/'+f});AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+ const zip=await JSZip.loadAsync(buf);const cf=zip.file('collection.anki21')||zip.file('collection.anki2');
+ if(!cf){$('main').innerHTML='<div class="box">This package uses the new Anki format (anki21b) which is not supported yet. Export it from Anki with “Support older Anki versions” ticked.</div>';return;}
+ const db=new SQL.Database(new Uint8Array(await cf.async('uint8array')));
+ const q=s=>{const r=db.exec(s)[0];return r?r.values.map(v=>Object.fromEntries(r.columns.map((c,i)=>[c,v[i]]))):[]};
+ const col=q('select models,decks from col')[0],models=JSON.parse(col.models),decks=JSON.parse(col.decks);
+ const notes=q('select id,guid,mid,flds,tags from notes order by id'),cards=q('select nid,ord,did from cards');
+ let mmap={};try{mmap=JSON.parse(await zip.file('media').async('string'))}catch{}
+ const media={};for(const[k,n] of Object.entries(mmap)){const z=zip.file(k);if(z)media[n]={zkey:k,bytes:await z.async('uint8array')};}
+ for(const m of Object.values(media)){m.url=URL.createObjectURL(new Blob([m.bytes],{type:mime(m.name)}));}
+ Object.entries(media).forEach(([n,m])=>m.name=n);
+ D={db,cfName:cf.name,zip,file,title,models,decks,notes,cards,media,edits:{},marks:JSON.parse(localStorage.getItem('insp.marks.'+file)||'{}'),info:{}};
+ $('dname').textContent=title;$('exp').disabled=$('rebuild').disabled=false;
+ $('main').innerHTML='<div class="box muted">Analysing audio…</div>';
+ const auds=Object.keys(media).filter(n=>/\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(n));
+ for(const n of auds)D.info[n]=await analyse(n);
+ render();}
+function mime(n){return /\.mp3$/i.test(n)?'audio/mpeg':/\.wav$/i.test(n)?'audio/wav':/\.ogg$/i.test(n)?'audio/ogg':/\.m4a$/i.test(n)?'audio/mp4':/\.png$/i.test(n)?'image/png':/\.gif$/i.test(n)?'image/gif':/\.svg$/i.test(n)?'image/svg+xml':/\.webp$/i.test(n)?'image/webp':/\.jpe?g$/i.test(n)?'image/jpeg':'application/octet-stream'}
+async function decodeBytes(b){return await AC.decodeAudioData(b.slice().buffer)}
+async function analyse(n){const m=D.media[n];try{const ab=await decodeBytes(m.edited||m.bytes);m.ab=ab;return check(ab)}catch(e){m.ab=null;return{dur:0,flags:[['bad','undecodable']]}}}
+function check(ab){const x=ab.getChannelData(0),sr=ab.sampleRate,d=x.length/sr,F=Math.round(sr/100),n=Math.floor(x.length/F),e=[];let sq=0,pk=0,clip=0;
+ for(let i=0;i<x.length;i++){const a=Math.abs(x[i]);sq+=x[i]*x[i];if(a>pk)pk=a;if(a>.99)clip++;}
+ for(let i=0;i<n;i++){let s=0;for(let k=i*F;k<(i+1)*F;k++)s+=x[k]*x[k];e.push(10*Math.log10(s/F+1e-18));}
+ const rms=10*Math.log10(sq/x.length+1e-18),mx=Math.max(...e,-200),thr=mx-20,fl=[];
+ const lead=e.findIndex(v=>v>mx-30)/100,tail=([...e].reverse().findIndex(v=>v>mx-30))/100;
+ if(rms<-50||pk<.01)fl.push(['bad','SILENT']);else if(rms<-35)fl.push(['warn','very quiet']);
+ if(d<.25)fl.push(['bad','too short']);if(clip>20)fl.push(['bad','clipped']);
+ if(n>6&&pk>=.01){if((e[0]+e[1]+e[2])/3>thr)fl.push(['warn','cut-off start']);if((e[n-1]+e[n-2]+e[n-3])/3>thr)fl.push(['warn','cut-off end']);
+  if(lead>.6)fl.push(['warn','lead silence '+lead.toFixed(1)+'s']);if(tail>.8)fl.push(['warn','tail silence '+tail.toFixed(1)+'s']);}
+ return{dur:d,rms,pk,flags:fl}}
+// ---------- render ----------
+function fieldsOf(nt){return nt.flds.split('\x1f')}
+function refs(v){const a=[],i=[];v.replace(/\[sound:([^\]]+)\]/g,(_,f)=>a.push(f));v.replace(/<img[^>]+src=["']?([^"' >]+)/gi,(_,f)=>i.push(decodeURIComponent(f)));return{a,i}}
+function groupOf(nt){const blk=(nt.tags.match(/\bblock_(\w+)/)||[])[1];const c=D.cards.find(c=>c.nid===nt.id);const dn=c&&D.decks[c.did]?D.decks[c.did].name.replace(/\x1f/g,'::'):'Deck';return dn+(blk?' · Block '+blk:'')}
+function render(){
+ const auds=Object.keys(D.info),bad=auds.filter(n=>D.info[n].flags.some(f=>f[0]==='bad')),warn=auds.filter(n=>!bad.includes(n)&&D.info[n].flags.length);
+ let h=`<div class="box"><div class="stats"><div class="stat"><b>${D.notes.length}</b>notes</div><div class="stat"><b>${D.cards.length}</b>cards</div><div class="stat"><b>${Object.keys(D.media).length}</b>media files</div><div class="stat"><b>${auds.length}</b>audio</div><div class="stat ${bad.length?'bad':'ok'}"><b>${bad.length}</b>broken audio</div><div class="stat ${warn.length?'bad':'ok'}" style="${warn.length?'':''}"><b style="color:${warn.length?'#d97706':'#16a34a'}">${warn.length}</b>warnings</div><div class="stat"><b>${Object.values(D.marks).filter(m=>m.star).length}</b>★ moments</div></div>
+ <div class="filters" style="margin-top:10px"><label><input type="checkbox" id="fp"> only cards with audio problems</label><label><input type="checkbox" id="fs"> only ★</label><input type="text" id="fq" placeholder="search text…"></div>
+ ${bad.length||warn.length?'<div class="sec">Audio report</div>'+[...bad,...warn].map(n=>`<div><b>${esc(n)}</b> ${(D.info[n].dur).toFixed(2)} s · ${D.info[n].flags.map(f=>`<span class="chip ${f[0]}">${esc(f[1])}</span>`).join('')}</div>`).join(''):''}</div>`;
+ let g='';
+ for(const nt of D.notes){const gr=groupOf(nt);if(gr!==g){h+=`<div class="grp">${esc(g=gr)}</div>`;}
+  const m=D.models[nt.mid]||{flds:[],tmpls:[]},F=fieldsOf(nt),all=F.join(' '),R=refs(all),title=(F[0]||'').replace(/<[^>]+>/g,'').slice(0,40);
+  const mk=D.marks[nt.guid]||{},prob=R.a.some(a=>D.info[a]&&D.info[a].flags.length);
+  h+=`<div class="note ${mk.star?'starred':''}" data-g="${esc(nt.guid)}" data-p="${prob?1:0}" data-t="${esc(all.replace(/<[^>]+>/g,' ').toLowerCase())}"><div class="nh"><span class="t">${esc(title)}</span><span class="muted">${esc(m.name||'')} · ${D.cards.filter(c=>c.nid===nt.id).length} cards</span><span class="sp"></span><button class="star ${mk.star?'on':''}" title="Mark a successful moment">★</button></div>
+  <input class="mark ${mk.note?'has':''}" placeholder="What worked well here?" value="${esc(mk.note||'')}">
+  <div class="imgs">${[...new Set(R.i)].map(i=>D.media[i]?`<img src="${D.media[i].url}" title="${esc(i)}">`:`<span class="chip bad">missing image ${esc(i)}</span>`).join('')}</div>
+  <div class="prevs">${(m.tmpls||[]).map((t,i)=>`<button class="btn alt sm" data-pv="${nt.id}:${i}">👁 ${esc(t.name)}</button>`).join('')}<button class="btn alt sm" data-fl="1">Fields</button></div>
+  <div class="flds hide">${(m.flds||[]).map((f,i)=>`<div class="k">${esc(f.name)}</div><div class="v">${esc((F[i]||'').slice(0,600))}</div>`).join('')}</div>
+  ${[...new Set(R.a)].map(a=>audioRow(a)).join('')}</div>`;}
+ $('main').innerHTML=h;wire();}
+function audioRow(a){const i=D.info[a],m=D.media[a];if(!m)return `<div class="au"><span class="chip bad">missing audio file ${esc(a)}</span></div>`;
+ return `<div class="au" data-a="${esc(a)}"><div class="row"><span class="nm">🔊 ${esc(a)}</span><span class="muted">${i.dur.toFixed(2)} s · ${isFinite(i.rms)?i.rms.toFixed(0):'—'} dB · peak ${(i.pk||0).toFixed(2)} · used by ${usage(a)} note(s)</span>${i.flags.map(f=>`<span class="chip ${f[0]}">${esc(f[1])}</span>`).join('')||'<span class="chip ok">ok</span>'}${m.edited?'<span class="chip ed">edited: '+esc(m.editNote)+'</span>':''}</div>
+ <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button><button class="btn alt sm" disabled title="Voice clone is off until the MiniMax balance and Oleg's approval are in place">🧬 Voice clone (MiniMax) — off</button>${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
+function usage(a){return D.notes.filter(n=>n.flds.includes('[sound:'+a+']')).length}
+function wire(){
+ document.querySelectorAll('.au').forEach(el=>{const a=el.dataset.a,m=D.media[a];if(!m||!m.ab)return;const W=new Wave(el.querySelector('.wf'),m.ab,s=>{el.querySelector('.sel').textContent=s?`${s[0].toFixed(2)}–${s[1].toFixed(2)} s`:''});el._w=W;
+  el.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>act(b.dataset.act,a,el));});
+ document.querySelectorAll('.note').forEach(el=>{const g=el.dataset.g,s=el.querySelector('.star'),t=el.querySelector('.mark');
+  s.onclick=()=>{const m=D.marks[g]=D.marks[g]||{};m.star=!m.star;s.classList.toggle('on',m.star);el.classList.toggle('starred',m.star);saveMarks();};
+  t.onchange=()=>{const m=D.marks[g]=D.marks[g]||{};m.note=t.value;saveMarks();};
+  el.querySelector('[data-fl]').onclick=()=>el.querySelector('.flds').classList.toggle('hide');});
+ document.querySelectorAll('[data-pv]').forEach(b=>b.onclick=()=>preview(...b.dataset.pv.split(':').map(Number)));
+ const flt=()=>{const p=$('fp').checked,s=$('fs').checked,q=$('fq').value.toLowerCase();document.querySelectorAll('.note').forEach(n=>n.classList.toggle('hide',(p&&n.dataset.p!=='1')||(s&&!(D.marks[n.dataset.g]||{}).star)||(q&&!n.dataset.t.includes(q))));};
+ $('fp').onchange=$('fs').onchange=flt;$('fq').oninput=flt;}
+function saveMarks(){localStorage.setItem('insp.marks.'+D.file,JSON.stringify(D.marks))}
+// ---------- waveform ----------
+class Wave{constructor(box,ab,cb){this.box=box;this.cv=box.querySelector('canvas');this.ab=ab;this.cb=cb;this.sel=null;this.p=null;this.draw();
+ let st=null;const tx=e=>{const r=this.cv.getBoundingClientRect();return Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*ab.duration};
+ box.onpointerdown=e=>{st=tx(e);this.sel=[st,st];box.setPointerCapture(e.pointerId)};box.onpointermove=e=>{if(st==null)return;const t=tx(e);this.sel=[Math.min(st,t),Math.max(st,t)];this.draw();cb(this.sel)};
+ box.onpointerup=()=>{st=null;if(this.sel&&this.sel[1]-this.sel[0]<.02)this.sel=null;this.draw();cb(this.sel)}}
+ draw(){const c=this.cv,dpr=devicePixelRatio||1,w=c.clientWidth||600,h=64;c.width=w*dpr;c.height=h*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  const x=this.ab.getChannelData(0),n=Math.floor(w/3),st=Math.max(1,Math.floor(x.length/n)),D2=this.ab.duration;
+  if(this.sel){g.fillStyle='rgba(0,207,255,.18)';g.fillRect(this.sel[0]/D2*w,0,(this.sel[1]-this.sel[0])/D2*w,h)}
+  for(let i=0;i<n;i++){let m=0;for(let k=i*st;k<Math.min(x.length,(i+1)*st);k++){const a=Math.abs(x[k]);if(a>m)m=a}const bh=Math.max(2,m*(h-8));const t=i/n*D2;
+   g.fillStyle=this.p!=null&&t<this.p?'#08003f':(this.sel&&t>=this.sel[0]&&t<=this.sel[1])?'#1676d2':'#7cb3e0';g.fillRect(i*3,(h-bh)/2,2,bh)}
+  g.fillStyle='#9aa7b4';g.font='10px sans-serif';g.fillText(D2.toFixed(2)+' s',w-40,10)}
+ play(a=0,b){if(this.src)try{this.src.stop()}catch{}const s=AC.createBufferSource();s.buffer=this.ab;s.connect(AC.destination);AC.resume();b=b??this.ab.duration;s.start(0,a,b-a);this.src=s;const t0=AC.currentTime;
+  const tick=()=>{const t=a+AC.currentTime-t0;if(t>=b||this.src!==s){this.p=null;this.draw();return}this.p=t;this.draw();requestAnimationFrame(tick)};tick()}}
+// ---------- edits ----------
+async function act(k,a,el){const W=el._w,m=D.media[a];
+ if(k==='play')return W.play();if(k==='playsel')return W.sel?W.play(...W.sel):W.play();
+ if(k==='trim'){if(!W.sel)return alert('Drag on the waveform to select the part to keep.');await setClip(a,cut(m.ab,...W.sel),'trim '+W.sel.map(v=>v.toFixed(2)).join('–')+' s',{op:'trim',start:W.sel[0],end:W.sel[1]});}
+ if(k==='revert'){delete m.edited;delete m.editNote;delete D.edits[a];D.info[a]=await analyse(a);m.url=URL.createObjectURL(new Blob([m.bytes],{type:mime(a)}));render();}
+ if(k==='replace')replaceDlg(a);}
+function cut(ab,a,b){const sr=ab.sampleRate,s=Math.floor(a*sr),e=Math.floor(b*sr),o=AC.createBuffer(1,e-s,sr),d=o.getChannelData(0),x=ab.getChannelData(0);d.set(x.subarray(s,e));const f=Math.min(Math.floor(sr*.008),d.length/2);for(let i=0;i<f;i++){d[i]*=i/f;d[d.length-1-i]*=i/f}return o}
+async function setClip(a,ab,note,edit){const m=D.media[a];m.edited=/\.wav$/i.test(a)?encWav(ab):await encMp3(ab);m.editNote=note;D.edits[a]={...edit,note};m.url=URL.createObjectURL(new Blob([m.edited],{type:mime(a)}));D.info[a]=await analyse(a);render();
+ const el=[...document.querySelectorAll('.au')].find(e=>e.dataset.a===a);el&&el.scrollIntoView({block:'center'});}
+async function resample(ab,sr){const O=new OfflineAudioContext(1,Math.ceil(ab.duration*sr),sr),s=O.createBufferSource();s.buffer=ab;s.connect(O.destination);s.start();return (await O.startRendering()).getChannelData(0)}
+async function encMp3(ab){const x=await resample(ab,44100),enc=new lamejs.Mp3Encoder(1,44100,128),i16=new Int16Array(x.length);for(let i=0;i<x.length;i++)i16[i]=Math.max(-1,Math.min(1,x[i]))*32767;
+ const out=[];for(let i=0;i<i16.length;i+=1152){const b=enc.encodeBuffer(i16.subarray(i,i+1152));if(b.length)out.push(b)}out.push(enc.flush());return new Uint8Array(await new Blob(out).arrayBuffer())}
+function encWav(ab){const x=ab.getChannelData(0),sr=ab.sampleRate,v=new DataView(new ArrayBuffer(44+x.length*2)),s=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+ s(0,'RIFF');v.setUint32(4,36+x.length*2,true);s(8,'WAVE');s(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);s(36,'data');v.setUint32(40,x.length*2,true);
+ for(let i=0;i<x.length;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,x[i]))*32767,true);return new Uint8Array(v.buffer)}
+function replaceDlg(a){const opts=Object.keys(D.info).filter(n=>n!==a&&D.media[n].ab).sort((x,y)=>D.info[y].dur-D.info[x].dur);
+ $('dt').textContent='Replace '+a+' with a cut from another clip';
+ $('db').innerHTML=`<div style="width:min(760px,90vw)"><select id="rsrc" style="width:100%">${opts.map(n=>`<option>${esc(n)} (${D.info[n].dur.toFixed(2)} s)</option>`).join('')}</select><div class="muted" style="margin:6px 0">Pick the source sentence, drag to select the word, listen, then use it.</div><div class="wf" id="rwf" style="height:90px"><canvas></canvas></div><div class="row" style="display:flex;gap:6px"><button class="btn alt sm" id="rp">▶ Selection</button><button class="btn sm" id="ru">Use selection for ${esc(a)}</button><span class="muted" id="rs"></span></div></div>`;
+ dlg.showModal();let W;const load=()=>{const n=opts[$('rsrc').selectedIndex];W=new Wave($('rwf'),D.media[n].ab,s=>$('rs').textContent=s?`${s[0].toFixed(2)}–${s[1].toFixed(2)} s`:'');W.src_name=n};load();$('rsrc').onchange=load;
+ $('rp').onclick=()=>W.sel?W.play(...W.sel):W.play();$('ru').onclick=async()=>{if(!W.sel)return alert('Select a region first');dlg.close();await setClip(a,cut(W.ab,...W.sel),'from '+W.src_name+' '+W.sel.map(v=>v.toFixed(2)).join('–')+' s',{op:'replace',source:W.src_name,start:W.sel[0],end:W.sel[1]});};}
+// ---------- preview ----------
+function renderTmpl(t,names,F,front){let s=t.replace(/\{\{FrontSide\}\}/g,front||'');
+ for(let k=0;k<3;k++)s=s.replace(/\{\{([#^])([^}]+)\}\}([\s\S]*?)\{\{\/\2\}\}/g,(_,o,n,b)=>{const v=(F[names.indexOf(n.trim())]||'').trim();return (o==='#')===!!v?b:''});
+ return s.replace(/\{\{([^}]+)\}\}/g,(_,n)=>{n=n.trim();let f=n.split(':'),nm=f.pop(),v=F[names.indexOf(nm)]??'';if(f.includes('text'))v=v.replace(/<[^>]+>/g,'');if(f.includes('type'))v='';return v})}
+function mediaize(h){h=h.replace(/\[sound:([^\]]+)\]/g,(_,f)=>D.media[f]?`<button onclick="new Audio('${D.media[f].url}').play()" style="border:none;border-radius:50%;width:30px;height:30px;background:#1676d2;color:#fff">▶</button>`:'<b style="color:red">[missing '+esc(f)+']</b>');
+ return h.replace(/(src=["']?)([^"' >]+)/gi,(m,p,f)=>{const n=decodeURIComponent(f);return D.media[n]?p+D.media[n].url:m})}
+function preview(nid,ord){const nt=D.notes.find(n=>n.id===nid),m=D.models[nt.mid],t=m.tmpls[ord],names=m.flds.map(f=>f.name),F=fieldsOf(nt);
+ const fr=renderTmpl(t.qfmt,names,F),bk=renderTmpl(t.afmt,names,F,fr),doc=h=>`<html><head><meta charset=utf-8><meta name=viewport content="width=device-width"><style>${m.css}</style></head><body class="card">${mediaize(h)}</body></html>`;
+ $('dt').textContent=m.name+' · '+t.name;$('db').innerHTML='<div style="display:flex;gap:12px;flex-wrap:wrap"><div><div class="sec">Front</div><iframe class="card" sandbox="allow-scripts" id="pf"></iframe></div><div><div class="sec">Back</div><iframe class="card" sandbox="allow-scripts" id="pb"></iframe></div></div>';
+ $('pf').srcdoc=doc(fr);$('pb').srcdoc=doc(bk);dlg.showModal()}
+// ---------- export / rebuild ----------
+$('exp').onclick=()=>{dl(new Blob([JSON.stringify({deck:D.file,exported:new Date().toISOString(),edits:D.edits,marks:D.marks},null,1)],{type:'application/json'}),D.file.replace(/\.apkg$/,'')+'_edits.json')};
+$('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media').async('string')),out=new JSZip(),ed=Object.keys(D.edits),ren={},stamp=Date.now().toString(36).slice(-5);
+ // edited clips get a new file name so Anki cannot keep the old copy; note fields are rewritten and their mod time bumped
+ for(const a of ed)ren[a]=a.replace(/(\.[^.]+)$/,'_fix'+stamp+'$1');
+ const db=new SQL.Database(D.db.export()),now=Math.floor(Date.now()/1000);
+ for(const nt of D.notes){let f=nt.flds;for(const a of ed)f=f.split('[sound:'+a+']').join('[sound:'+ren[a]+']');if(f!==nt.flds)db.run('update notes set flds=?,mod=?,usn=-1 where id=?',[f,now,nt.id]);}
+ const nm={};for(const name of Object.keys(z.files)){const f=z.files[name];if(f.dir||name==='media'||name===D.cfName)continue;const n=mm[name];
+  if(n&&ren[n]){out.file(name,D.media[n].edited);nm[name]=ren[n];}else{out.file(name,await f.async('uint8array'));if(n)nm[name]=n;}}
+ out.file(D.cfName,db.export());out.file('media',JSON.stringify(nm));db.close();
+ const b=await out.generateAsync({type:'blob',compression:'DEFLATE'});dl(b,D.file.replace(/\.apkg$/,'')+'_fixed.apkg');
+ alert('Rebuilt with '+ed.length+' edited clip(s) (renamed *_fix'+stamp+'). Import the _fixed.apkg into Anki: the notes keep their IDs and get the new audio. For our build.py decks also export the edits JSON so the source build is updated too.');};
+function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click()}
+</script></body></html>

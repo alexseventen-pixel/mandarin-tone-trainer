@@ -7,9 +7,10 @@ import { assessWithCrepe } from './providers/crepe.js';
 import { pinyin } from 'pinyin-pro';
 import { analyze as analyzeAnki } from './anki/analyze.js';
 import { answer as answerAnki } from './anki/answer.js';
+import { handleInspector } from './inspector.js';
 
 const publicDir=new URL('../public/',import.meta.url);
-const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4','.mp3':'audio/mpeg'};
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4','.mp3':'audio/mpeg','.wasm':'application/wasm'};
 
 function sendJson(response,status,data){
   response.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
@@ -121,7 +122,7 @@ async function handleDrillAnalyze(request,response){
 
 async function serveFile(request,response){
   const url=new URL(request.url,'http://localhost');
-  const pages={'/drill':'drill.html','/stats':'stats.html'};
+  const pages={'/drill':'drill.html','/stats':'stats.html','/inspector':'inspector.html'};
   const requested=url.pathname==='/'?'index.html':pages[url.pathname]||url.pathname.slice(1);
   const safe=normalize(requested).replace(/^(\.\.(\/|\\|$))+/,'');
   const fileUrl=new URL(safe,publicDir);
@@ -150,6 +151,7 @@ async function serveFile(request,response){
 
 createServer(async(request,response)=>{
   if(request.method==='GET'&&request.url==='/health')return sendJson(response,200,{status:'ok'});
+  if(request.url.startsWith('/api/inspector/'))return handleInspector(request,response,request.url.split('?')[0]);
   if(request.url==='/api/anki/analyze'&&request.method==='OPTIONS'){response.writeHead(204,CORS);return response.end();}
   if(request.method==='POST'&&request.url==='/api/anki/analyze')return handleAnkiAnalyze(request,response);
   if(request.url==='/api/anki/answer'&&request.method==='OPTIONS'){response.writeHead(204,CORS);return response.end();}
