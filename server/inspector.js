@@ -1,6 +1,9 @@
 // Deck Inspector API: passcode-gated. Preloaded decks are stored AES-256-GCM encrypted in inspector-data/;
 // the key lives only in the Render env (INSPECTOR_DATA_KEY). Disabled unless INSPECTOR_PASSCODE is set.
 import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
+import { pinyin as toPinyin } from 'pinyin-pro';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { createHmac, createDecipheriv, timingSafeEqual } from 'node:crypto';
 const dataDir=new URL('../inspector-data/',import.meta.url);
 const PASS=()=>process.env.INSPECTOR_PASSCODE||'', KEY=()=>process.env.INSPECTOR_DATA_KEY||'';
@@ -10,6 +13,15 @@ const J=(res,s,d)=>{res.writeHead(s,{'Content-Type':'application/json; charset=u
 async function body(req){const c=[];let n=0;for await(const x of req){n+=x.length;if(n>10000)throw new Error('too big');c.push(x);}return Buffer.concat(c).toString();}
 function dec(b){const d=createDecipheriv('aes-256-gcm',Buffer.from(KEY(),'hex'),b.subarray(0,12));d.setAuthTag(b.subarray(12,28));return Buffer.concat([d.update(b.subarray(28)),d.final()]);}
 let fails=0,failT=0;
+// ---- CC-CEDICT lookup (CC BY-SA) + free edge neural TTS for new cards ----
+let CED=null;
+async function cedict(){if(CED)return CED;CED=new Map();const t=gunzipSync(await readFile(new URL('./data/cedict_ts.u8.gz',import.meta.url))).toString('utf8');
+  for(const l of t.split('\n')){if(l[0]==='#')continue;const m=l.match(/^(\S+) (\S+) \[([^\]]+)\] \/(.*)\/\s*$/);if(!m)continue;
+    const e={py:m[3],defs:m[4].split('/').filter(Boolean)};for(const k of new Set([m[2],m[1]])){if(!CED.has(k))CED.set(k,[]);CED.get(k).push(e);}}
+  return CED;}
+const VOICES=['zh-CN-XiaoxiaoNeural','zh-CN-XiaoyiNeural','zh-CN-YunxiNeural','zh-CN-YunjianNeural','zh-TW-HsiaoChenNeural'];
+async function edgeTts(text,voice,rate){const t=new MsEdgeTTS();await t.setMetadata(voice,OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
+  try{const {audioStream}=t.toStream(text,{rate});const c=[];for await(const x of audioStream)c.push(x);return Buffer.concat(c);}finally{try{t.close()}catch{}}}
 // ---- MiniMax voice clone (paid, Oleg's key). Key read only from env, never logged. ----
 const MM=()=>process.env.MINIMAX_API_KEY||'',MMG=()=>process.env.MINIMAX_GROUP_ID||'',MMB='https://api.minimax.io';
 let voiceId=process.env.MINIMAX_VOICE_ID||'',cloning=null;
@@ -46,6 +58,19 @@ export async function handleInspector(req,res,path){
     fails=0;return J(res,200,{token:tok()});
   }
   if(!eq(req.headers['x-insp-token']||'',tok()))return J(res,401,{error:'Login required'});
+  if(path==='/api/inspector/dict'){
+    const w=(new URL(req.url,'http://x').searchParams.get('w')||'').trim().slice(0,20);
+    if(!/^[\u3400-\u9fff]+$/.test(w))return J(res,400,{error:'Chinese characters only'});
+    const d=await cedict();const ent=d.get(w)||[];
+    return J(res,200,{word:w,pinyin:toPinyin(w),entries:ent,chars:ent.length?[]:[...w].map(c=>({c,pinyin:toPinyin(c),entries:(d.get(c)||[]).slice(0,2)}))});
+  }
+  if(path==='/api/inspector/tts'&&req.method==='POST'){
+    let q={};try{q=JSON.parse(await body(req));}catch{}
+    const text=String(q.text||'').slice(0,60),voice=VOICES.includes(q.voice)?q.voice:VOICES[0],rate=/^[+-]\d{1,2}%$/.test(q.rate||'')?q.rate:'+0%';
+    if(!/^[\u3000-\u9fff\uff00-\uffef\s]+$/.test(text))return J(res,400,{error:'Chinese text only (max 60 chars)'});
+    try{const mp3=await edgeTts(text,voice,rate);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':mp3.length,'Cache-Control':'no-store'});return res.end(mp3);}
+    catch(e){return J(res,502,{error:'TTS failed: '+String(e.message).slice(0,120)});}
+  }
   if(path==='/api/inspector/clone/status')return J(res,200,{enabled:!!MM(),voice:!!voiceId});
   if(path==='/api/inspector/clone/tts'&&req.method==='POST'){
     if(!MM())return J(res,503,{error:'MINIMAX_API_KEY not set on the server'});
