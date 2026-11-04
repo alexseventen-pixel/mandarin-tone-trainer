@@ -41,10 +41,10 @@ iframe.card{width:390px;height:720px;border:1px solid #e2e8ed;border-radius:14px
 <script src="/inspector/lib/jszip.min.js"></script><script src="/inspector/lib/sql-wasm.js"></script><script src="/inspector/lib/lame.min.js"></script>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let TOKEN=sessionStorage.getItem('insp.t')||'',SQL,D=null,AC;
+let VAR={},CLONE={enabled:false},TOKEN=sessionStorage.getItem('insp.t')||'',SQL,D=null,AC;
 const api=(p,o={})=>fetch(p,{...o,headers:{...(o.headers||{}),'X-Insp-Token':TOKEN}});
 $('lf').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/inspector/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('code').value})});const j=await r.json();if(!r.ok){$('lerr').textContent=j.error;return;}TOKEN=j.token;sessionStorage.setItem('insp.t',TOKEN);start();};
-async function start(){const r=await api('/api/inspector/decks');if(r.status===401){$('login').classList.remove('hide');return;}if(!r.ok){$('login').classList.remove('hide');$('lerr').textContent=(await r.json()).error;return;}
+async function start(){loadVariants();const r=await api('/api/inspector/decks');if(r.status===401){$('login').classList.remove('hide');return;}if(!r.ok){$('login').classList.remove('hide');$('lerr').textContent=(await r.json()).error;return;}
  $('login').classList.add('hide');$('app').classList.remove('hide');const j=await r.json();let g='';
  $('decks').innerHTML=j.decks.length?j.decks.map(d=>{const h=(d.group!==g?'<div class="sec">'+esc(g=d.group)+'</div>':'');return h+`<button class="dk" data-id="${d.id}">${esc(d.name)}<small>${(d.size/1048576).toFixed(1)} MB</small></button>`}).join(''):'No preloaded decks.';
  document.querySelectorAll('.dk').forEach(b=>b.onclick=async()=>{document.querySelectorAll('.dk').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('main').innerHTML='<div class="box muted">Loading deck…</div>';const r=await api('/api/inspector/deck?id='+b.dataset.id);if(!r.ok){$('main').innerHTML='<div class="box">Could not load: '+esc((await r.json()).error)+'</div>';return;}openDeck(await r.arrayBuffer(),b.dataset.id+'.apkg',b.firstChild.textContent);});}
@@ -104,7 +104,7 @@ function render(){
  $('main').innerHTML=h;wire();}
 function audioRow(a){const i=D.info[a],m=D.media[a];if(!m)return `<div class="au"><span class="chip bad">missing audio file ${esc(a)}</span></div>`;
  return `<div class="au" data-a="${esc(a)}"><div class="row"><span class="nm">🔊 ${esc(a)}</span><span class="muted">${i.dur.toFixed(2)} s · ${isFinite(i.rms)?i.rms.toFixed(0):'—'} dB · peak ${(i.pk||0).toFixed(2)} · used by ${usage(a)} note(s)</span>${i.flags.map(f=>`<span class="chip ${f[0]}">${esc(f[1])}</span>`).join('')||'<span class="chip ok">ok</span>'}${m.edited?'<span class="chip ed">edited: '+esc(m.editNote)+'</span>':''}</div>
- <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button><button class="btn alt sm" disabled title="Voice clone is off until the MiniMax balance and Oleg's approval are in place">🧬 Voice clone (MiniMax) — off</button>${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
+ <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button>${VAR[a]?`<button class="btn sm" data-act="variants">🎧 Replacement variants (${VAR[a].variants.length})</button>`:''}${CLONE.enabled?'<button class="btn alt sm" data-act="clone">🧬 Voice clone (MiniMax)</button>':'<button class="btn alt sm" disabled title="Set MINIMAX_API_KEY in the Render environment to enable">🧬 Voice clone — key not set</button>'}${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
 function usage(a){return D.notes.filter(n=>n.flds.includes('[sound:'+a+']')).length}
 function wire(){
  document.querySelectorAll('.au').forEach(el=>{const a=el.dataset.a,m=D.media[a];if(!m||!m.ab)return;const W=new Wave(el.querySelector('.wf'),m.ab,s=>{el.querySelector('.sel').textContent=s?`${s[0].toFixed(2)}–${s[1].toFixed(2)} s`:''});el._w=W;
@@ -135,7 +135,7 @@ async function act(k,a,el){const W=el._w,m=D.media[a];
  if(k==='play')return W.play();if(k==='playsel')return W.sel?W.play(...W.sel):W.play();
  if(k==='trim'){if(!W.sel)return alert('Drag on the waveform to select the part to keep.');await setClip(a,cut(m.ab,...W.sel),'trim '+W.sel.map(v=>v.toFixed(2)).join('–')+' s',{op:'trim',start:W.sel[0],end:W.sel[1]});}
  if(k==='revert'){delete m.edited;delete m.editNote;delete D.edits[a];D.info[a]=await analyse(a);m.url=URL.createObjectURL(new Blob([m.bytes],{type:mime(a)}));render();}
- if(k==='replace')replaceDlg(a);}
+ if(k==='replace')replaceDlg(a);if(k==='variants'||k==='clone')variantsDlg(a,k==='clone');}
 function cut(ab,a,b){const sr=ab.sampleRate,s=Math.floor(a*sr),e=Math.floor(b*sr),o=AC.createBuffer(1,e-s,sr),d=o.getChannelData(0),x=ab.getChannelData(0);d.set(x.subarray(s,e));const f=Math.min(Math.floor(sr*.008),d.length/2);for(let i=0;i<f;i++){d[i]*=i/f;d[d.length-1-i]*=i/f}return o}
 async function setClip(a,ab,note,edit){const m=D.media[a];m.edited=/\.wav$/i.test(a)?encWav(ab):await encMp3(ab);m.editNote=note;D.edits[a]={...edit,note};m.url=URL.createObjectURL(new Blob([m.edited],{type:mime(a)}));D.info[a]=await analyse(a);render();
  const el=[...document.querySelectorAll('.au')].find(e=>e.dataset.a===a);el&&el.scrollIntoView({block:'center'});}
@@ -150,6 +150,30 @@ function replaceDlg(a){const opts=Object.keys(D.info).filter(n=>n!==a&&D.media[n
  $('db').innerHTML=`<div style="width:min(760px,90vw)"><select id="rsrc" style="width:100%">${opts.map(n=>`<option>${esc(n)} (${D.info[n].dur.toFixed(2)} s)</option>`).join('')}</select><div class="muted" style="margin:6px 0">Pick the source sentence, drag to select the word, listen, then use it.</div><div class="wf" id="rwf" style="height:90px"><canvas></canvas></div><div class="row" style="display:flex;gap:6px"><button class="btn alt sm" id="rp">▶ Selection</button><button class="btn sm" id="ru">Use selection for ${esc(a)}</button><span class="muted" id="rs"></span></div></div>`;
  dlg.showModal();let W;const load=()=>{const n=opts[$('rsrc').selectedIndex];W=new Wave($('rwf'),D.media[n].ab,s=>$('rs').textContent=s?`${s[0].toFixed(2)}–${s[1].toFixed(2)} s`:'');W.src_name=n};load();$('rsrc').onchange=load;
  $('rp').onclick=()=>W.sel?W.play(...W.sel):W.play();$('ru').onclick=async()=>{if(!W.sel)return alert('Select a region first');dlg.close();await setClip(a,cut(W.ab,...W.sel),'from '+W.src_name+' '+W.sel.map(v=>v.toFixed(2)).join('–')+' s',{op:'replace',source:W.src_name,start:W.sel[0],end:W.sel[1]});};}
+// ---------- replacement variants ----------
+
+async function loadVariants(){try{const c=await api('/api/inspector/clone/status');if(c.ok)CLONE=await c.json();}catch{}
+ try{const r=await api('/api/inspector/deck?id=bear-p1v2-variants');if(r.ok){const j=JSON.parse(new TextDecoder().decode(await r.arrayBuffer()));VAR={};for(const k in j)VAR[j[k].clip]=j[k];}}catch{}
+ if(D)render();}
+const b64u8=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+let VP;function vplay(u){if(VP)VP.pause();VP=new Audio(u);VP.play()}
+function variantsDlg(a,focusClone){const v=VAR[a],word=v?v.word:(a.match(/[\u4e00-\u9fff]+/)||[''])[0];
+ $('dt').textContent='Replacement variants · '+(word||a);
+ const groups={};(v?v.variants:[]).forEach((x,i)=>{x.url=x.url||URL.createObjectURL(new Blob([b64u8(x.b64)],{type:'audio/mpeg'}));(groups[x.group]=groups[x.group]||[]).push(i)});
+ const row=(lab,u,i)=>`<div class="row" style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eef2f5"><button class="btn sm" data-p="${u}">▶</button><span style="flex:1">${esc(lab)}</span><button class="btn alt sm" data-u="${i}">Use this</button></div>`;
+ $('db').innerHTML=`<div style="width:min(620px,90vw)"><div class="muted" style="margin-bottom:6px">Current clip: <button class="btn alt sm" id="vcur">▶ ${esc(a)}</button> · All variants are loudness-normalized (−16 LUFS) with silence trimmed. “Use this” swaps the clip in your edits; Export / Rebuild pick it up.</div>
+ ${Object.entries(groups).map(([g,ix])=>`<div class="sec">${esc(g)}</div>`+ix.map(i=>row(v.variants[i].label,v.variants[i].url,i)).join('')).join('')}
+ <div class="sec">Voice clone · Li Pei Ru (MiniMax, paid)</div><div id="vcl">${CLONE.enabled?`<button class="btn alt sm" data-c="1">Generate · normal</button> <button class="btn alt sm" data-c="0.8">Generate · slow</button> <span class="muted" id="vcs"></span>`:'<span class="muted">Key not set: add MINIMAX_API_KEY (and MINIMAX_GROUP_ID if needed) in the Render environment.</span>'}</div><div id="vclo"></div>
+ <div class="muted" style="font-size:11.5px;margin-top:10px">Sources: re-cut from the original lesson audio · Microsoft Edge neural TTS · audio-cmn by hugolpz (CC BY-SA).</div></div>`;
+ dlg.showModal();$('vcur').onclick=()=>vplay(D.media[a].url);
+ const wireRows=()=>{$('db').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>vplay(b.dataset.p));
+  $('db').querySelectorAll('[data-u]').forEach(b=>b.onclick=async()=>{const i=b.dataset.u,x=i[0]==='c'?CL[i]:v.variants[i];const ab=await AC.decodeAudioData((x.bytes||b64u8(x.b64)).slice().buffer);dlg.close();await setClip(a,ab,'variant: '+x.label,{op:'variant',variant:x.id,label:x.label});});};
+ const CL={};wireRows();
+ $('db').querySelectorAll('[data-c]').forEach(b=>b.onclick=async()=>{if(!word)return alert('No Chinese word found for this clip');$('vcs').textContent='Generating… (first time also clones the voice, ~30 s)';
+  const r=await api('/api/inspector/clone/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:word,speed:+b.dataset.c})});
+  if(!r.ok){$('vcs').textContent=(await r.json()).error;return}const bytes=new Uint8Array(await r.arrayBuffer()),id='c'+Object.keys(CL).length,lab='Li Pei Ru clone · '+(b.dataset.c==='1'?'normal':'slow');
+  CL[id]={id:'minimax_clone',label:lab,bytes};$('vcs').textContent='';$('vclo').insertAdjacentHTML('beforeend',row(lab,URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'})),id));wireRows();});
+ if(focusClone)$('vcl').scrollIntoView();}
 // ---------- preview ----------
 function renderTmpl(t,names,F,front){let s=t.replace(/\{\{FrontSide\}\}/g,front||'');
  for(let k=0;k<3;k++)s=s.replace(/\{\{([#^])([^}]+)\}\}([\s\S]*?)\{\{\/\2\}\}/g,(_,o,n,b)=>{const v=(F[names.indexOf(n.trim())]||'').trim();return (o==='#')===!!v?b:''});
