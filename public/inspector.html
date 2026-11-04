@@ -79,6 +79,7 @@ async function openDeck(buf,file,title){
  $('main').innerHTML='<div class="box muted">Analysing audio…</div>';
  const auds=Object.keys(media).filter(n=>/\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(n));
  for(const n of auds)D.info[n]=await analyse(n);
+ try{await genRestore()}catch(e){console.warn(e)}
  render();}
 function mime(n){return /\.mp3$/i.test(n)?'audio/mpeg':/\.wav$/i.test(n)?'audio/wav':/\.ogg$/i.test(n)?'audio/ogg':/\.m4a$/i.test(n)?'audio/mp4':/\.png$/i.test(n)?'image/png':/\.gif$/i.test(n)?'image/gif':/\.svg$/i.test(n)?'image/svg+xml':/\.webp$/i.test(n)?'image/webp':/\.jpe?g$/i.test(n)?'image/jpeg':'application/octet-stream'}
 async function decodeBytes(b){return await AC.decodeAudioData(b.slice().buffer)}
@@ -220,7 +221,7 @@ function expRow(nt,n){if(!EXP.has(nt.id))return '';const A=[...new Set(refs(effF
 function anatomy(){if(!D.notes.length)return '';const c=classify(),ex=D.excluded.size,orph=orphans();
  const blocks=[...new Set(c.chunks.map(n=>(fv(n,'Block')||'').trim()).filter(Boolean))];
  const tile=(n,l,sub)=>`<div class="stat"><b style="${n?'':'color:#9aa7b4'}">${n||0}</b>${l}${sub?`<div class="muted" style="font-size:11px">${sub}</div>`:''}</div>`;
- let h=`<div class="box" id="anat"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">🧬 Sentence anatomy</b><span class="muted">pre-filled with the standard template · click any slot to choose an alternative</span><span class="sp" style="flex:1"></span>${D.exStack.length?'<button class="btn alt sm" id="undoex">↶ Undo delete</button>':''}${(D.audStack||[]).length?'<button class="btn alt sm" id="undoau">↶ Undo sound delete</button>':''}<button class="btn sm" id="addglob">+ Add card / note</button></div>
+ let h=`<div class="box" id="anat"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">🧬 Sentence anatomy</b><span class="muted">pre-filled with the standard template · click any slot to choose an alternative</span><span class="sp" style="flex:1"></span><button class="btn sm" id="genw">✨ New word</button>${D.exStack.length?'<button class="btn alt sm" id="undoex">↶ Undo delete</button>':''}${(D.audStack||[]).length?'<button class="btn alt sm" id="undoau">↶ Undo sound delete</button>':''}<button class="btn sm" id="addglob">+ Add card / note</button></div>
  <div class="stats" style="margin-top:10px">${tile(c.words.length,'words')}${tile(c.chunks.length,'sentence chunks',blocks.length?'blocks '+blocks.map(esc).join(', '):'')}${tile(c.full.length,'full sentence')}${tile(c.games.length,'games',c.games.length?'':'not built yet')}${tile(c.tests.length,'test / exam',c.tests.length?'':'not built yet')}${tile(ex,'deleted notes')}${tile(orph.length,'orphan media')}</div>`;
  if(c.words.length){h+=`<div class="sec">Words</div><table class="anat"><tr><th>Hanzi</th><th>Picture</th><th>English (card)</th><th>Dictionary (CC-CEDICT)</th><th>Audio</th><th></th></tr>`;
   for(const nt of c.words){const k=fv(nt,'Key'),V=VARK[k],img=refs(fv(nt,'Picture')).i[0],en=strip(fv(nt,'Short')),dct=V&&V.dict?V.dict.map(d=>d.py+': '+d.defs.slice(0,3).join('; ')).join(' | '):strip(fv(nt,'Definition')).slice(0,90);
@@ -245,6 +246,7 @@ function wireAnatomy(){const byId=id=>D.notes.find(n=>n.id==id);
  document.querySelectorAll('[data-exclude]').forEach(b=>b.onclick=()=>{const nt=byId(b.dataset.exclude);if(!confirm('Delete “'+strip(fieldsOf(nt)[0]).slice(0,30)+'” and its '+D.cards.filter(c=>c.nid===nt.id).length+' card(s) from the rebuilt deck?\nNothing is deleted from the source files; you can Restore or Undo it any time.'))return;D.excluded.add(nt.id);D.exStack.push(nt.id);render()});
  document.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>{D.excluded.delete(+b.dataset.restore);D.exStack=D.exStack.filter(x=>x!=+b.dataset.restore);render()});
  if($('undoex'))$('undoex').onclick=()=>{const id=D.exStack.pop();D.excluded.delete(id);render()};
+ if($('genw'))$('genw').onclick=genWord;
  if($('addglob'))$('addglob').onclick=()=>noteEditor(null,{});
  document.querySelectorAll('[data-addg]').forEach(b=>b.onclick=()=>noteEditor(null,{like:byId(b.dataset.addg)}));
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>noteEditor(byId(b.dataset.edit),{}));
@@ -375,6 +377,93 @@ function ui(m){var S=g(SK,{}),n=pend().length;el.innerHTML="☁ "+(S.email?("Sav
 var busy=0;function push(){var S=g(SK,{}),L=pend();if(!S.email||!L.length||busy){if(!busy)ui();return}busy=1;
  fetch(U,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:S.email,code:S.code,device:"anki",attempts:L})}).then(function(r){return r.json().then(function(j){return [r.status,j]})}).then(function(x){busy=0;if(x[0]===200){var S2=g(SK,{});S2.last=S2.last||{};L.forEach(function(a){if(a.t>(S2.last[a.card]||0))S2.last[a.card]=a.t});localStorage.setItem(SK,JSON.stringify(S2));ui("synced")}else ui(x[1].error||"not saved yet, kept in the queue")}).catch(function(){busy=0;ui("offline, will retry")})}
 push();var iv=setInterval(push,8000);setTimeout(function(){clearInterval(iv)},900000);})();<\/script>`;
+// ---------- ✨ new word generator: one word -> picture, answer back, audio, radicals and every task card ----------
+const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)},unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function genStore(){return JSON.parse(localStorage.getItem('insp.gen.'+D.file)||'[]')}
+function genPersist(rec){const L=genStore().filter(x=>x.hanzi!==rec.hanzi);L.push(rec);try{localStorage.setItem('insp.gen.'+D.file,JSON.stringify(L))}catch(e){try{rec.media={};L[L.length-1]=rec;localStorage.setItem('insp.gen.'+D.file,JSON.stringify(L))}catch{}}}
+async function genRestore(){for(const r of genStore()){if(D.notes.some(n=>n.added&&strip(fieldsOf(n)[0])===r.hanzi))continue;for(const [n,b] of Object.entries(r.media||{}))if(!D.media[n])await addMedia(n,unb64(b));
+ const like=D.notes.find(n=>n.id===r.likeId)||classify().words.find(n=>fv(n,'Block')===r.block);const nt=addNote(r.mid,r.fields,r.tags,like);nt.gen=1}}
+function wordMid(){return Object.keys(D.models).find(k=>{const N=D.models[k].flds.map(f=>f.name);return N.includes('Hanzi')&&N.includes('Picture')&&N.includes('ExZh')})}
+const toneNum=p=>{const m={ā:1,á:2,ǎ:3,à:4,ē:1,é:2,ě:3,è:4,ī:1,í:2,ǐ:3,ì:4,ō:1,ó:2,ǒ:3,ò:4,ū:1,ú:2,ǔ:3,ù:4,ǖ:1,ǘ:2,ǚ:3,ǜ:4};for(const c of p)if(m[c])return m[c];return 5};
+function genWord(){const mid=wordMid();if(!mid)return alert('This deck has no word note type (Hanzi + Picture + ExZh).');
+ const W=classify().words,blocks=[...new Set(W.map(n=>fv(n,'Block')).filter(Boolean))],phr=[...new Set(D.notes.flatMap(n=>refs(effFlds(n)).a))].filter(a=>/_x_/.test(a));
+ const G={kit:null,pic:null,audio:null,exAudio:null,radAud:{}};
+ $('dt').textContent='✨ New word generator';
+ $('db').innerHTML=`<div id="gen" style="width:min(1000px,94vw);max-height:78vh;overflow:auto;font-size:13px">
+ <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="gh" placeholder="汉字" style="font-size:22px;width:120px"><button class="btn sm" id="glook">🔎 Look up (CC-CEDICT + Make Me a Hanzi + Commons audio)</button><span class="muted" id="gst"></span></div>
+ <div id="gbody" style="display:none">
+ <div class="sec">Reading & meaning <span class="muted" style="text-transform:none">pick the reading used in YOUR sentence</span></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="gread"></select> Pinyin <input id="gpy" style="width:110px"> Key <input id="gkey" style="width:80px"> Translation <input id="gshort" style="flex:1;min-width:240px"></div>
+ <div class="muted" style="margin-top:4px">Dictionary meanings (2–3, one per line)</div><textarea id="gdefs" rows="3" style="width:100%"></textarea>
+ <div class="muted">Usage note (shown on the back)</div><textarea id="gnote" rows="2" style="width:100%"></textarea>
+ <div class="sec">Phrase from the story</div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">Block <select id="gblk">${blocks.map(b=>`<option>${esc(b)}</option>`).join('')}</select> after <select id="gafter"></select>
+  Phrase <input id="gexzh" style="width:200px" placeholder="安装<b>了</b>"> <input id="gexpy" style="width:170px" placeholder="pinyin"> <input id="gexen" style="width:190px" placeholder="English"></div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">Phrase audio <select id="gexa"><option value="">— none —</option>${phr.map(a=>`<option>${esc(a)}</option>`).join('')}</select><button class="btn alt sm" id="gexp">▶</button><button class="btn alt sm" id="gextts">🔊 TTS the phrase</button><span class="muted" id="gexst"></span></div>
+ <div class="sec">Word audio <span class="muted" style="text-transform:none">open dictionary recordings first (Lingua Libre / audio-cmn on Wikimedia Commons), then a cut from the story video audio, then TTS</span></div>
+ <div id="gaud"></div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">✂ Cut from <select id="gcsrc">${phr.map(a=>`<option>${esc(a)}</option>`).join('')}</select> start <input id="gcs" type="number" step="10" value="0" style="width:80px"> ms end <input id="gce" type="number" step="10" value="400" style="width:80px"> ms <button class="btn alt sm" id="gcplay">▶ cut</button><button class="btn alt sm" id="gcfull">▶ whole clip</button><button class="btn sm" id="gcuse">Use this cut</button><button class="btn alt sm" id="gtts">🔊 TTS fallback</button></div>
+ <div id="gaudsel" class="muted" style="margin-top:4px">No word audio chosen yet.</div>
+ <div class="sec">Picture <span class="muted" style="text-transform:none">bright, colourful, realistic scene (not surreal) · free generator, no key or payment · or upload your own</span></div>
+ <div style="display:flex;gap:10px"><div style="flex:1"><textarea id="gprompt" rows="3" style="width:100%"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button class="btn sm" id="gpic">🎨 Generate picture</button><label class="btn alt sm">🖼 Upload<input type="file" id="gup" accept="image/*" style="display:none"></label><span class="muted" id="gpst"></span></div>
+  <div class="muted" style="margin-top:6px">Picture → character link (1–2 lines)</div><textarea id="gexpl" rows="2" style="width:100%"></textarea><div class="muted">Memory story (Assoc)</div><textarea id="gassoc" rows="2" style="width:100%"></textarea></div>
+  <div><img id="gimg" style="width:280px;height:210px;object-fit:cover;border-radius:10px;background:#eef3f7"></div></div>
+ <div class="sec">Radicals / components <span class="muted" style="text-transform:none">meaning + audio on the back (audio generated on create)</span></div><div id="grad"></div>
+ <div class="sec">Cards</div><div>Word note type gives 4 cards: 1 Picture → answer · 2 Character → say it (tone listener) · 3 Write · 4 Phrase → say it.
+  <label><input type="checkbox" id="gwr" checked> add the phrase to ✍ writing combinations</label> · the phrase joins the 🎧 audio→combination game (8 options) and the 🎹 piano automatically.</div>
+ <div style="margin-top:10px;display:flex;gap:8px"><button class="btn" id="gmake">✨ Create word + all cards</button><span class="muted" id="gmst"></span></div></div></div>`;
+ const v=id=>$(id).value,q=s=>$('db').querySelector(s);
+ const fillAfter=()=>{$('gafter').innerHTML=W.filter(n=>fv(n,'Block')===v('gblk')).map(n=>`<option value="${n.id}">${esc(strip(fv(n,'Hanzi')))}</option>`).join('')};$('gblk').onchange=fillAfter;fillAfter();
+ const setAud=(bytes,ext,label)=>{G.audio={bytes,ext};$('gaudsel').innerHTML='✔ Word audio: '+esc(label)+` <button class="btn alt sm" id="gap">▶</button>`;$('gap').onclick=()=>vplay(URL.createObjectURL(new Blob([bytes],{type:mime('x.'+ext)})))};
+ const readings=()=>{const E=G.kit.entries.length?G.kit.entries:[];const by={};E.forEach(e=>{(by[e.py]=by[e.py]||[]).push(...e.defs)});return by};
+ const applyReading=()=>{const by=readings(),py=v('gread'),defs=(by[py]||[]).filter(d=>!/^variant of|^see |^old variant/i.test(d));const disp=G.kit.disp[py]||py;
+  $('gpy').value=disp;$('gkey').value=disp.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/gi,'').toLowerCase();$('gdefs').value=defs.slice(0,3).join('\n');$('gshort').value=defs.slice(0,2).join('; ')};
+ $('glook').onclick=async()=>{const w=v('gh').trim();if(!w)return;$('gst').textContent='Looking up…';const r=await api('/api/inspector/wordkit?w='+encodeURIComponent(w)),j=await r.json();if(!r.ok){$('gst').textContent=j.error;return}
+  G.kit=j;G.kit.disp={};const by=readings();const ks=Object.keys(by);
+  for(const k of ks)G.kit.disp[k]=/[1-5]/.test(k)?k.split(' ').map(numToMark).join(' '):k;
+  $('gread').innerHTML=(ks.length?ks:[j.pinyin]).map(k=>`<option value="${esc(k)}">${esc(G.kit.disp[k]||k)} — ${esc((by[k]||[]).slice(0,2).join('; ').slice(0,60))}</option>`).join('');$('gread').onchange=applyReading;
+  if(ks.length)applyReading();else{$('gpy').value=j.pinyin;$('gkey').value=j.pinyin.normalize('NFD').replace(/[^a-z]/gi,'').toLowerCase()}
+  const sib=W.find(n=>strip(fv(n,'ExZh')).includes(w));if(sib){$('gblk').value=fv(sib,'Block');fillAfter();$('gafter').value=sib.id;$('gexa').value=refs(fv(sib,'ExAudio')).a[0]||'';$('gcsrc').value=$('gexa').value}
+  const ch=j.chars;$('gexpl').value=`The picture shows … ${w} = `+ch.map(c=>c.comps.length?c.comps.map(k=>`${k.c} (${k.meaning})`).join(' + '):c.c).join(' · ')+(ch[0].etym&&ch[0].etym.hint?` — ${ch[0].etym.hint}.`:'.');
+  $('gprompt').value=`bright colorful children's picture-book illustration, realistic everyday scene, cheerful, clear single subject, no text, not surreal: ${$('gshort').value||w}`;
+  $('gaud').innerHTML=j.audio.length?j.audio.map((a,i)=>`<div>${esc(a.source)} · ${esc(a.speaker)} · <span class="muted">${esc(a.title.slice(5))}</span> <button class="btn alt sm" data-gca="${i}">▶</button> <button class="btn sm" data-gcu="${i}">Use</button></div>`).join(''):'<span class="muted">No open dictionary recording found on Commons — use a cut from the video audio or TTS.</span>';
+  const getC=async i=>{const r=await api('/api/inspector/commonsfile?t='+encodeURIComponent(j.audio[i].title));if(!r.ok)throw new Error((await r.json()).error);return new Uint8Array(await r.arrayBuffer())};
+  q('#gaud').querySelectorAll('[data-gca]').forEach(b=>b.onclick=async()=>{const u=await getC(+b.dataset.gca);vplay(URL.createObjectURL(new Blob([u])))});
+  q('#gaud').querySelectorAll('[data-gcu]').forEach(b=>b.onclick=async()=>{const a=j.audio[+b.dataset.gcu],u=await getC(+b.dataset.gcu);let bytes=u;try{bytes=await encMp3(await decodeBytes(u))}catch{}setAud(bytes,'mp3',a.source+' · '+a.speaker+' (CC, Wikimedia Commons)')});
+  $('grad').innerHTML='<table class="anat"><tr><th>Char</th><th>Component</th><th>Pinyin</th><th>Meaning</th><th>Role</th></tr>'+ch.flatMap(c=>c.comps.map(k=>`<tr data-grow><td>${esc(c.c)}</td><td><input data-k="c" value="${esc(k.c)}" style="width:40px"></td><td><input data-k="py" value="${esc(k.py)}" style="width:70px"></td><td><input data-k="m" value="${esc(k.meaning)}" style="width:260px"></td><td><select data-k="r">${['meaning','sound','shape'].map(x=>`<option ${x===(k.role||'shape')?'selected':''}>${x}</option>`).join('')}</select></td></tr>`)).join('')+'</table>';
+  $('gbody').style.display='block';$('gst').textContent='Filled — everything below is editable.'};
+ $('gexp').onclick=()=>{const a=v('gexa');if(a&&D.media[a])vplay(D.media[a].url)};
+ $('gextts').onclick=async()=>{const t=strip(v('gexzh'));if(!t)return;const r=await api('/api/inspector/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,voice:'zh-CN-XiaoxiaoNeural',rate:'+0%'})});if(!r.ok)return $('gexst').textContent='TTS failed';
+  const n='gen_x_'+(v('gkey')||'w')+'_'+Date.now().toString(36)+'.mp3';await addMedia(n,new Uint8Array(await r.arrayBuffer()));$('gexa').insertAdjacentHTML('beforeend',`<option>${n}</option>`);$('gexa').value=n;$('gexst').textContent='phrase audio ready'};
+ const cut=async()=>{const m=D.media[v('gcsrc')];const ab=m.ab||await decodeBytes(m.edited||m.bytes),sr=ab.sampleRate,s=Math.max(0,Math.round(+v('gcs')/1000*sr)),e=Math.min(ab.length,Math.round(+v('gce')/1000*sr));if(e<=s)throw new Error('end must be after start');
+  const o=AC.createBuffer(1,e-s,sr),x=ab.getChannelData(0).subarray(s,e),y=o.getChannelData(0);y.set(x);const f=Math.min(400,y.length>>3);for(let i=0;i<f;i++){y[i]*=i/f;y[y.length-1-i]*=i/f}return o};
+ $('gcplay').onclick=async()=>{const s=AC.createBufferSource();s.buffer=await cut();s.connect(AC.destination);s.start()};
+ $('gcfull').onclick=()=>vplay(D.media[v('gcsrc')].url);
+ $('gcuse').onclick=async()=>{setAud(await encMp3(await cut()),'mp3',`cut ${v('gcs')}–${v('gce')} ms from ${v('gcsrc')} (story video audio)`)};
+ $('gtts').onclick=async()=>{const r=await api('/api/inspector/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:v('gh'),voice:'zh-CN-XiaoxiaoNeural',rate:'-20%'})});if(r.ok)setAud(new Uint8Array(await r.arrayBuffer()),'mp3','TTS (Xiaoxiao)')};
+ const showPic=(u8,ext)=>{G.pic={bytes:u8,ext};$('gimg').src=URL.createObjectURL(new Blob([u8],{type:mime('x.'+ext)}))};
+ $('gpic').onclick=async()=>{$('gpst').textContent='Generating (10–60 s)…';try{const r=await api('/api/inspector/image?p='+encodeURIComponent(v('gprompt')));if(!r.ok)throw new Error((await r.json()).error);showPic(new Uint8Array(await r.arrayBuffer()),'jpg');$('gpst').textContent='Done — regenerate for another version.'}catch(e){$('gpst').textContent=e.message}};
+ $('gup').onchange=async e=>{const f=e.target.files[0];if(f)showPic(new Uint8Array(await f.arrayBuffer()),(f.name.match(/\.(\w+)$/)||[,'jpg'])[1].toLowerCase())};
+ $('gmake').onclick=async()=>{const w=v('gh').trim(),key=v('gkey')||'w',st=$('gmst');if(!G.kit)return alert('Look the word up first');if(!G.audio&&!confirm('No word audio chosen. Create anyway?'))return;
+  try{st.textContent='Building…';const stamp=Date.now().toString(36),media={},put=async(n,b)=>{await addMedia(n,b);media[n]=b64(b);return n};
+   const pic=G.pic?await put(`gen_${key}_${stamp}.${G.pic.ext}`,G.pic.bytes):'',au=G.audio?await put(`gen_${key}_${stamp}.mp3`,G.audio.bytes):'';
+   const rows=[...q('#grad').querySelectorAll('[data-grow]')].map(r=>({ch:r.cells[0].textContent,c:r.querySelector('[data-k=c]').value.trim(),py:r.querySelector('[data-k=py]').value.trim(),m:r.querySelector('[data-k=m]').value.trim(),r:r.querySelector('[data-k=r]').value})).filter(x=>x.c);
+   let keys='';for(const ch of [...w]){keys+=`<div class="kch">${esc(ch)}</div>`;for(const k of rows.filter(x=>x.ch===ch)){let ka='';st.textContent='Radical audio '+k.c+'…';
+     try{const r=await api('/api/inspector/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:k.c,voice:'zh-CN-XiaoxiaoNeural',rate:'-20%'})});if(r.ok)ka=`[sound:${await put(`gen_k_${key}_${k.c.codePointAt(0).toString(16)}_${stamp}.mp3`,new Uint8Array(await r.arrayBuffer()))}]`}catch{}
+     keys+=`<div class="krow"><span class="kc">${esc(k.c)}</span><span class="kp">${esc(k.py)}</span><span class="km">${esc(k.m)}</span><span class="kr ${k.r}">${k.r}</span><span class="ka">${ka}</span></div>`}}
+   st.textContent='Stroke data…';let strokes='';try{const P=await charpack(w),o={};P.forEach(x=>{if(x.hw)o[x.c]={strokes:x.hw.strokes,medians:x.hw.medians,radStrokes:x.hw.radStrokes||[]}});strokes=JSON.stringify(o)}catch{}
+   const exzh=v('gexzh')||`<b>${w}</b>`,exa=v('gexa'),phrase=strip(exzh);
+   const defs=v('gdefs').split('\n').map(s=>s.trim()).filter(Boolean).slice(0,3),V={Hanzi:w,Pinyin:v('gpy'),Short:v('gshort'),Definition:defs.length?'<ol>'+defs.map(d=>'<li>'+esc(d)+'</li>').join('')+'</ol>'+(phrase!==w?`<div class="sense"><b>In this story:</b> ${esc(phrase)} = ${esc(v('gexen'))}</div>`:''):'',
+    Explain:v('gexpl'),Picture:pic?`<img src="${pic}">`:'',Audio:au?`[sound:${au}]`:'',ExZh:exzh,ExPy:v('gexpy'),ExEn:v('gexen'),ExAudio:exa?`[sound:${exa}]`:'',Note:v('gnote'),Strokes:strokes,Block:v('gblk'),Key:key,AudioFile:au,ExAudioFile:exa,Assoc:v('gassoc'),Keys:keys};
+   const N=D.models[mid].flds.map(f=>f.name),F=N.map(n=>V[n]??''),like=D.notes.find(n=>n.id===+v('gafter'));
+   const old=D.notes.find(n=>n.added&&strip(fieldsOf(n)[0])===w);if(old){D.notes.splice(D.notes.indexOf(old),1);D.cards=D.cards.filter(c=>c.nid!==old.id)}
+   const nt=addNote(mid,F,like?like.tags:'',like);nt.gen=1;
+   if($('gwr').checked){const h=hanOnly(phrase);if(h.length>=2&&h.length<=4){const L=wrGet();if(!L.some(x=>x.t===h)){L.push({t:h,on:true});wrSave()}}}
+   genPersist({hanzi:w,mid,fields:F,tags:like?like.tags:'',likeId:like?like.id:null,block:v('gblk'),media});dlg.close();render();
+   const el=document.querySelector(`[data-nid="${nt.id}"]`);el&&el.scrollIntoView({block:'center'});}catch(e){st.textContent='Error: '+e.message;console.error(e)}};
+ dlg.showModal()}
+function numToMark(s){return s.replace(/([a-zü:]+)([1-5])/gi,(_,syl,t)=>{t=+t;syl=syl.replace(/u:/g,'ü').toLowerCase();if(t===5)return syl;const M={a:'āáǎà',e:'ēéěè',i:'īíǐì',o:'ōóǒò',u:'ūúǔù',ü:'ǖǘǚǜ'};
+ const i=syl.search(/[ae]/)>=0?syl.search(/[ae]/):syl.includes('ou')?syl.indexOf('o'):(()=>{let k=-1;for(let j=0;j<syl.length;j++)if('aeiouü'.includes(syl[j]))k=j;return k})();return i<0?syl:syl.slice(0,i)+M[syl[i]][t-1]+syl.slice(i+1)})}
 // ---------- create / edit notes ----------
 async function csum(t){const h=new Uint8Array(await crypto.subtle.digest('SHA-1',new TextEncoder().encode(t)));return parseInt([...h.slice(0,4)].map(x=>x.toString(16).padStart(2,'0')).join(''),16)}
 const pick=(N,l)=>l.find(x=>N.includes(x));

@@ -55,6 +55,13 @@ async function charData(c){if(CH.has(c))return CH.get(c);const cp=c.codePointAt(
   const [hw,svg]=await Promise.all([fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/'+encodeURIComponent(c)+'.json').then(r=>r.ok?r.json():null),
     fetch('https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsZhHans/'+cp+'.svg').then(r=>r.ok?r.text():null)]);
   const v={hw,svg};if(hw||svg)CH.set(c,v);return v;}
+// Make Me a Hanzi dictionary (decomposition, etymology; Arphic PL / LGPL) and Wikimedia Commons pronunciation search (Lingua Libre / audio-cmn, CC licences)
+const UA='mandarin-tone-trainer/1.0 (deck inspector)';let MMH=null;
+async function mmh(){if(MMH)return MMH;const t=await (await fetch('https://raw.githubusercontent.com/skishore/makemeahanzi/master/dictionary.txt')).text();const m=new Map();for(const l of t.split('\n')){if(!l)continue;try{const e=JSON.parse(l);m.set(e.character,e)}catch{}}return MMH=m}
+async function commonsAudio(w){const out=[];for(const q of ['intitle:"(cmn)" intitle:"'+w+'"','intitle:"Cmn-'+w+'"']){
+  const u='https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&format=json&srlimit=20&srsearch='+encodeURIComponent(q);
+  const j=await (await fetch(u,{headers:{'User-Agent':UA}})).json();for(const x of (j.query||{}).search||[]){const t=x.title;if(!/\.(wav|ogg|mp3|flac)$/i.test(t))continue;
+   const exact=new RegExp('[-\u2013]'+w+'\\.(wav|ogg|mp3|flac)$').test(t);if(exact&&!out.some(o=>o.title===t))out.push({title:t,source:/^File:LL-/.test(t)?'Lingua Libre':'audio-cmn',speaker:(t.match(/\(cmn\)-([^-]+)-/)||[])[1]||''})}}return out}
 export async function handleInspector(req,res,path){
   if(!PASS())return J(res,503,{error:'Inspector is disabled: set INSPECTOR_PASSCODE on the server'});
   if(path==='/api/inspector/login'&&req.method==='POST'){
@@ -80,6 +87,28 @@ export async function handleInspector(req,res,path){
   if(path==='/api/inspector/charpack'){
     const cs=[...new Set([...(new URL(req.url,'http://x').searchParams.get('c')||'')].filter(c=>/[\u3400-\u9fff]/.test(c)))].slice(0,12);
     const out={};for(const c of cs){try{out[c]=await charData(c)}catch(e){out[c]={error:String(e.message).slice(0,80)}}}return J(res,200,{chars:out});
+  }
+  if(path==='/api/inspector/wordkit'){
+    const w=(new URL(req.url,'http://x').searchParams.get('w')||'').trim().slice(0,8);
+    if(!/^[\u3400-\u9fff]+$/.test(w))return J(res,400,{error:'Chinese characters only'});
+    const d=await cedict(),M=await mmh().catch(()=>new Map());
+    const chars=[...w].map(c=>{const e=M.get(c)||{},et=e.etymology||{};const comps=[...(e.decomposition||'')].filter(x=>/[\u2e80-\u9fff]/.test(x)&&x!==c&&!/[\u2ff0-\u2fff]/.test(x));
+      return {c,pinyin:e.pinyin||[toPinyin(c)],definition:e.definition||'',radical:e.radical||'',etym:et,comps:comps.map(k=>{const m=M.get(k)||{};const ce=(d.get(k)||[])[0];
+        return {c:k,py:(m.pinyin||[])[0]||(ce?ce.py:''),meaning:(m.definition||(ce?ce.defs.slice(0,2).join('; '):'')).split(/[;,]/).slice(0,2).join(';').trim(),role:k===et.semantic?'meaning':k===et.phonetic?'sound':''}})}});
+    let audio=[];try{audio=await commonsAudio(w)}catch{}
+    return J(res,200,{word:w,pinyin:toPinyin(w),entries:d.get(w)||[],chars,audio});
+  }
+  if(path==='/api/inspector/commonsfile'){
+    const t=new URL(req.url,'http://x').searchParams.get('t')||'';if(!/^File:LL-Q9192 \(cmn\)|^File:Cmn-|^File:Zh-/.test(t))return J(res,400,{error:'only Mandarin pronunciation files'});
+    const r=await fetch('https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(t.slice(5)),{headers:{'User-Agent':UA}});if(!r.ok)return J(res,502,{error:'Commons '+r.status});
+    const b=Buffer.from(await r.arrayBuffer());res.writeHead(200,{'Content-Type':r.headers.get('content-type')||'audio/wav','Content-Length':b.length});return res.end(b);
+  }
+  if(path==='/api/inspector/image'){
+    // free public generator (Pollinations, no key, no payment); upload stays available as the fallback
+    const q=(new URL(req.url,'http://x').searchParams.get('p')||'').slice(0,400),seed=Math.floor(Math.random()*1e6);if(!q)return J(res,400,{error:'prompt required'});
+    try{const r=await fetch('https://image.pollinations.ai/prompt/'+encodeURIComponent(q)+'?width=768&height=576&nologo=true&seed='+seed,{signal:AbortSignal.timeout(90000)});if(!r.ok)throw new Error('HTTP '+r.status);
+      const b=Buffer.from(await r.arrayBuffer());res.writeHead(200,{'Content-Type':r.headers.get('content-type')||'image/jpeg','Content-Length':b.length});return res.end(b);}
+    catch(e){return J(res,502,{error:'Image generator unavailable ('+String(e.message).slice(0,80)+') — upload a picture instead'})}
   }
   if(path==='/api/inspector/clone/status')return J(res,200,{enabled:!!MM(),voice:!!voiceId});
   if(path==='/api/inspector/clone/tts'&&req.method==='POST'){
