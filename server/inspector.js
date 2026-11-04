@@ -61,7 +61,7 @@ async function mmh(){if(MMH)return MMH;const t=await (await fetch('https://raw.g
 async function commonsAudio(w){const out=[];for(const q of ['intitle:"(cmn)" intitle:"'+w+'"','intitle:"Cmn-'+w+'"']){
   const u='https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&format=json&srlimit=20&srsearch='+encodeURIComponent(q);
   const j=await (await fetch(u,{headers:{'User-Agent':UA}})).json();for(const x of (j.query||{}).search||[]){const t=x.title;if(!/\.(wav|ogg|mp3|flac)$/i.test(t))continue;
-   const exact=new RegExp('[-\u2013]'+w+'\\.(wav|ogg|mp3|flac)$').test(t);if(exact&&!out.some(o=>o.title===t))out.push({title:t,source:/^File:LL-/.test(t)?'Lingua Libre':'audio-cmn',speaker:(t.match(/\(cmn\)-([^-]+)-/)||[])[1]||''})}}return out}
+   const exact=new RegExp('[-\u2013]'+w+'[.](wav|ogg|mp3|flac)$').test(t);if(exact&&!out.some(o=>o.title===t))out.push({title:t,source:/^File:LL-/.test(t)?'Lingua Libre':'audio-cmn',speaker:(t.match(/\(cmn\)-([^-]+)-/)||[])[1]||''})}}return out}
 export async function handleInspector(req,res,path){
   if(!PASS())return J(res,503,{error:'Inspector is disabled: set INSPECTOR_PASSCODE on the server'});
   if(path==='/api/inspector/login'&&req.method==='POST'){
@@ -94,7 +94,7 @@ export async function handleInspector(req,res,path){
     const d=await cedict(),M=await mmh().catch(()=>new Map());
     const chars=[...w].map(c=>{const e=M.get(c)||{},et=e.etymology||{};const comps=[...(e.decomposition||'')].filter(x=>/[\u2e80-\u9fff]/.test(x)&&x!==c&&!/[\u2ff0-\u2fff]/.test(x));
       return {c,pinyin:e.pinyin||[toPinyin(c)],definition:e.definition||'',radical:e.radical||'',etym:et,comps:comps.map(k=>{const m=M.get(k)||{};const ce=(d.get(k)||[])[0];
-        return {c:k,py:(m.pinyin||[])[0]||(ce?ce.py:''),meaning:(m.definition||(ce?ce.defs.slice(0,2).join('; '):'')).split(/[;,]/).slice(0,2).join(';').trim(),role:k===et.semantic?'meaning':k===et.phonetic?'sound':''}})}});
+        return {c:k,py:(m.pinyin||[])[0]||(ce?ce.py:''),meaning:((ce?ce.defs.filter(x=>!/variant of|surname/i.test(x)).slice(0,2).join('; '):'')||m.definition||'').split(/[;,]/).slice(0,2).join(';').trim(),role:k===et.semantic?'meaning':k===et.phonetic?'sound':''}})}});
     let audio=[];try{audio=await commonsAudio(w)}catch{}
     return J(res,200,{word:w,pinyin:toPinyin(w),entries:d.get(w)||[],chars,audio});
   }
