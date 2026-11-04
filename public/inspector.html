@@ -36,7 +36,7 @@ body.drawer-on main{margin-right:346px}.dgrid{display:flex;gap:6px;flex-wrap:wra
 .filters label{margin-right:12px;font-size:13px}.hide{display:none!important}
 </style></head><body>
 <header><h1>🔎 Deck Inspector</h1><span class="muted" id="dname"></span><span class="sp"></span>
-<button class="btn alt sm" id="expa" disabled>📊 Export for analysis</button><button class="btn alt sm" id="exp" disabled>⬇ Export edits & marks</button><button class="btn sm" id="rebuild" disabled>🛠 Rebuild deck (.apkg)</button></header>
+<button class="btn" id="rebuild" disabled title="Apply all your edits and download a ready-to-import Anki deck" style="font-size:15px;padding:10px 18px">⬇ Download deck (.apkg)</button><span style="position:relative"><button class="btn alt sm" id="more" title="More: JSON exports, import edits">⋯ More</button><div id="moremenu" class="hide" style="position:absolute;right:0;top:110%;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(8,0,63,.18);padding:8px;display:flex;flex-direction:column;gap:6px;z-index:20;min-width:240px"><label class="btn alt sm" id="impl">⬆ Import edits JSON…<input type="file" id="impf" accept=".json,application/json" style="display:none"></label><button class="btn alt sm" id="exp" disabled>Export edits & marks (JSON)</button><button class="btn alt sm" id="expa" disabled>Export for analysis (JSON)</button></div></span></header>
 <div id="login" class="box"><b>Enter passcode</b><p class="muted">This tool is private. Deck files are only opened in your browser.</p>
 <form id="lf"><input type="password" id="code" placeholder="Passcode" autocomplete="current-password" style="width:100%"><div style="margin-top:10px"><button class="btn">Unlock</button> <span id="lerr" style="color:#dc2626"></span></div></form></div>
 <div class="wrap hide" id="app">
@@ -379,7 +379,21 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
   if(n&&ren[n]&&D.media[n].zkey===name){out.file(name,D.media[n].edited);nm[name]=ren[n];}else{out.file(name,await f.async('uint8array'));if(n)nm[name]=n;}}
  const keptF=D.notes.filter(n=>!D.excluded.has(n.id)).map(effFlds).join(' ');for(const n of Object.keys(D.newMedia)){if(!keptF.includes(n))continue;out.file(String(nk),D.media[n].edited||D.media[n].bytes);nm[String(nk++)]=ren[n]||n;}
  out.file(D.cfName,db.export());out.file('media',JSON.stringify(nm));db.close();
- const b=await out.generateAsync({type:'blob',compression:'DEFLATE'});dl(b,D.file.replace(/\.apkg$/,'')+'_fixed.apkg');
+ const b=await out.generateAsync({type:'blob',compression:'DEFLATE'});dl(b,D.file.replace(/\.apkg$/,'')+'_fixed.apkg');if(window.__noAlert)return;
  alert('Rebuilt with '+ed.length+' edited clip(s), '+ Object.keys(D.fedits).length+' note(s) with slot choices, '+D.notes.filter(n=>n.added&&!D.excluded.has(n.id)).length+' new note(s), '+D.excluded.size+' excluded note(s), '+orph.size+' orphan media dropped'+' (renamed *_fix'+stamp+'). Import the _fixed.apkg into Anki: the notes keep their IDs and get the new audio. For our build.py decks also export the edits JSON so the source build is updated too.');};
+// ---------- import edits JSON ----------
+async function importEdits(j){const E=j.edits||j.audioEdits||{},marks=j.marks||{};let ok=0,skip=[];
+ for(const [a,e] of Object.entries(E)){const m=D.media[a];if(!m){skip.push(a+' (no such clip)');continue}
+  try{if(e.op==='variant'){const v=VAR[a]&&VAR[a].variants.find(x=>x.id===e.variant);if(!v){skip.push(a+' (variant '+e.variant+' not found)');continue}
+    await setClip(a,await AC.decodeAudioData(b64u8(v.b64).slice().buffer),'variant: '+v.label,{op:'variant',variant:v.id,label:v.label});ok++}
+   else if(e.op==='trim'){const ab=await decodeBytes(m.bytes),end=Math.min(e.end,ab.duration);await setClip(a,cut(ab,e.start,end),'trim '+e.start.toFixed(2)+'–'+end.toFixed(2)+' s',{op:'trim',start:e.start,end});ok++}
+   else skip.push(a+' ('+e.op+' cannot be re-applied, re-do it by hand)')}catch(err){skip.push(a+' ('+err.message+')')}}
+ for(const g in marks){D.marks[g]=marks[g]}if(Object.keys(marks).length)saveMarks();
+ const sc=j.slotChoices||{};for(const g in sc){const nt=D.notes.find(n=>n.guid===g);if(nt)D.fedits[nt.id]=sc[g]}
+ for(const x of (j.excludedNotes||j.excluded||[])){const nt=D.notes.find(n=>n.guid===(x.guid||x));if(nt)D.excluded.add(nt.id)}
+ render();alert('Imported '+ok+' audio edit(s)'+(skip.length?'\nSkipped: '+skip.join(', '):'')+'\nNow press “⬇ Download deck (.apkg)”.')}
+$('impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!D)return;try{await importEdits(JSON.parse(await f.text()))}catch(err){alert('Could not import: '+err.message)}};
+$('more').onclick=e=>{e.stopPropagation();$('moremenu').classList.toggle('hide')};document.addEventListener('click',e=>{if(!e.target.closest('#moremenu'))$('moremenu').classList.add('hide')});
+$('moremenu').addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>$('moremenu').classList.add('hide'),0)});
 function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click()}
 </script></body></html>
