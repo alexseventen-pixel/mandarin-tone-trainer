@@ -29,6 +29,10 @@ dialog{border:none;border-radius:18px;box-shadow:0 20px 60px rgba(8,0,63,.25);pa
 iframe.card{width:390px;height:720px;border:1px solid #e2e8ed;border-radius:14px;background:#fff}
 #login{max-width:360px;margin:12vh auto}input[type=password],input[type=text],select{border:1px solid #d5e2ec;border-radius:10px;padding:8px 10px;font:inherit}
 .anat{width:100%;border-collapse:collapse;font-size:13px}.anat td,.anat th{border-top:1px solid #eef2f5;padding:6px;text-align:left;vertical-align:middle}.anat th{font-size:11px;color:#7a8794;text-transform:uppercase;letter-spacing:.06em}.slot{cursor:pointer;border-radius:8px;padding:3px 6px;display:inline-block}.slot:hover{background:#e0f2fe}.slot img{height:44px;border-radius:8px;display:block}.slot.chg{box-shadow:inset 0 0 0 1.5px #7cc7f0;background:#f0f9ff}.hz{font-size:22px;font-weight:700}.note.excl{opacity:.75;background:#f8fafc}
+.note{transition:transform .15s,box-shadow .15s,opacity .15s;cursor:pointer}.note.sel{transform:scale(1.015);box-shadow:0 14px 40px rgba(22,118,210,.28);outline:2px solid #1676d2;outline-offset:0;position:relative;z-index:2;opacity:1!important}main.hassel .note:not(.sel){opacity:.55}
+#drawer{position:fixed;right:16px;top:70px;bottom:16px;width:330px;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 16px 50px rgba(8,0,63,.18);padding:14px;z-index:6;border-top:4px solid #1676d2}
+body.drawer-on main{margin-right:346px}.dgrid{display:flex;gap:6px;flex-wrap:wrap}.drow{display:flex;gap:6px;align-items:center}.dname{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+#anat tr[data-row]{cursor:pointer}#anat tr.selrow td{background:#e0f2fe}
 .filters label{margin-right:12px;font-size:13px}.hide{display:none!important}
 </style></head><body>
 <header><h1>🔎 Deck Inspector</h1><span class="muted" id="dname"></span><span class="sp"></span>
@@ -39,6 +43,7 @@ iframe.card{width:390px;height:720px;border:1px solid #e2e8ed;border-radius:14px
 <aside><div class="box"><div class="sec" style="margin-top:0">Open a deck</div><input type="file" id="file" accept=".apkg,.colpkg"><div class="muted" style="font-size:12px;margin-top:6px">Any Anki .apkg (legacy collection.anki2/anki21). Parsed only in this browser.</div>
 <div class="sec">Our decks</div><div id="decks" class="muted">Loading…</div></div></aside>
 <main id="main"><div class="box muted">Pick a deck on the left or open an .apkg file.</div></main></div>
+<div id="drawer" class="hide"></div>
 <dialog id="dlg"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><b id="dt"></b><span style="flex:1"></span><button class="btn alt sm" onclick="dlg.close()">Close</button></div><div id="db"></div></dialog>
 <script src="/inspector/lib/jszip.min.js"></script><script src="/inspector/lib/sql-wasm.js"></script><script src="/inspector/lib/lame.min.js"></script>
 <script>
@@ -95,10 +100,10 @@ function render(){
  ${bad.length||warn.length?'<div class="sec">Audio report</div>'+[...bad,...warn].map(n=>`<div><b>${esc(n)}</b> ${(D.info[n].dur).toFixed(2)} s · ${D.info[n].flags.map(f=>`<span class="chip ${f[0]}">${esc(f[1])}</span>`).join('')}</div>`).join(''):''}</div>`;
  h=anatomy()+h;let g='';
  for(const nt of D.notes){const gr=groupOf(nt);if(gr!==g){g=gr;h+=`<div class="grp" style="display:flex;align-items:center;gap:8px">${esc(gr)}<button class="btn alt sm" data-addg="${nt.id}">+ Add card here</button></div>`;}
-  if(D.excluded.has(nt.id)){h+=`<div class="note excl" data-g="${esc(nt.guid)}" data-p="0" data-t=""><div class="nh"><span class="t" style="text-decoration:line-through;color:#9aa7b4">${esc((fieldsOf(nt)[0]||'').replace(/<[^>]+>/g,'').slice(0,40))}</span><span class="chip bad">deleted from rebuild</span><span class="sp"></span><button class="btn alt sm" data-restore="${nt.id}">↺ Restore</button></div></div>`;continue;}
+  if(D.excluded.has(nt.id)){h+=`<div class="note excl" data-nid="${nt.id}" data-g="${esc(nt.guid)}" data-p="0" data-t=""><div class="nh"><span class="t" style="text-decoration:line-through;color:#9aa7b4">${esc((fieldsOf(nt)[0]||'').replace(/<[^>]+>/g,'').slice(0,40))}</span><span class="chip bad">deleted from rebuild</span><span class="sp"></span><button class="btn alt sm" data-restore="${nt.id}">↺ Restore</button></div></div>`;continue;}
   const m=D.models[nt.mid]||{flds:[],tmpls:[]},F=fieldsOf(nt),all=F.join(' '),R=refs(all),title=(F[0]||'').replace(/<[^>]+>/g,'').slice(0,40);
   const mk=D.marks[nt.guid]||{},prob=R.a.some(a=>D.info[a]&&D.info[a].flags.length);
-  h+=`<div class="note ${mk.star?'starred':''}" data-g="${esc(nt.guid)}" data-p="${prob?1:0}" data-t="${esc(all.replace(/<[^>]+>/g,' ').toLowerCase())}"><div class="nh"><span class="t">${esc(title)}</span><span class="muted">${esc(m.name||'')} · ${D.cards.filter(c=>c.nid===nt.id).length} cards</span><span class="sp"></span>${nt.added?'<span class="chip ed">new</span>':''}<button class="btn alt sm" data-edit="${nt.id}">✎ Edit fields</button><button class="btn alt sm" data-dup="${nt.id}">⧉ Duplicate</button><button class="btn alt sm" data-exclude="${nt.id}" title="Exclude this note and its cards from the rebuilt deck (reversible)">🗑 Exclude</button><button class="btn red sm" data-exclude="${nt.id}" title="Delete this note and its cards from the rebuilt deck (you can restore it)">🗑 Delete</button><button class="star ${mk.star?'on':''}" title="Mark a successful moment">★</button></div>
+  h+=`<div class="note ${mk.star?'starred':''}" data-nid="${nt.id}" data-g="${esc(nt.guid)}" data-p="${prob?1:0}" data-t="${esc(all.replace(/<[^>]+>/g,' ').toLowerCase())}"><div class="nh"><span class="t">${esc(title)}</span><span class="muted">${esc(m.name||'')} · ${D.cards.filter(c=>c.nid===nt.id).length} cards</span><span class="sp"></span>${nt.added?'<span class="chip ed">new</span>':''}<button class="btn alt sm" data-edit="${nt.id}">✎ Edit fields</button><button class="btn alt sm" data-dup="${nt.id}">⧉ Duplicate</button><button class="btn alt sm" data-exclude="${nt.id}" title="Exclude this note and its cards from the rebuilt deck (reversible)">🗑 Exclude</button><button class="btn red sm" data-exclude="${nt.id}" title="Delete this note and its cards from the rebuilt deck (you can restore it)">🗑 Delete</button><button class="star ${mk.star?'on':''}" title="Mark a successful moment">★</button></div>
   <input class="mark ${mk.note?'has':''}" placeholder="What worked well here?" value="${esc(mk.note||'')}">
   <div class="imgs">${[...new Set(R.i)].map(i=>D.media[i]?`<img src="${D.media[i].url}" title="${esc(i)}">`:`<span class="chip bad">missing image ${esc(i)}</span>`).join('')}</div>
   <div class="prevs">${(m.tmpls||[]).map((t,i)=>`<button class="btn alt sm" data-pv="${nt.id}:${i}">👁 ${esc(t.name)}</button>`).join('')}<button class="btn alt sm" data-fl="1">Fields</button></div>
@@ -119,7 +124,7 @@ function wire(){
   el.querySelector('[data-fl]').onclick=()=>el.querySelector('.flds').classList.toggle('hide');});
  document.querySelectorAll('[data-pv]').forEach(b=>b.onclick=()=>preview(...b.dataset.pv.split(':').map(Number)));
  const flt=()=>{const p=$('fp').checked,s=$('fs').checked,q=$('fq').value.toLowerCase();document.querySelectorAll('.note').forEach(n=>n.classList.toggle('hide',(p&&n.dataset.p!=='1')||(s&&!(D.marks[n.dataset.g]||{}).star)||(q&&!n.dataset.t.includes(q))));};
- $('fp').onchange=$('fs').onchange=flt;$('fq').oninput=flt;}
+ $('fp').onchange=$('fs').onchange=flt;$('fq').oninput=flt;applySel(false);}
 function saveMarks(){localStorage.setItem('insp.marks.'+D.file,JSON.stringify(D.marks))}
 // ---------- waveform ----------
 class Wave{constructor(box,ab,cb){this.box=box;this.cv=box.querySelector('canvas');this.ab=ab;this.cb=cb;this.sel=null;this.p=null;this.draw();
@@ -203,12 +208,12 @@ function anatomy(){if(!D.notes.length)return '';const c=classify(),ex=D.excluded
  if(c.words.length){h+=`<div class="sec">Words</div><table class="anat"><tr><th>Hanzi</th><th>Picture</th><th>English (card)</th><th>Dictionary (CC-CEDICT)</th><th>Audio</th><th></th></tr>`;
   for(const nt of c.words){const k=fv(nt,'Key'),V=VARK[k],img=refs(fv(nt,'Picture')).i[0],en=strip(fv(nt,'Short')),dct=V&&V.dict?V.dict.map(d=>d.py+': '+d.defs.slice(0,3).join('; ')).join(' | '):strip(fv(nt,'Definition')).slice(0,90);
    const ch=D.fedits[nt.id]||{};
-   h+=`<tr><td><span class="hz">${esc(strip(fv(nt,'Hanzi')))}</span><div class="muted">${esc(strip(fv(nt,'Pinyin')))}</div></td>
+   h+=`<tr data-row="${nt.id}"><td><span class="hz">${esc(strip(fv(nt,'Hanzi')))}</span><div class="muted">${esc(strip(fv(nt,'Pinyin')))}</div></td>
    <td><span class="slot ${ch.Picture?'chg':''}" data-pic="${nt.id}" title="Click to choose another picture">${img&&D.media[img]?`<img src="${D.media[img].url}">`:'<span class="chip bad">no picture</span>'}<span class="muted" style="font-size:11px">${V&&V.pictures&&V.pictures.length?'+'+V.pictures.length+' alt':'only one'}</span></span></td>
    <td><span class="slot ${ch.Short?'chg':''}" data-def="${nt.id}" title="Click to pick a definition from the dictionary">${esc(en)} ✎</span></td>
    <td class="muted" style="font-size:12px;max-width:280px">${esc(dct)}</td><td>${audSlot(nt,'Audio')}</td><td>${Object.keys(ch).length?`<button class="btn alt sm" data-reset="${nt.id}">↺ default</button>`:''} <button class="btn red sm" data-exclude="${nt.id}" title="Delete from the rebuilt deck">🗑</button></td></tr>`;}
   h+='</table>';}
- const crow=(nt)=>`<tr><td>${esc(strip(fv(nt,'Label'))||fv(nt,'Block'))}</td><td><span class="hz" style="font-size:17px">${esc(strip(fv(nt,'Text')))}</span><div class="muted">${esc(strip(fv(nt,'Pinyin')))}</div></td><td>${esc(strip(fv(nt,'English')))}</td><td>${audSlot(nt,'Audio')}</td><td><button class="btn red sm" data-exclude="${nt.id}" title="Delete from the rebuilt deck">🗑</button></td></tr>`;
+ const crow=(nt)=>`<tr data-row="${nt.id}"><td>${esc(strip(fv(nt,'Label'))||fv(nt,'Block'))}</td><td><span class="hz" style="font-size:17px">${esc(strip(fv(nt,'Text')))}</span><div class="muted">${esc(strip(fv(nt,'Pinyin')))}</div></td><td>${esc(strip(fv(nt,'English')))}</td><td>${audSlot(nt,'Audio')}</td><td><button class="btn red sm" data-exclude="${nt.id}" title="Delete from the rebuilt deck">🗑</button></td></tr>`;
  if(c.chunks.length)h+=`<div class="sec">Sentence chunks (blocks)</div><table class="anat"><tr><th>Block</th><th>Chinese</th><th>English</th><th>Audio</th></tr>${c.chunks.map(crow).join('')}</table>`;
  h+=`<div class="sec">Full sentence</div>`+(c.full.length?`<table class="anat">${c.full.map(crow).join('')}</table>`:'<div class="muted">not built yet</div>');
  h+=`<div class="sec">Games</div><div class="muted">${c.games.length?c.games.length+' game note(s)':'not built yet'}</div><div class="sec">Test / exam</div><div class="muted">${c.tests.length?c.tests.length+' test note(s)':'not built yet'}</div>`;
@@ -301,6 +306,53 @@ $('expa').onclick=()=>{const a=analysisData(),base=D.file.replace(/\.apkg$/,'');
  if(confirm('Also download a CSV (one row per note)?')){const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',rows=[['id','note_type','kind','block','added','excluded','starred','mark_note','first_field','audio','audio_flags','fields_json'].join(',')];
   for(const n of a.notes)rows.push([n.id,n.noteType,n.kind,n.fields.Block||'',n.added,n.excluded,!!(n.mark&&n.mark.star),n.mark&&n.mark.note||'',strip(Object.values(n.fields)[0]),n.audio.map(x=>x.file).join(' '),n.audio.map(x=>x.flags.join('/')).join(' '),JSON.stringify(n.fields)].map(q).join(','));
   setTimeout(()=>dl(new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv'}),base+'_analysis.csv'),400);}};
+// ---------- selection + action drawer ----------
+let SELID=null;
+function noteEls(){return [...document.querySelectorAll('#main .note[data-nid]')].filter(e=>!e.classList.contains('hide'))}
+function selectNote(id,scroll=true){SELID=id==null?null:+id;applySel(scroll)}
+function applySel(scroll){const els=noteEls(),el=els.find(e=>+e.dataset.nid===SELID);if(SELID!=null&&!el)SELID=null;
+ document.querySelectorAll('#main .note.sel').forEach(e=>e.classList.remove('sel'));document.querySelectorAll('#anat tr.selrow').forEach(e=>e.classList.remove('selrow'));
+ $('main').classList.toggle('hassel',SELID!=null);$('drawer').classList.toggle('hide',SELID==null);document.body.classList.toggle('drawer-on',SELID!=null);
+ if(SELID==null)return;el.classList.add('sel');document.querySelectorAll(`#anat tr[data-row="${SELID}"]`).forEach(e=>e.classList.add('selrow'));
+ if(scroll)el.scrollIntoView({block:'nearest',behavior:'smooth'});drawDrawer()}
+function blocksAll(){return [...new Set(D.notes.map(n=>fv(n,'Block')||(n.tags.match(/block_(\w+)/)||[])[0]).filter(Boolean))].sort()}
+function moveToBlock(nt,b){const letter=(b.match(/(?:Block |block_)(\w+)/)||[,b])[1];
+ if(fnames(nt).includes('Block')){if(nt.added){const N=fnames(nt),F=fieldsOf(nt);F[N.indexOf('Block')]='Block '+letter;nt.flds=nt.flds0=F.join('\x1f')}else setField(nt,'Block','Block '+letter)}
+ nt.tags0=nt.tags0??nt.tags;nt.tags=(' '+nt.tags+' ').replace(/ block_\w+ /,' ').trim()+' block_'+letter;
+ const others=D.notes.filter(n=>n!==nt&&(n.tags.match(/block_(\w+)/)||[])[1]===letter);D.notes.splice(D.notes.indexOf(nt),1);
+ const last=others.length?D.notes.indexOf(others[others.length-1])+1:D.notes.length;D.notes.splice(last,0,nt);render()}
+function drawDrawer(){const nt=D.notes.find(n=>n.id===SELID);if(!nt)return;const m=D.models[nt.mid]||{tmpls:[]},N=fnames(nt),E=effFlds(nt),R=refs(E),mk=D.marks[nt.guid]||{},ex=D.excluded.has(nt.id);
+ const cur=(nt.tags.match(/block_(\w+)/)||[])[1]||'';
+ $('drawer').innerHTML=`<div style="display:flex;align-items:center;gap:8px"><b style="font-size:20px">${esc(strip(fieldsOf({flds:E})[0]).slice(0,24))}</b><span class="sp" style="flex:1"></span><button class="btn alt sm" id="dwx" title="Esc">✕</button></div>
+ <div class="muted" style="font-size:12px">${esc(m.name||'')} · ${D.cards.filter(c=>c.nid===nt.id).length} cards${nt.added?' · new':''}${ex?' · <b style="color:#dc2626">deleted</b>':''} · ↑/↓ to move, Esc to close</div>
+ ${[...new Set(R.i)].filter(i=>D.media[i]).slice(0,1).map(i=>`<img src="${D.media[i].url}" style="width:100%;max-height:150px;object-fit:cover;border-radius:12px;margin-top:8px">`).join('')}
+ <div class="sec">Preview</div><div class="dgrid">${(m.tmpls||[]).map((t,i)=>`<button class="btn alt sm" data-dpv="${i}">👁 ${esc(t.name)}</button>`).join('')}</div>
+ <div class="sec">Audio</div>${[...new Set(R.a)].map(a=>`<div class="drow"><button class="btn sm" data-dpl="${esc(a)}">▶</button><span class="dname" title="${esc(a)}">${esc(a)}</span>${D.info[a]&&D.info[a].flags.length?'<span class="chip warn">!</span>':''}${D.media[a]&&D.media[a].edited?'<span class="chip ed">edited</span>':''}</div><div class="dgrid" style="margin:2px 0 6px 34px">${VAR[a]?`<button class="btn sm" data-dva="${esc(a)}">🎧 Variants (${VAR[a].variants.length})</button>`:''}<button class="btn alt sm" data-dtr="${esc(a)}">✂ Trim</button><button class="btn alt sm" data-drp="${esc(a)}">⇄ Replace</button></div>`).join('')||'<div class="muted">No audio</div>'}
+ <div class="sec">Content</div><div class="dgrid"><button class="btn alt sm" id="dwed">✎ Edit fields</button>${N.includes('Picture')?'<button class="btn alt sm" id="dwpic">🖼 Choose picture</button><label class="btn alt sm">⬆ Upload picture<input type="file" id="dwup" accept="image/*" style="display:none"></label>':''}${N.includes('Short')?'<button class="btn alt sm" id="dwdef">📖 Definition</button>':''}</div>
+ <div class="sec">Successful moment</div><div class="drow"><button class="star ${mk.star?'on':''}" id="dwst">★</button><input type="text" id="dwmk" placeholder="What worked well here?" value="${esc(mk.note||'')}" style="flex:1"></div>
+ <div class="sec">Organise</div><div class="dgrid"><button class="btn alt sm" id="dwdup">⧉ Duplicate</button><button class="btn alt sm" id="dwadd">+ Add card after</button></div>
+ ${blocksAll().length?`<div class="drow" style="margin-top:6px"><span class="muted">Move to</span><select id="dwmv">${blocksAll().map(b=>{const l=(b.match(/(?:Block |block_)(\w+)/)||[,b])[1];return `<option value="${esc(l)}" ${l===cur?'selected':''}>Block ${esc(l)}</option>`}).join('')}</select></div>`:''}
+ <div style="margin-top:12px">${ex?`<button class="btn sm" id="dwres">↺ Restore</button>`:`<button class="btn red sm" id="dwdel">🗑 Delete</button>`}</div>`;
+ const D_=$('drawer'),q=s=>D_.querySelector(s),byA=(sel,f)=>D_.querySelectorAll(sel).forEach(b=>b.onclick=()=>f(b));
+ q('#dwx').onclick=()=>selectNote(null);
+ byA('[data-dpv]',b=>preview(nt.id,+b.dataset.dpv));byA('[data-dpl]',b=>vplay(D.media[b.dataset.dpl].url));byA('[data-dva]',b=>variantsDlg(b.dataset.dva));byA('[data-drp]',b=>replaceDlg(b.dataset.drp));
+ byA('[data-dtr]',b=>{const el=[...document.querySelectorAll('.note.sel .au')].find(e=>e.dataset.a===b.dataset.dtr);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.style.boxShadow='0 0 0 3px #7cc7f0';setTimeout(()=>el.style.boxShadow='',1600);}alert('Drag on the highlighted waveform to select the part to keep, then press “✂ Keep selection”.')});
+ q('#dwed').onclick=()=>noteEditor(nt,{});if(q('#dwpic'))q('#dwpic').onclick=()=>picDlg(nt);if(q('#dwdef'))q('#dwdef').onclick=()=>defDlg(nt);
+ if(q('#dwup'))q('#dwup').onchange=async e=>{const f=e.target.files[0];if(!f)return;const ext=(f.name.match(/\.(\w+)$/)||[,'jpg'])[1].toLowerCase(),name=`ins_pic_${Date.now().toString(36)}.${ext}`;await addMedia(name,new Uint8Array(await f.arrayBuffer()));
+  if(nt.added){const F=fieldsOf(nt);F[N.indexOf('Picture')]=`<img src="${name}">`;nt.flds=nt.flds0=F.join('\x1f');render()}else setField(nt,'Picture',`<img src="${name}">`)};
+ q('#dwst').onclick=()=>{const k=D.marks[nt.guid]=D.marks[nt.guid]||{};k.star=!k.star;saveMarks();render()};q('#dwmk').onchange=e=>{const k=D.marks[nt.guid]=D.marks[nt.guid]||{};k.note=e.target.value;saveMarks();render()};
+ q('#dwdup').onclick=()=>{const c=addNote(nt.mid,E.split('\x1f'),nt.tags,nt);selectNote(c.id)};q('#dwadd').onclick=()=>noteEditor(null,{like:nt});
+ if(q('#dwmv'))q('#dwmv').onchange=e=>moveToBlock(nt,'Block '+e.target.value);
+ if(q('#dwdel'))q('#dwdel').onclick=()=>{if(!confirm('Delete “'+strip(fieldsOf(nt)[0]).slice(0,30)+'” and its '+D.cards.filter(c=>c.nid===nt.id).length+' card(s) from the rebuilt deck?\nNothing is deleted from the source files; you can Restore or Undo it any time.'))return;D.excluded.add(nt.id);D.exStack.push(nt.id);render()};
+ if(q('#dwres'))q('#dwres').onclick=()=>{D.excluded.delete(nt.id);D.exStack=D.exStack.filter(x=>x!==nt.id);render()};}
+document.addEventListener('click',e=>{if(!D||$('dlg').open)return;const t=e.target;if(!t.isConnected)return;
+ if(t.closest('#drawer')||t.closest('dialog'))return;
+ const row=t.closest('#anat tr[data-row]');if(row){if(!t.closest('button,.slot,input,select,a,label'))selectNote(row.dataset.row);return}
+ const n=t.closest('#main .note[data-nid]');if(n){if(!t.closest('button,input,select,textarea,a,label,.wf,.slot'))selectNote(SELID===+n.dataset.nid&&false?null:n.dataset.nid,false);return}
+ if(t.closest('header')||t.closest('aside'))return;if(SELID!=null)selectNote(null)});
+document.addEventListener('keydown',e=>{if(!D||$('dlg').open||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+ if(e.key==='Escape'&&SELID!=null){selectNote(null);return}
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){const els=noteEls();if(!els.length)return;e.preventDefault();let i=els.findIndex(x=>+x.dataset.nid===SELID);i=i<0?0:Math.max(0,Math.min(els.length-1,i+(e.key==='ArrowDown'?1:-1)));selectNote(els[i].dataset.nid);}});
 // ---------- preview ----------
 function renderTmpl(t,names,F,front){let s=t.replace(/\{\{FrontSide\}\}/g,front||'');
  for(let k=0;k<3;k++)s=s.replace(/\{\{([#^])([^}]+)\}\}([\s\S]*?)\{\{\/\2\}\}/g,(_,o,n,b)=>{const v=(F[names.indexOf(n.trim())]||'').trim();return (o==='#')===!!v?b:''});
@@ -320,7 +372,7 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
  for(const nt of D.notes){if(D.excluded.has(nt.id)){db.run('delete from cards where nid=?',[nt.id]);db.run('delete from notes where id=?',[nt.id]);continue;}
   let f=effFlds(nt);for(const a of ed){f=f.split('[sound:'+a+']').join('[sound:'+ren[a]+']');f=f.split('\x1f').map(x=>x===a?ren[a]:x).join('\x1f');}if(nt.added){const N0=fieldsOf({flds:f});db.run('insert into notes (id,guid,mid,mod,usn,tags,flds,sfld,csum,flags,data) values (?,?,?,?,?,?,?,?,?,0,?)',[nt.id,nt.guid,nt.mid,now,-1,' '+nt.tags.trim()+' ',f,strip(N0[0]),await csum(strip(N0[0])),'']);
    let due=(db.exec('select max(due) from cards')[0]?.values[0][0]||0)+1;for(const c of D.cards.filter(c=>c.nid===nt.id))db.run('insert into cards (id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values (?,?,?,?,?,?,0,0,?,0,0,0,0,0,0,0,0,?)',[nt.id+c.ord+1,nt.id,c.did,c.ord,now,-1,due++,'']);continue;}
-  if(f!==nt.flds0)db.run('update notes set flds=?,mod=?,usn=-1 where id=?',[f,now,nt.id]);}
+  if(f!==nt.flds0)db.run('update notes set flds=?,mod=?,usn=-1 where id=?',[f,now,nt.id]);if(nt.tags0!=null&&nt.tags!==nt.tags0)db.run('update notes set tags=?,mod=?,usn=-1 where id=?',[' '+nt.tags.trim()+' ',now,nt.id]);}
  if(D.modelChanged)db.run('update col set models=?,mod=?',[JSON.stringify(D.models),now*1000]);
  const orph=new Set(D.dropOrphans?orphans():[]);let nk=Math.max(0,...Object.keys(mm).map(Number).filter(isFinite))+1;
  const nm={};for(const name of Object.keys(z.files)){const f=z.files[name];if(f.dir||name==='media'||name===D.cfName)continue;const n=mm[name];if(n&&orph.has(n))continue;
