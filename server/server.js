@@ -8,6 +8,7 @@ import { pinyin } from 'pinyin-pro';
 import { analyze as analyzeAnki } from './anki/analyze.js';
 import { answer as answerAnki } from './anki/answer.js';
 import { handleInspector } from './inspector.js';
+import { register as accRegister, sync as accSync, mine as accMine, status as accStatus } from './store.js';
 
 const publicDir=new URL('../public/',import.meta.url);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.wav':'audio/wav','.m4a':'audio/mp4','.mp4':'video/mp4','.mp3':'audio/mpeg','.wasm':'application/wasm'};
@@ -122,7 +123,7 @@ async function handleDrillAnalyze(request,response){
 
 async function serveFile(request,response){
   const url=new URL(request.url,'http://localhost');
-  const pages={'/drill':'drill.html','/stats':'stats.html','/inspector':'inspector.html'};
+  const pages={'/account':'account.html','/drill':'drill.html','/stats':'stats.html','/inspector':'inspector.html'};
   const requested=url.pathname==='/'?'index.html':pages[url.pathname]||url.pathname.slice(1);
   const safe=normalize(requested).replace(/^(\.\.(\/|\\|$))+/,'');
   const fileUrl=new URL(safe,publicDir);
@@ -156,6 +157,19 @@ createServer(async(request,response)=>{
   if(request.method==='POST'&&request.url==='/api/anki/analyze')return handleAnkiAnalyze(request,response);
   if(request.url==='/api/anki/answer'&&request.method==='OPTIONS'){response.writeHead(204,CORS);return response.end();}
   if(request.method==='POST'&&request.url==='/api/anki/answer')return handleAnkiAnswer(request,response);
+  if(request.url.startsWith('/api/account/')||request.url==='/api/anki/sync'){
+    const SC={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'};
+    if(request.method==='OPTIONS'){response.writeHead(204,SC);return response.end();}
+    const send=(s,d)=>{response.writeHead(s,{...SC,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});response.end(JSON.stringify(d));};
+    try{
+      if(request.url==='/api/account/status')return send(200,await accStatus());
+      if(request.method!=='POST')return send(405,{error:'POST only'});
+      const chunks=[];let n=0;for await(const c of request){n+=c.length;if(n>2_000_000)return send(413,{error:'too big'});chunks.push(c);}
+      const body=JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');
+      const f={'/api/account/register':accRegister,'/api/account/attempts':accMine,'/api/anki/sync':accSync}[request.url];
+      if(!f)return send(404,{error:'not found'});const [s,d]=await f(body);return send(s,d);
+    }catch(e){return send(500,{error:'Storage error'});}
+  }
   if(request.method==='POST'&&request.url==='/api/drill/analyze')return handleDrillAnalyze(request,response);
   if(request.method==='POST'&&request.url==='/api/prepare')return handlePrepare(request,response);
   if(request.method==='POST'&&request.url==='/api/assess')return handleAssessment(request,response);

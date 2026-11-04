@@ -49,6 +49,12 @@ async function cloneTts(text,speed){
   if(!mmOk(r)||!r.data?.audio)throw new Error('tts failed: '+(r.base_resp?.status_msg||'unknown'));
   return Buffer.from(r.data.audio,'hex');
 }
+// Hanzi Writer stroke data (hanzi-writer-data, Arphic PL / derived from Make Me a Hanzi) + AnimCJK SVG (Arphic PL). Fetched once, cached.
+const CH=new Map();
+async function charData(c){if(CH.has(c))return CH.get(c);const cp=c.codePointAt(0);
+  const [hw,svg]=await Promise.all([fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/'+encodeURIComponent(c)+'.json').then(r=>r.ok?r.json():null),
+    fetch('https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsZhHans/'+cp+'.svg').then(r=>r.ok?r.text():null)]);
+  const v={hw,svg};if(hw||svg)CH.set(c,v);return v;}
 export async function handleInspector(req,res,path){
   if(!PASS())return J(res,503,{error:'Inspector is disabled: set INSPECTOR_PASSCODE on the server'});
   if(path==='/api/inspector/login'&&req.method==='POST'){
@@ -70,6 +76,10 @@ export async function handleInspector(req,res,path){
     if(!/^[\u3000-\u9fff\uff00-\uffef\s]+$/.test(text))return J(res,400,{error:'Chinese text only (max 60 chars)'});
     try{const mp3=await edgeTts(text,voice,rate);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':mp3.length,'Cache-Control':'no-store'});return res.end(mp3);}
     catch(e){return J(res,502,{error:'TTS failed: '+String(e.message).slice(0,120)});}
+  }
+  if(path==='/api/inspector/charpack'){
+    const cs=[...new Set([...(new URL(req.url,'http://x').searchParams.get('c')||'')].filter(c=>/[\u3400-\u9fff]/.test(c)))].slice(0,12);
+    const out={};for(const c of cs){try{out[c]=await charData(c)}catch(e){out[c]={error:String(e.message).slice(0,80)}}}return J(res,200,{chars:out});
   }
   if(path==='/api/inspector/clone/status')return J(res,200,{enabled:!!MM(),voice:!!voiceId});
   if(path==='/api/inspector/clone/tts'&&req.method==='POST'){
