@@ -126,7 +126,7 @@ function usage(a){return D.notes.filter(n=>n.flds.includes('[sound:'+a+']')).len
 function wire(){
  document.querySelectorAll('.au').forEach(el=>{const a=el.dataset.a,m=D.media[a];if(!m||!m.ab)return;const W=new Wave(el.querySelector('.wf'),m.ab,s=>{el.querySelector('.sel').textContent=s?`${s[0].toFixed(2)}–${s[1].toFixed(2)} s`:''});el._w=W;
   el.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>act(b.dataset.act,a,el));});
- wireAnatomy();wirePiano();
+ wireAnatomy();wirePiano();wireAc();
  document.querySelectorAll('[data-rma]').forEach(b=>b.onclick=e=>{e.stopPropagation();const [id,a]=[b.dataset.rma.split('|')[0],b.dataset.rma.slice(b.dataset.rma.indexOf('|')+1)];const nt=D.notes.find(n=>n.id==id);if(confirm('Remove “'+a+'” from this card?\nThe file is kept; “↶ Undo sound delete” brings it back.'))rmAudio(nt,a)});
  if($('undoau'))$('undoau').onclick=undoAudio;
  document.querySelectorAll('.note:not(.excl)').forEach(el=>{const g=el.dataset.g,s=el.querySelector('.star'),t=el.querySelector('.mark');
@@ -233,7 +233,7 @@ function anatomy(){if(!D.notes.length)return '';const c=classify(),ex=D.excluded
  const crow=(nt)=>`<tr data-row="${nt.id}"><td>${esc(strip(fv(nt,'Label'))||fv(nt,'Block'))}</td><td><span class="hz" style="font-size:17px">${esc(strip(fv(nt,'Text')))}</span><div class="muted">${esc(strip(fv(nt,'Pinyin')))}</div></td><td>${esc(strip(fv(nt,'English')))}</td><td>${audSlot(nt,'Audio')}</td><td><button class="btn red sm" data-exclude="${nt.id}" title="Delete from the rebuilt deck">🗑</button></td></tr>${expRow(nt,5)}`;
  if(c.chunks.length)h+=`<div class="sec">Sentence chunks (blocks)</div><table class="anat"><tr><th>Block</th><th>Chinese</th><th>English</th><th>Audio</th></tr>${c.chunks.map(crow).join('')}</table>`;
  h+=`<div class="sec">Full sentence</div>`+(c.full.length?`<table class="anat">${c.full.map(crow).join('')}</table>`:'<div class="muted">not built yet</div>');
- h+=piano(c);
+ h+=piano(c)+acSection();
  h+=`<div class="sec">Games</div><div class="muted">${c.games.length?c.games.length+' game note(s)':'not built yet'}</div><div class="sec">Test / exam</div><div class="muted">${c.tests.length?c.tests.length+' test note(s)':'not built yet'}</div>`;
  if(orph.length)h+=`<div class="sec">Orphan media (not used by any kept note)</div><div style="font-size:12px">${orph.map(esc).join(', ')}</div><label style="font-size:13px"><input type="checkbox" id="dropo" ${D.dropOrphans?'checked':''}> leave orphan media out of the rebuilt deck</label>`;
  return h+'</div>'}
@@ -290,6 +290,34 @@ var p=document.getElementById('pall');if(p)p.onclick=function(){var i=0;(functio
 const PIANO_CSS=`.card{font-family:-apple-system,sans-serif;background:#f4f8fb;color:#08003f;text-align:center}.pw{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px}.ptile{width:96px;height:118px;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(8,0,63,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}.ptile img{width:100%;height:100%;object-fit:cover}.ptile .b{display:none}.ptile.fl img{display:none}.ptile.fl{background:#fffbeb}.ptile.fl .b{display:block}.ptile .h{font-size:32px;font-weight:700}.ptile .p{color:#7a8794}.ptxt{font-size:28px;color:#9aa7b4;align-self:center}.pb{border:none;border-radius:12px;padding:10px 16px;background:#1676d2;color:#fff;font-size:15px;margin:8px}`;
 function pianoHtml(ren){const c=classify(),S=pianoSources(c),src=S.find(x=>x.k===PSRC)||S[0];if(!src)return '';const T=sentenceTiles(src.t,c.words),rn=f=>ren[f]||f;
  return T.map(t=>{if(!t.nt)return `<span class="ptxt">${esc(t.h)}</span>`;const d=tileData(t);return `<div class="ptile" data-a="${esc(d.a?rn(d.a):'')}">${d.img?`<img src="${esc(d.img)}">`:''}<div class="b"><div class="h">${esc(d.h)}</div><div class="p">${esc(d.py)}</div></div></div>`}).join('')}
+// ---------- audio → combination game (exactly 8 options, editable per card) ----------
+function acItems(){const c=classify(),it=[],seen=new Set(),add=(k,t,py,en,a)=>{t=strip(t).replace(/\s|[，。,.]/g,'');if(!t||!a||seen.has(t))return;seen.add(t);it.push({k,t,py:strip(py),en:strip(en),a})};
+ c.words.forEach(n=>add('p-'+fv(n,'Key'),fv(n,'ExZh'),fv(n,'ExPy'),fv(n,'ExEn'),refs(fv(n,'ExAudio')).a[0]));c.chunks.forEach(n=>add(fv(n,'DrillId')||'c'+n.id,fv(n,'Text'),fv(n,'Pinyin'),fv(n,'English'),refs(fv(n,'Audio')).a[0]));return it}
+function acDistractors(it,all){const W=classify().words.map(n=>strip(fv(n,'Hanzi'))).filter(Boolean),out=[],push=x=>{x=x.trim();if(x&&x!==it.t&&!out.includes(x))out.push(x)};
+ for(const w of W)if(it.t.includes(w))for(const v of W)if(v!==w&&v.length===w.length&&!it.t.includes(v))push(it.t.replace(w,v));
+ all.filter(x=>x!==it).sort((a,b)=>Math.abs(a.t.length-it.t.length)-Math.abs(b.t.length-it.t.length)).forEach(x=>push(x.t));
+ for(const w of W)push(it.t+w);let i=0;while(out.length<7)push(it.t+'·'+(++i));return out}
+function acGet(){D.acg=D.acg||JSON.parse(localStorage.getItem('insp.acg.'+D.file)||'{}');const all=acItems();
+ return all.map(it=>{const sv=D.acg[it.k];let o=sv&&sv.options&&sv.options.length===8?sv.options.slice():null;if(!o){const d=acDistractors(it,all);o=[it.t,...d.slice(0,7)]}o[0]=o[0]||it.t;return{...it,options:o,ans:sv&&sv.answer!=null?sv.answer:0,edited:!!sv,dpool:acDistractors(it,all)}})}
+function acSave(){localStorage.setItem('insp.acg.'+D.file,JSON.stringify(D.acg))}
+function acSection(){const G=acGet();if(!G.length)return '';return `<div id="acg"><div class="sec">🎧 Audio → combination game · exactly 8 options per card <span style="text-transform:none;letter-spacing:0" class="muted">listen, pick what you heard · click an option to edit it · ✔ marks the correct one</span></div>
+ <label style="font-size:13px"><input type="checkbox" id="accard" ${D.acCard!==false?'checked':''}> add these ${G.length} game cards to the downloaded deck</label>
+ <table class="anat"><tr><th>Audio</th><th>Combination</th><th>8 options (correct ✔ + 7 distractors)</th><th></th></tr>${G.map((g,gi)=>`<tr><td><button class="btn sm" data-acp="${esc(g.a)}">▶</button></td><td><span class="hz" style="font-size:17px">${esc(g.t)}</span><div class="muted">${esc(g.py)}</div></td>
+ <td><div style="display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:4px">${g.options.map((o,i)=>`<div style="display:flex;gap:2px;align-items:center"><button class="btn ${i===g.ans?'':'alt'} sm" data-acans="${gi}:${i}" title="Mark as the correct answer">${i===g.ans?'✔':'○'}</button><input type="text" data-aco="${gi}:${i}" value="${esc(o)}" style="width:100%;padding:4px 6px;font-size:14px${i===g.ans?';border-color:#16a34a':''}"><button class="btn alt sm" data-acr="${gi}:${i}" title="Replace with another distractor">↻</button></div>`).join('')}</div></td>
+ <td>${g.edited?`<button class="btn alt sm" data-acd="${gi}">↺ default</button>`:''}</td></tr>`).join('')}</table></div>`}
+function wireAc(){const P=$('acg');if(!P)return;const G=acGet(),put=(gi,f)=>{const g=G[gi],cur={options:g.options.slice(),answer:g.ans};f(cur);D.acg[g.k]=cur;acSave();render()};
+ $('accard').onchange=e=>{D.acCard=e.target.checked};
+ P.querySelectorAll('[data-acp]').forEach(b=>b.onclick=()=>{const a=b.dataset.acp;if(D.media[a])vplay(D.media[a].url)});
+ P.querySelectorAll('[data-aco]').forEach(t=>t.onchange=()=>{const [gi,i]=t.dataset.aco.split(':').map(Number);const v=t.value.trim();if(!v||G[gi].options.some((x,j)=>j!==i&&x===v)){if(v)alert('This option is already in the list — every one of the 8 must be different.');return render()}put(gi,c=>c.options[i]=v)});
+ P.querySelectorAll('[data-acans]').forEach(b=>b.onclick=()=>{const [gi,i]=b.dataset.acans.split(':').map(Number);put(gi,c=>c.answer=i)});
+ P.querySelectorAll('[data-acr]').forEach(b=>b.onclick=()=>{const [gi,i]=b.dataset.acr.split(':').map(Number),g=G[gi],nx=g.dpool.find(x=>!g.options.includes(x))||prompt('New option:');if(nx)put(gi,c=>c.options[i]=nx)});
+ P.querySelectorAll('[data-acd]').forEach(b=>b.onclick=()=>{delete D.acg[G[b.dataset.acd].k];acSave();render()});}
+const AC_JS=`<script>(function(){var f=document.getElementById('acdata');if(!f)return;var o=f.getAttribute('data-o').split('|'),ans=o[+f.getAttribute('data-a')];
+o.sort(function(){return Math.random()-.5});var d=document.getElementById('acopts'),done=false;
+o.forEach(function(t){var b=document.createElement('button');b.className='aco';b.textContent=t;b.onclick=function(){if(done)return;done=true;
+ if(t==ans){b.className+=' ok';document.getElementById('acfb').textContent='✅ Correct!'}else{b.className+=' bad';document.getElementById('acfb').textContent='❌ Correct: '+ans;
+ [].forEach.call(d.children,function(c){if(c.textContent==ans)c.className+=' ok'})}};d.appendChild(b)})})();<\/script>`;
+const AC_CSS=`.card{font-family:-apple-system,sans-serif;background:#f4f8fb;color:#08003f;text-align:center;font-size:18px}#acopts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;max-width:520px;margin:auto}.aco{border:none;border-radius:12px;padding:12px 6px;font-size:20px;background:#fff;box-shadow:0 3px 10px rgba(8,0,63,.1)}.aco.ok{background:#dcfce7}.aco.bad{background:#fee2e2}.big{font-size:30px;font-weight:700}.py{color:#7a8794}`;
 // ---------- create / edit notes ----------
 async function csum(t){const h=new Uint8Array(await crypto.subtle.digest('SHA-1',new TextEncoder().encode(t)));return parseInt([...h.slice(0,4)].map(x=>x.toString(16).padStart(2,'0')).join(''),16)}
 const pick=(N,l)=>l.find(x=>N.includes(x));
@@ -408,7 +436,7 @@ function preview(nid,ord){const nt=D.notes.find(n=>n.id===nid),m=D.models[nt.mid
  $('dt').textContent=m.name+' · '+t.name;$('db').innerHTML='<div style="display:flex;gap:12px;flex-wrap:wrap"><div><div class="sec">Front</div><iframe class="card" sandbox="allow-scripts" id="pf"></iframe></div><div><div class="sec">Back</div><iframe class="card" sandbox="allow-scripts" id="pb"></iframe></div></div>';
  $('pf').srcdoc=doc(fr);$('pb').srcdoc=doc(bk);dlg.showModal()}
 // ---------- export / rebuild ----------
-$('exp').onclick=()=>{dl(new Blob([JSON.stringify({deck:D.file,exported:new Date().toISOString(),edits:D.edits,marks:D.marks,slotChoices:Object.fromEntries(Object.entries(D.fedits).map(([id,v])=>[(D.notes.find(n=>n.id==id)||{}).guid,v])),excludedNotes:D.notes.filter(n=>D.excluded.has(n.id)).map(n=>({guid:n.guid,first:fieldsOf(n)[0].replace(/<[^>]+>/g,'').slice(0,40)})),dropOrphans:D.dropOrphans?orphans():[],newMedia:Object.keys(D.newMedia)},null,1)],{type:'application/json'}),D.file.replace(/\.apkg$/,'')+'_edits.json')};
+$('exp').onclick=()=>{dl(new Blob([JSON.stringify({deck:D.file,exported:new Date().toISOString(),edits:D.edits,marks:D.marks,slotChoices:Object.fromEntries(Object.entries(D.fedits).map(([id,v])=>[(D.notes.find(n=>n.id==id)||{}).guid,v])),excludedNotes:D.notes.filter(n=>D.excluded.has(n.id)).map(n=>({guid:n.guid,first:fieldsOf(n)[0].replace(/<[^>]+>/g,'').slice(0,40)})),dropOrphans:D.dropOrphans?orphans():[],newMedia:Object.keys(D.newMedia),audioComboGame:D.acg||JSON.parse(localStorage.getItem('insp.acg.'+D.file)||'{}')},null,1)],{type:'application/json'}),D.file.replace(/\.apkg$/,'')+'_edits.json')};
 $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media').async('string')),out=new JSZip(),ed=Object.keys(D.edits),ren={},stamp=Date.now().toString(36).slice(-5);
  // edited clips get a new file name so Anki cannot keep the old copy; note fields are rewritten and their mod time bumped
  for(const a of ed)ren[a]=a.replace(/(\.[^.]+)$/,'_fix'+stamp+'$1');
@@ -422,6 +450,13 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
    const nid=now*1000+777,tt=(pianoSources(classify()).find(x=>x.k===PSRC)||{l:'Sentence'}).l,f=tt+'\x1f'+html,did=(D.cards[0]||{did:1}).did,due=(db.exec('select max(due) from cards')[0]?.values[0][0]||0)+1;
    db.run('insert into notes (id,guid,mid,mod,usn,tags,flds,sfld,csum,flags,data) values (?,?,?,?,?,?,?,?,?,0,?)',[nid,'piano'+nid.toString(36),mid,now,-1,' game piano ',f,tt,await csum(tt),'']);
    db.run('insert into cards (id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values (?,?,?,0,?,-1,0,0,?,0,0,0,0,0,0,0,0,?)',[nid+1,nid,did,now,due,'']);}}
+ if(D.acCard!==false){const G=acGet();if(G.length){pc=true;const mid=1793305798,any=Object.values(D.models)[0];MODELS=MODELS===D.models?{...D.models}:MODELS;
+   MODELS[mid]={...any,id:mid,name:'BearDoor 🎧 Audio → combination (8)',type:0,flds:['Audio','Answer','Pinyin','English','Options','AnswerIdx'].map((n,i)=>({...any.flds[0],name:n,ord:i})),
+    tmpls:[{...any.tmpls[0],name:'Hear → pick 1 of 8',ord:0,qfmt:'<div>🎧 Which combination did you hear?</div>{{Audio}}<div id="acdata" data-o="{{text:Options}}" data-a="{{AnswerIdx}}"></div><div id="acopts"></div><div id="acfb"></div>'+AC_JS,afmt:'<div class="big">{{Answer}}</div><div class="py">{{Pinyin}}</div><div>{{English}}</div>{{Audio}}',bqfmt:'',bafmt:''}],css:AC_CSS,sortf:1,req:[[0,'any',[0,1]]]};
+   const did=(D.cards[0]||{did:1}).did;let due=(db.exec('select max(due) from cards')[0]?.values[0][0]||0)+1,k=0;
+   for(const g of G){const nid=now*1000+500+k++,a=ren[g.a]||g.a,ans=g.options[g.ans],f=['[sound:'+a+']',ans,g.py,g.en,g.options.map(x=>x.replace(/\|/g,'/')).join('|'),String(g.ans)].join('\x1f');
+    db.run('insert into notes (id,guid,mid,mod,usn,tags,flds,sfld,csum,flags,data) values (?,?,?,?,?,?,?,?,?,0,?)',[nid,'acg'+g.k.replace(/\W/g,''),mid,now,-1,' game audio_combination ',f,ans,await csum(ans),'']);
+    db.run('insert into cards (id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values (?,?,?,0,?,-1,0,0,?,0,0,0,0,0,0,0,0,?)',[nid+1,nid,did,now,due++,'']);}}}
  if(D.modelChanged||pc)db.run('update col set models=?,mod=?',[JSON.stringify(MODELS),now*1000]);
  const orph=new Set(D.dropOrphans?orphans():[]);let nk=Math.max(0,...Object.keys(mm).map(Number).filter(isFinite))+1;
  const nm={};for(const name of Object.keys(z.files)){const f=z.files[name];if(f.dir||name==='media'||name===D.cfName)continue;const n=mm[name];if(n&&orph.has(n))continue;
@@ -440,6 +475,7 @@ async function importEdits(j){const E=j.edits||j.audioEdits||{},marks=j.marks||{
  for(const g in marks){D.marks[g]=marks[g]}if(Object.keys(marks).length)saveMarks();
  const sc=j.slotChoices||{};for(const g in sc){const nt=D.notes.find(n=>n.guid===g);if(nt)D.fedits[nt.id]=sc[g]}
  for(const x of (j.excludedNotes||j.excluded||[])){const nt=D.notes.find(n=>n.guid===(x.guid||x));if(nt)D.excluded.add(nt.id)}
+ if(j.audioComboGame){D.acg={...(D.acg||{}),...j.audioComboGame};acSave()}
  render();alert('Imported '+ok+' audio edit(s)'+(skip.length?'\nSkipped: '+skip.join(', '):'')+'\nNow press “⬇ Download deck (.apkg)”.')}
 $('impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!D)return;try{await importEdits(JSON.parse(await f.text()))}catch(err){alert('Could not import: '+err.message)}};
 $('more').onclick=e=>{e.stopPropagation();$('moremenu').classList.toggle('hide')};document.addEventListener('click',e=>{if(!e.target.closest('#moremenu'))$('moremenu').classList.add('hide')});
