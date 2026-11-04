@@ -34,7 +34,7 @@ iframe.card{width:390px;height:720px;border:1px solid #e2e8ed;border-radius:14px
 body.drawer-on main{margin-right:346px}.dgrid{display:flex;gap:6px;flex-wrap:wrap}.drow{display:flex;gap:6px;align-items:center}.dname{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 #anat tr[data-row]{cursor:pointer}#anat tr.selrow td{background:#e0f2fe}
 .note:not(.sel) .au{display:none}.aux td{background:#f8fbfe;padding:4px 10px 10px}.aux .au{display:block!important}.kau{opacity:.85}
-.piano{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px}.tile{width:112px;height:132px;perspective:600px;cursor:pointer;position:relative}.tile .in{position:absolute;inset:0;transition:transform .35s;transform-style:preserve-3d}.tile.fl .in{transform:rotateY(180deg)}
+.piano{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;max-width:250px}.tile{width:112px;height:132px;perspective:600px;cursor:pointer;position:relative}.tile .in{position:absolute;inset:0;transition:transform .35s;transform-style:preserve-3d}.tile.fl .in{transform:rotateY(180deg)}
 .tile .f,.tile .b{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;box-shadow:0 4px 14px rgba(8,0,63,.12);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}.tile .f img{width:100%;height:100%;object-fit:cover}.tile .b{transform:rotateY(180deg);background:#fffbeb}.tile .b .h{font-size:34px;font-weight:700}.tile .b .p{color:#7a8794}
 .tile.on .f,.tile.on .b{box-shadow:0 0 0 3px #f59e0b}.ptxt{font-size:30px;color:#9aa7b4;align-self:center;padding:0 2px}.tile .pk{position:absolute;right:4px;top:4px;z-index:3;background:#fff;border:none;border-radius:8px;font-size:12px;padding:2px 5px;opacity:.85;cursor:pointer}
 .filters label{margin-right:12px;font-size:13px}.hide{display:none!important}
@@ -52,7 +52,7 @@ body.drawer-on main{margin-right:346px}.dgrid{display:flex;gap:6px;flex-wrap:wra
 <script src="/inspector/lib/jszip.min.js"></script><script src="/inspector/lib/sql-wasm.js"></script><script src="/inspector/lib/lame.min.js"></script>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let VARK={},VAR={},CLONE={enabled:false},TOKEN=sessionStorage.getItem('insp.t')||'',SQL,D=null,AC;
+const GENM=new Set(['1793305797','1793305798','1793305799']);let VARW={},VARK={},VAR={},CLONE={enabled:false},TOKEN=sessionStorage.getItem('insp.t')||'',SQL,D=null,AC;
 const api=(p,o={})=>fetch(p,{...o,headers:{...(o.headers||{}),'X-Insp-Token':TOKEN}});
 $('lf').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/inspector/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('code').value})});const j=await r.json();if(!r.ok){$('lerr').textContent=j.error;return;}TOKEN=j.token;sessionStorage.setItem('insp.t',TOKEN);start();};
 async function start(){loadVariants();const r=await api('/api/inspector/decks');if(r.status===401){$('login').classList.remove('hide');return;}if(!r.ok){$('login').classList.remove('hide');$('lerr').textContent=(await r.json()).error;return;}
@@ -80,6 +80,7 @@ async function openDeck(buf,file,title){
  const auds=Object.keys(media).filter(n=>/\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(n));
  for(const n of auds)D.info[n]=await analyse(n);
  try{await genRestore()}catch(e){console.warn(e)}
+ try{seedGen()}catch(e){console.warn(e)}
  render();}
 function mime(n){return /\.mp3$/i.test(n)?'audio/mpeg':/\.wav$/i.test(n)?'audio/wav':/\.ogg$/i.test(n)?'audio/ogg':/\.m4a$/i.test(n)?'audio/mp4':/\.png$/i.test(n)?'image/png':/\.gif$/i.test(n)?'image/gif':/\.svg$/i.test(n)?'image/svg+xml':/\.webp$/i.test(n)?'image/webp':/\.jpe?g$/i.test(n)?'image/jpeg':'application/octet-stream'}
 async function decodeBytes(b){return await AC.decodeAudioData(b.slice().buffer)}
@@ -118,7 +119,7 @@ function render(){
 function audKind(nt,a){if(!nt)return '';const k=n=>refs(fv(nt,n)).a.includes(a);if(k('Audio'))return 'word audio';if(k('ExAudio'))return 'phrase audio';if(k('Keys')){const h=fv(nt,'Keys'),i=h.indexOf('[sound:'+a+']'),c=(h.slice(0,i).match(/class="kc">([^<]+)<\/span><span class="kp">([^<]+)/g)||[]).pop()||'';const mm=c.match(/>([^<]+)<\/span><span class="kp">([^<]+)/);return 'radical sound'+(mm?' '+mm[1]+' '+mm[2]:'')+' (from Keys)'}return 'audio'}
 function audioRow(a,nt){const i=D.info[a],m=D.media[a];if(!m)return `<div class="au"><span class="chip bad">missing audio file ${esc(a)}</span></div>`;const kd=audKind(nt,a);
  return `<div class="au ${/radical/.test(kd)?'kau':''}" data-a="${esc(a)}"><div class="row"><span class="nm">🔊 ${kd?'<span class="chip '+(/radical/.test(kd)?'warn':'ed')+'">'+esc(kd)+'</span> ':''}${esc(a)}</span>${nt?`<button class="btn red sm" data-rma="${nt.id}|${esc(a)}" title="Remove this sound from this card (undo any time)">🗑 Delete</button>`:''}<span class="muted">${i.dur.toFixed(2)} s · ${isFinite(i.rms)?i.rms.toFixed(0):'—'} dB · peak ${(i.pk||0).toFixed(2)} · used by ${usage(a)} note(s)</span>${i.flags.map(f=>`<span class="chip ${f[0]}">${esc(f[1])}</span>`).join('')||'<span class="chip ok">ok</span>'}${m.edited?'<span class="chip ed">edited: '+esc(m.editNote)+'</span>':''}</div>
- <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button>${VAR[a]?`<button class="btn sm" data-act="variants">🎧 Replacement variants (${VAR[a].variants.length})</button>`:''}${CLONE.enabled?'<button class="btn alt sm" data-act="clone">🧬 Voice clone (MiniMax)</button>':'<button class="btn alt sm" disabled title="Set MINIMAX_API_KEY in the Render environment to enable">🧬 Voice clone — key not set</button>'}${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
+ <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button><button class="btn sm" data-act="variants">🎧 Alternatives & clone${vget(a)?' ('+vget(a).variants.length+')':''}</button>${CLONE.enabled?'<button class="btn alt sm" data-act="clone">🧬 Voice clone (MiniMax)</button>':'<button class="btn alt sm" disabled title="Set MINIMAX_API_KEY in the Render environment to enable">🧬 Voice clone — key not set</button>'}${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
 function rmAudio(nt,a){D.audStack=D.audStack||[];const N=fnames(nt),E=effFlds(nt).split('\x1f'),prev=nt.added?nt.flds:JSON.stringify(D.fedits[nt.id]||null);
  const tag='[sound:'+a+']';if(nt.added){nt.flds=nt.flds0=E.map(x=>x.split(tag).join('')).join('\x1f')}else{E.forEach((x,i)=>{if(x.includes(tag))(D.fedits[nt.id]=D.fedits[nt.id]||{})[N[i]]=x.split(tag).join('')})}
  D.audStack.push({id:nt.id,added:!!nt.added,prev,a});render()}
@@ -174,26 +175,42 @@ function replaceDlg(a){const opts=Object.keys(D.info).filter(n=>n!==a&&D.media[n
 // ---------- replacement variants ----------
 
 async function loadVariants(){try{const c=await api('/api/inspector/clone/status');if(c.ok)CLONE=await c.json();}catch{}
- try{const r=await api('/api/inspector/deck?id=bear-p1v2-variants');if(r.ok){const j=JSON.parse(new TextDecoder().decode(await r.arrayBuffer()));VAR={};VARK={};for(const k in j){VAR[j[k].clip]=j[k];VARK[k]=j[k];}}}catch{}
+ try{const r=await api('/api/inspector/deck?id=bear-p1v2-variants');if(r.ok){const j=JSON.parse(new TextDecoder().decode(await r.arrayBuffer()));VAR={};VARK={};for(const k in j){VAR[j[k].clip]=j[k];VARK[k]=j[k];if(j[k].word&&!VARW[j[k].word])VARW[j[k].word]=j[k];}}}catch{}
  if(D)render();}
 const b64u8=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+const SPEAK={'彐':'记','忄':'心','灬':'火','阝':'阜','宀':'棉','丨':'滚','亅':'决','乛':'折'};
+function vget(a){return VAR[a]||VARW[clipText(a)]||null}
+function clipText(a){if(D.cliptxt&&D.cliptxt[a])return D.cliptxt[a];const t='[sound:'+a+']';
+ for(const nt of D.notes){if(!effFlds(nt).includes(t)&&!effFlds(nt).includes(a))continue;const N=fnames(nt),F=effFlds(nt).split('\x1f'),g=n=>F[N.indexOf(n)]||'';
+  for(let i=0;i<N.length;i++){if(!F[i].includes(t))continue;const n=N[i];
+   if(n==='Keys'){const h=F[i].slice(0,F[i].indexOf(t)),m=h.match(/class="kc">([^<]+)<\/span>(?![\s\S]*class="kc")/);if(m)return m[1]}
+   if(/^ExAudio/.test(n))return strip(g('ExZh')).replace(/[，。,.\s]/g,'');
+   if(n==='Audio')return strip(g('Hanzi')||g('Text')||g('Answer')).replace(/[，。,.\s]/g,'')}}
+ return (a.match(/[\u4e00-\u9fff]+/)||[''])[0]}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-alt]');if(!b)return;e.preventDefault();e.stopPropagation();const a=b.dataset.alt;(D.cliptxt=D.cliptxt||{})[a]=D.cliptxt[a]||b.dataset.txt||'';if(!D.cliptxt[a])delete D.cliptxt[a];variantsDlg(a)},true);
 let VP;function vplay(u){if(VP)VP.pause();VP=new Audio(u);VP.play()}
-function variantsDlg(a,focusClone){const v=VAR[a],word=v?v.word:(a.match(/[\u4e00-\u9fff]+/)||[''])[0];
+function variantsDlg(a,focusClone){const word=clipText(a),v=VAR[a]||VARW[word]||null;
  $('dt').textContent='Replacement variants · '+(word||a);
  const groups={};(v?v.variants:[]).forEach((x,i)=>{x.url=x.url||URL.createObjectURL(new Blob([b64u8(x.b64)],{type:'audio/mpeg'}));(groups[x.group]=groups[x.group]||[]).push(i)});
  const HV=new Set(JSON.parse(localStorage.getItem('insp.hidv')||'[]')),hk=i=>a+'|'+(v&&v.variants[i]?v.variants[i].id+'#'+i:i),nh=v?v.variants.filter((_,i)=>HV.has(hk(i))).length:0;
  const row=(lab,u,i)=>HV.has(hk(i))?'':`<div class="row" style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eef2f5"><button class="btn sm" data-p="${u}">▶</button><span style="flex:1">${esc(lab)}</span><button class="btn alt sm" data-u="${i}">Use this</button>${String(i)[0]==='c'?'':`<button class="btn red sm" data-hv="${i}" title="Remove from this list (undo below)">🗑 Delete</button>`}</div>`;
- $('db').innerHTML=`<div style="width:min(620px,90vw)"><div class="muted" style="margin-bottom:6px">Current clip: <button class="btn alt sm" id="vcur">▶ ${esc(a)}</button> · All variants are loudness-normalized (−16 LUFS) with silence trimmed. “Use this” swaps the clip in your edits; Export / Rebuild pick it up.</div>
+ $('db').innerHTML=`<div style="width:min(620px,90vw)"><div class="muted" style="margin-bottom:6px">Current clip: <button class="btn alt sm" id="vcur">${D.media[a]?'▶ '+esc(a):'none yet — pick one below'}</button> · All variants are loudness-normalized (−16 LUFS) with silence trimmed. “Use this” swaps the clip in your edits; Export / Rebuild pick it up.</div>
  ${nh?`<div class="muted" style="font-size:12px">${nh} deleted from this list <button class="btn alt sm" id="vundo">↶ Undo</button> <button class="btn alt sm" id="vall">↺ Restore all</button></div>`:''}${Object.entries(groups).map(([g,ix])=>ix.every(i=>HV.has(hk(i)))?'':`<div class="sec">${esc(g)}</div>`+ix.map(i=>row(v.variants[i].label,v.variants[i].url,i)).join('')).join('')}
- <div class="sec">Voice clone · Li Pei Ru (MiniMax, paid)</div><div id="vcl">${CLONE.enabled?`<button class="btn alt sm" data-c="1">Generate · normal</button> <button class="btn alt sm" data-c="0.8">Generate · slow</button> <span class="muted" id="vcs"></span>`:'<span class="muted">Key not set: add MINIMAX_API_KEY (and MINIMAX_GROUP_ID if needed) in the Render environment.</span>'}</div><div id="vclo"></div>
+ <div class="sec">Generate now · free Microsoft Edge neural TTS · text “${esc(word)}”${SPEAK[word]?' (spoken as '+SPEAK[word]+')':''}</div><div id="vtts">${[['zh-CN-XiaoxiaoNeural','Xiaoxiao F'],['zh-CN-XiaoyiNeural','Xiaoyi F'],['zh-CN-YunxiNeural','Yunxi M'],['zh-CN-YunjianNeural','Yunjian M'],['zh-TW-HsiaoChenNeural','HsiaoChen F TW']].map(([vo,l])=>`<button class="btn alt sm" data-tv="${vo}|+0%">${l}</button><button class="btn alt sm" data-tv="${vo}|-25%">${l} slow</button>`).join(' ')} <span class="muted" id="vts"></span></div><div id="vtto"></div>
+ <div class="sec">Cut by hand</div><button class="btn alt sm" id="vcut">⇄ Cut from another clip (story video audio)…</button>
+ <div class="sec">Voice clone · Li Pei Ru · Chatterbox (open source, pre-generated above when available) · MiniMax (paid)</div><div id="vcl">${CLONE.enabled?`<button class="btn alt sm" data-c="1">Generate · normal</button> <button class="btn alt sm" data-c="0.8">Generate · slow</button> <span class="muted" id="vcs"></span>`:'<span class="muted">Key not set: add MINIMAX_API_KEY (and MINIMAX_GROUP_ID if needed) in the Render environment.</span>'}</div><div id="vclo"></div>
  <div class="muted" style="font-size:11.5px;margin-top:10px">Sources: re-cut from the original lesson audio · Chatterbox multilingual (Resemble AI, open source, generated offline) · Microsoft Edge neural TTS · audio-cmn by hugolpz (CC BY-SA).</div></div>`;
- dlg.showModal();$('vcur').onclick=()=>vplay(D.media[a].url);const svH=()=>{localStorage.setItem('insp.hidv',JSON.stringify([...HV]));variantsDlg(a)};
+ const CL={};dlg.showModal();$('vcur').onclick=()=>D.media[a]&&vplay(D.media[a].url);const svH=()=>{localStorage.setItem('insp.hidv',JSON.stringify([...HV]));variantsDlg(a)};
  $('db').querySelectorAll('[data-hv]').forEach(b=>b.onclick=()=>{HV.add(hk(b.dataset.hv));const st=JSON.parse(localStorage.getItem('insp.hidvs')||'[]');st.push(hk(b.dataset.hv));localStorage.setItem('insp.hidvs',JSON.stringify(st));svH()});
  if($('vundo'))$('vundo').onclick=()=>{const st=JSON.parse(localStorage.getItem('insp.hidvs')||'[]');let k;while((k=st.pop())&&!HV.has(k));if(k)HV.delete(k);localStorage.setItem('insp.hidvs',JSON.stringify(st));svH()};
  if($('vall'))$('vall').onclick=()=>{v.variants.forEach((_,i)=>HV.delete(hk(i)));svH()};
  const wireRows=()=>{$('db').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>vplay(b.dataset.p));
-  $('db').querySelectorAll('[data-u]').forEach(b=>b.onclick=async()=>{const i=b.dataset.u,x=i[0]==='c'?CL[i]:v.variants[i];const ab=await AC.decodeAudioData((x.bytes||b64u8(x.b64)).slice().buffer);dlg.close();await setClip(a,ab,'variant: '+x.label,{op:'variant',variant:x.id,label:x.label});});};
- const CL={};wireRows();
+  $('db').querySelectorAll('[data-u]').forEach(b=>b.onclick=async()=>{const i=b.dataset.u,x=i[0]==='c'?CL[i]:v.variants[i];const by=x.bytes||b64u8(x.b64);dlg.close();
+   if(!D.media[a]){await addMedia(a,by);(D.virt=D.virt||{})[a]=1;render();return}const ab=await AC.decodeAudioData(by.slice().buffer);await setClip(a,ab,'variant: '+x.label,{op:'variant',variant:x.id,label:x.label,word});});};
+ $('vcut').onclick=()=>{if(D.media[a])replaceDlg(a);else alert('Pick a variant first, then you can cut.')};
+ $('db').querySelectorAll('[data-tv]').forEach(b=>b.onclick=async()=>{const [vo,rt]=b.dataset.tv.split('|');$('vts').textContent='Generating…';const r=await api('/api/inspector/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SPEAK[word]||word,voice:vo,rate:rt})});
+  if(!r.ok){$('vts').textContent=(await r.json()).error;return}const bytes=new Uint8Array(await r.arrayBuffer()),id='c'+Object.keys(CL).length,lab='Edge TTS · '+b.textContent;CL[id]={id:'tts_live_'+vo+rt,label:lab,bytes};$('vts').textContent='';$('vtto').insertAdjacentHTML('beforeend',row(lab,URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'})),id));wireRows();});
+ wireRows();
  $('db').querySelectorAll('[data-c]').forEach(b=>b.onclick=async()=>{if(!word)return alert('No Chinese word found for this clip');$('vcs').textContent='Generating… (first time also clones the voice, ~30 s)';
   const r=await api('/api/inspector/clone/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:word,speed:+b.dataset.c})});
   if(!r.ok){$('vcs').textContent=(await r.json()).error;return}const bytes=new Uint8Array(await r.arrayBuffer()),id='c'+Object.keys(CL).length,lab='Li Pei Ru clone · '+(b.dataset.c==='1'?'normal':'slow');
@@ -210,12 +227,12 @@ function orphans(){const used=new Set();const add=t=>{refs(t).a.forEach(x=>used.
  return Object.keys(D.media).filter(n=>D.media[n].zkey&&!used.has(n)&&!n.startsWith('_')&&!tm.includes(n))}
 function classify(){const r={words:[],chunks:[],full:[],games:[],tests:[]};
  for(const nt of D.notes){if(D.excluded.has(nt.id))continue;const N=fnames(nt),m=D.models[nt.mid]||{},tg=' '+nt.tags+' ';
-  if(/game/i.test(tg+m.name))r.games.push(nt);else if(/ (test|exam|quiz) /i.test(tg))r.tests.push(nt);
+  if(/game/i.test(tg+m.name)||GENM.has(String(nt.mid))||/[✍🎧🎹]/u.test(m.name||''))r.games.push(nt);else if(/ (test|exam|quiz) /i.test(tg))r.tests.push(nt);
   else if(N.includes('Hanzi'))r.words.push(nt);else if(/ final /.test(tg)||fv(nt,'IsFinal')==='1')r.full.push(nt);else if(N.includes('Text'))r.chunks.push(nt);}
  return r}
 const strip=h=>String(h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 function audSlot(nt,fld){const a=(refs(fv(nt,fld)).a[0])||'';if(!a)return '<span class="muted">—</span>';const m=D.media[a],ed=m&&m.edited;
- return `<span class="slot ${ed?'chg':''}" data-aud="${esc(a)}" title="Click to choose another audio">▶ ${esc(ed?'edited: '+(m.editNote||'').slice(0,28):'original')}${VAR[a]?` · <b>${VAR[a].variants.length}</b> variants`:''}</span>`}
+ return `<span class="slot ${ed?'chg':''}" data-aud="${esc(a)}" title="Click to choose another audio">▶ ${esc(ed?'edited: '+(m.editNote||'').slice(0,28):'original')}${vget(a)?` · <b>${vget(a).variants.length}</b> variants`:' · 🎧'}</span>`}
 let EXP=new Set();
 function expRow(nt,n){if(!EXP.has(nt.id))return '';const A=[...new Set(refs(effFlds(nt)).a)];return `<tr class="aux"><td colspan="${n}"><div class="muted" style="font-size:12px">Audio anatomy · ${A.length} sound(s) on this card · ▶ on the right still opens the variant picker</div>${A.map(a=>audioRow(a,nt)).join('')||'<span class="muted">no audio</span>'}</td></tr>`}
 function anatomy(){if(!D.notes.length)return '';const c=classify(),ex=D.excluded.size,orph=orphans();
@@ -239,7 +256,7 @@ function anatomy(){if(!D.notes.length)return '';const c=classify(),ex=D.excluded
  if(orph.length)h+=`<div class="sec">Orphan media (not used by any kept note)</div><div style="font-size:12px">${orph.map(esc).join(', ')}</div><label style="font-size:13px"><input type="checkbox" id="dropo" ${D.dropOrphans?'checked':''}> leave orphan media out of the rebuilt deck</label>`;
  return h+'</div>'}
 function wireAnatomy(){const byId=id=>D.notes.find(n=>n.id==id);
- document.querySelectorAll('[data-aud]').forEach(b=>b.onclick=()=>{const a=b.dataset.aud;if(VAR[a])variantsDlg(a);else replaceDlg(a)});
+ document.querySelectorAll('[data-aud]').forEach(b=>b.onclick=()=>{const a=b.dataset.aud;variantsDlg(a)});
  document.querySelectorAll('[data-pic]').forEach(b=>b.onclick=()=>picDlg(byId(b.dataset.pic)));
  document.querySelectorAll('[data-def]').forEach(b=>b.onclick=()=>defDlg(byId(b.dataset.def)));
  document.querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{delete D.fedits[b.dataset.reset];render()});
@@ -289,7 +306,7 @@ function wirePiano(){const P=$('piano');if(!P)return;$('psrc').onchange=e=>{PSRC
 const PIANO_JS=`<script>(function(){var T=document.querySelectorAll('.ptile');var A={};function snd(f){if(!f)return;try{if(A.cur)A.cur.pause();A.cur=new Audio(f);A.cur.play();}catch(e){}}
 for(var i=0;i<T.length;i++)T[i].onclick=function(){if(this.className.indexOf(' fl')<0){snd(this.getAttribute('data-a'));this.className+=' fl';}else this.className=this.className.replace(' fl','');};
 var p=document.getElementById('pall');if(p)p.onclick=function(){var i=0;(function nx(){if(i>=T.length)return;var t=T[i++];if(t.className.indexOf(' fl')<0)t.className+=' fl';var f=t.getAttribute('data-a');if(!f)return setTimeout(nx,150);if(A.cur)A.cur.pause();A.cur=new Audio(f);A.cur.onended=function(){setTimeout(nx,120)};A.cur.onerror=nx;A.cur.play();})();};})();<\/script>`;
-const PIANO_CSS=`.card{font-family:-apple-system,sans-serif;background:#f4f8fb;color:#08003f;text-align:center}.pw{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px}.ptile{width:96px;height:118px;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(8,0,63,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}.ptile img{width:100%;height:100%;object-fit:cover}.ptile .b{display:none}.ptile.fl img{display:none}.ptile.fl{background:#fffbeb}.ptile.fl .b{display:block}.ptile .h{font-size:32px;font-weight:700}.ptile .p{color:#7a8794}.ptxt{font-size:28px;color:#9aa7b4;align-self:center}.pb{border:none;border-radius:12px;padding:10px 16px;background:#1676d2;color:#fff;font-size:15px;margin:8px}`;
+const PIANO_CSS=`.card{font-family:-apple-system,sans-serif;background:#f4f8fb;color:#08003f;text-align:center}.pw{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;max-width:220px;margin:0 auto}.ptile{width:96px;height:118px;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(8,0,63,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}.ptile img{width:100%;height:100%;object-fit:cover}.ptile .b{display:none}.ptile.fl img{display:none}.ptile.fl{background:#fffbeb}.ptile.fl .b{display:block}.ptile .h{font-size:32px;font-weight:700}.ptile .p{color:#7a8794}.ptxt{font-size:28px;color:#9aa7b4;align-self:center}.pb{border:none;border-radius:12px;padding:10px 16px;background:#1676d2;color:#fff;font-size:15px;margin:8px}`;
 function pianoHtml(ren){const c=classify(),S=pianoSources(c),src=S.find(x=>x.k===PSRC)||S[0];if(!src)return '';const T=sentenceTiles(src.t,c.words),rn=f=>ren[f]||f;
  return T.map(t=>{if(!t.nt)return `<span class="ptxt">${esc(t.h)}</span>`;const d=tileData(t);return `<div class="ptile" data-a="${esc(d.a?rn(d.a):'')}">${d.img?`<img src="${esc(d.img)}">`:''}<div class="b"><div class="h">${esc(d.h)}</div><div class="p">${esc(d.py)}</div></div></div>`}).join('')}
 // ---------- audio → combination game (exactly 8 options, editable per card) ----------
@@ -304,7 +321,7 @@ function acGet(){D.acg=D.acg||JSON.parse(localStorage.getItem('insp.acg.'+D.file
 function acSave(){localStorage.setItem('insp.acg.'+D.file,JSON.stringify(D.acg))}
 function acSection(){const G=acGet();if(!G.length)return '';return `<div id="acg"><div class="sec">🎧 Audio → combination game · exactly 8 options per card <span style="text-transform:none;letter-spacing:0" class="muted">listen, pick what you heard · click an option to edit it · ✔ marks the correct one</span></div>
  <label style="font-size:13px"><input type="checkbox" id="accard" ${D.acCard!==false?'checked':''}> add these ${G.length} game cards to the downloaded deck</label>
- <table class="anat"><tr><th>Audio</th><th>Combination</th><th>8 options (correct ✔ + 7 distractors)</th><th></th></tr>${G.map((g,gi)=>`<tr><td><button class="btn sm" data-acp="${esc(g.a)}">▶</button></td><td><span class="hz" style="font-size:17px">${esc(g.t)}</span><div class="muted">${esc(g.py)}</div></td>
+ <table class="anat"><tr><th>Audio</th><th>Combination</th><th>8 options (correct ✔ + 7 distractors)</th><th></th></tr>${G.map((g,gi)=>`<tr><td><button class="btn sm" data-acp="${esc(g.a)}">▶</button> <button class="btn alt sm" data-alt="${esc(g.a)}" data-txt="${esc(g.t)}" title="Alternative audio & clone">🎧</button></td><td><span class="hz" style="font-size:17px">${esc(g.t)}</span><div class="muted">${esc(g.py)}</div></td>
  <td><div style="display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:4px">${g.options.map((o,i)=>`<div style="display:flex;gap:2px;align-items:center"><button class="btn ${i===g.ans?'':'alt'} sm" data-acans="${gi}:${i}" title="Mark as the correct answer">${i===g.ans?'✔':'○'}</button><input type="text" data-aco="${gi}:${i}" value="${esc(o)}" style="width:100%;padding:4px 6px;font-size:14px${i===g.ans?';border-color:#16a34a':''}"><button class="btn alt sm" data-acr="${gi}:${i}" title="Replace with another distractor">↻</button></div>`).join('')}</div></td>
  <td>${g.edited?`<button class="btn alt sm" data-acd="${gi}">↺ default</button>`:''}</td></tr>`).join('')}</table></div>`}
 function wireAc(){const P=$('acg');if(!P)return;const G=acGet(),put=(gi,f)=>{const g=G[gi],cur={options:g.options.slice(),answer:g.ans};f(cur);D.acg[g.k]=cur;acSave();render()};
@@ -323,12 +340,15 @@ const AC_CSS=`.card{font-family:-apple-system,sans-serif;background:#f4f8fb;colo
 // ---------- trial writing card for 2–4 character combinations ----------
 const hanOnly=t=>[...String(t)].filter(c=>/[\u3400-\u9fff]/.test(c)).join('');
 function wrGet(){if(!D.wr){D.wr=JSON.parse(localStorage.getItem('insp.wr.'+D.file)||'null');if(!D.wr){const seen=new Set();D.wr=acItems().map(x=>hanOnly(x.t)).filter(t=>t.length>=2&&t.length<=4&&!seen.has(t)&&seen.add(t)).map(t=>({t,on:true}))}}return D.wr}
+function wrVirt(w){return 'bd1_x_wr_'+[...w.t].map(c=>c.codePointAt(0).toString(16)).join('')+'.mp3'}
+function wrAudio(w){const it=acItems().find(x=>hanOnly(x.t)===w.t);if(it&&it.a)return it.a;const v=wrVirt(w);return D.media[v]?v:''}
 function wrSave(){localStorage.setItem('insp.wr.'+D.file,JSON.stringify(D.wr))}
 function wrSection(){const W=wrGet();return `<div id="wrs"><div class="sec">✍ Writing cards · 2–4 character combinations <span style="text-transform:none;letter-spacing:0" class="muted">Hanzi Writer quiz in a 米字格 grid, characters one after another; back side: AnimCJK animation with the radical coloured · works offline in AnkiMobile</span></div>
  <label style="font-size:13px"><input type="checkbox" id="wrcard" ${D.wrCard!==false?'checked':''}> add the ticked writing cards to the downloaded deck</label>
- <table class="anat"><tr><th></th><th>Combination (edit)</th><th></th></tr>${W.map((w,i)=>`<tr><td><input type="checkbox" data-wron="${i}" ${w.on?'checked':''}></td><td><input type="text" data-wrt="${i}" value="${esc(w.t)}" style="font-size:18px;width:160px"> <span class="muted">${hanOnly(w.t).length} chars</span></td><td><button class="btn alt sm" data-wrpv="${i}">👁 Preview</button> <button class="btn red sm" data-wrdel="${i}">🗑 Delete</button></td></tr>`).join('')}</table>
+ <table class="anat"><tr><th></th><th>Combination (edit) · English</th><th>Audio</th><th></th></tr>${W.map((w,i)=>`<tr><td><input type="checkbox" data-wron="${i}" ${w.on?'checked':''}></td><td><input type="text" data-wrt="${i}" value="${esc(w.t)}" style="font-size:18px;width:160px"> <span class="muted">${hanOnly(w.t).length} chars</span> <input type="text" data-wren="${i}" value="${esc(w.en||'')}" placeholder="English (auto)" style="width:170px"></td><td>${(()=>{const a=wrAudio(w);return a&&D.media[a]?`<button class="btn sm" onclick="vplay(D.media['${a}'].url)">▶</button> <button class="btn alt sm" data-alt="${esc(a)}" data-txt="${esc(w.t)}">🎧 Alternatives</button>`:`<button class="btn sm" data-alt="${esc(wrVirt(w))}" data-txt="${esc(w.t)}">🎧 Pick audio</button>`})()}</td><td><button class="btn alt sm" data-wrpv="${i}">👁 Preview</button> <button class="btn red sm" data-wrdel="${i}">🗑 Delete</button></td></tr>`).join('')}</table>
  <div style="display:flex;gap:6px;margin-top:6px"><input type="text" id="wrnew" placeholder="add a combination, e.g. 熊门" style="width:200px"><button class="btn sm" id="wradd">+ Add</button>${D.wrStack&&D.wrStack.length?'<button class="btn alt sm" id="wrundo">↶ Undo delete</button>':''}<span class="muted" id="wrst"></span></div></div>`}
 function wireWr(){if(!$('wrs'))return;const W=wrGet();$('wrcard').onchange=e=>{D.wrCard=e.target.checked};
+ document.querySelectorAll('[data-wren]').forEach(b=>b.onchange=()=>{W[b.dataset.wren].en=b.value.trim();wrSave()});
  document.querySelectorAll('[data-wron]').forEach(b=>b.onchange=()=>{W[b.dataset.wron].on=b.checked;wrSave()});
  document.querySelectorAll('[data-wrt]').forEach(b=>b.onchange=()=>{const t=hanOnly(b.value);if(t.length<2||t.length>4){alert('2–4 Chinese characters, please');return render()}W[b.dataset.wrt].t=t;wrSave();render()});
  document.querySelectorAll('[data-wrdel]').forEach(b=>b.onclick=()=>{D.wrStack=D.wrStack||[];D.wrStack.push(W.splice(+b.dataset.wrdel,1)[0]);wrSave();render()});
@@ -338,7 +358,8 @@ function wireWr(){if(!$('wrs'))return;const W=wrGet();$('wrcard').onchange=e=>{D
 let HWLIB=null;const CPK={};
 async function charpack(t){const need=[...t].filter(c=>!CPK[c]);if(need.length){const r=await api('/api/inspector/charpack?c='+encodeURIComponent(need.join('')));const j=await r.json();Object.assign(CPK,j.chars||{})}return [...t].map(c=>({c,...(CPK[c]||{})}))}
 async function wrNote(t,ren){HWLIB=HWLIB||await (await fetch('/inspector/lib/hanzi-writer.min.js')).text();const P=await charpack(t),miss=P.filter(x=>!x.hw).map(x=>x.c);if(miss.length)throw new Error('No stroke data for '+miss.join(''));
- const it=acItems().find(x=>hanOnly(x.t)===t),wn=classify().words.find(n=>strip(fv(n,'Hanzi'))===t);let py=it?it.py:wn?strip(fv(wn,'Pinyin')):'',en=it?it.en:wn?strip(fv(wn,'Short')):'',a=it?it.a:wn?refs(fv(wn,'Audio')).a[0]:'';
+ const it=acItems().find(x=>hanOnly(x.t)===t),wn=classify().words.find(n=>strip(fv(n,'Hanzi'))===t),wi=(D.wr||[]).find(x=>x.t===t)||{};let py=it?it.py:wn?strip(fv(wn,'Pinyin')):'',en=wi.en||(it?it.en:wn?strip(fv(wn,'Short')):''),a=it?it.a:wn?refs(fv(wn,'Audio')).a[0]:(D.media[wrVirt({t})]?wrVirt({t}):'');
+ if(!en||!py){const T=sentenceTiles(t,classify().words);if(T.every(x=>x.nt)){if(!py)py=T.map(x=>strip(fv(x.nt,'Pinyin'))).join(' ');if(!en)en=T.map(x=>x.h+' '+strip(fv(x.nt,'Short')).split(';')[0]).join(' + ')}}
  if(!py){try{const j=await (await api('/api/inspector/dict?w='+encodeURIComponent(t))).json();py=j.pinyin||'';en=en||((j.entries[0]||{}).defs||[]).slice(0,2).join('; ')}catch{}}
  const strokes={};P.forEach(x=>strokes[x.c]={strokes:x.hw.strokes,medians:x.hw.medians,radStrokes:x.hw.radStrokes||[]});
  let off=0;const anim=P.map(x=>{if(!x.svg)return `<div class="acbox"><span class="nos">${esc(x.c)}</span></div>`;const cp=x.c.codePointAt(0),rs=x.hw.radStrokes||[];
@@ -379,6 +400,10 @@ var busy=0;function push(){var S=g(SK,{}),L=pend();if(!S.email||!L.length||busy)
 push();var iv=setInterval(push,8000);setTimeout(function(){clearInterval(iv)},900000);})();<\/script>`;
 // ---------- ✨ new word generator: one word -> picture, answer back, audio, radicals and every task card ----------
 const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)},unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function seedGen(){const by=mid=>D.notes.filter(n=>String(n.mid)===mid);
+ if(!localStorage.getItem('insp.wr.'+D.file)){const L=by('1793305797');if(L.length){const seen=new Set();D.wr=L.map(n=>{const F=fieldsOf(n);return{t:strip(F[0]),en:strip(F[2]),on:true}}).filter(x=>!seen.has(x.t)&&seen.add(x.t));wrSave()}}
+ if(!localStorage.getItem('insp.acg.'+D.file)){const L=by('1793305798');if(L.length){D.acg={};const I=acItems();for(const n of L){const F=fieldsOf(n),it=I.find(x=>x.t===strip(F[1]));if(it&&!D.acg[it.k]){const o=F[4].split('|');if(o.length===8)D.acg[it.k]={options:o,answer:+F[5]||0}}}acSave()}}
+ if(by('1793305799').length)D.pianoCard=true}
 function genStore(){return JSON.parse(localStorage.getItem('insp.gen.'+D.file)||'[]')}
 function genPersist(rec){const L=genStore().filter(x=>x.hanzi!==rec.hanzi);L.push(rec);try{localStorage.setItem('insp.gen.'+D.file,JSON.stringify(L))}catch(e){try{rec.media={};L[L.length-1]=rec;localStorage.setItem('insp.gen.'+D.file,JSON.stringify(L))}catch{}}}
 async function genRestore(){for(const r of genStore()){if(D.notes.some(n=>n.added&&strip(fieldsOf(n)[0])===r.hanzi))continue;for(const [n,b] of Object.entries(r.media||{}))if(!D.media[n])await addMedia(n,unb64(b));
@@ -597,6 +622,7 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
   let f=effFlds(nt);for(const a of ed){f=f.split('[sound:'+a+']').join('[sound:'+ren[a]+']');f=f.split('\x1f').map(x=>x===a?ren[a]:x).join('\x1f');}f=tapify(f,fnames(nt));if(nt.added){const N0=fieldsOf({flds:f});db.run('insert into notes (id,guid,mid,mod,usn,tags,flds,sfld,csum,flags,data) values (?,?,?,?,?,?,?,?,?,0,?)',[nt.id,nt.guid,nt.mid,now,-1,' '+nt.tags.trim()+' ',f,strip(N0[0]),await csum(strip(N0[0])),'']);
    let due=(db.exec('select max(due) from cards')[0]?.values[0][0]||0)+1;for(const c of D.cards.filter(c=>c.nid===nt.id))db.run('insert into cards (id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values (?,?,?,?,?,?,0,0,?,0,0,0,0,0,0,0,0,?)',[nt.id+c.ord+1,nt.id,c.did,c.ord,now,-1,due++,'']);continue;}
   if(f!==nt.flds0)db.run('update notes set flds=?,mod=?,usn=-1 where id=?',[f,now,nt.id]);if(nt.tags0!=null&&nt.tags!==nt.tags0)db.run('update notes set tags=?,mod=?,usn=-1 where id=?',[' '+nt.tags.trim()+' ',now,nt.id]);}
+ for(const g of GENM){const r=db.exec('select id from notes where mid='+g);for(const [id] of (r[0]?.values||[])){db.run('delete from cards where nid=?',[id]);db.run('delete from notes where id=?',[id])}}
  let MODELS=D.models,pc=false;if(D.pianoCard){const html=pianoHtml(ren);if(html){pc=true;const mid=1793305799;MODELS={...D.models};
    const any=Object.values(D.models)[0];MODELS[mid]={...any,id:mid,name:'BearDoor 🎹 Picture sentence',type:0,flds:[{...any.flds[0],name:'Title',ord:0},{...any.flds[0],name:'Tiles',ord:1}],tmpls:[{...any.tmpls[0],name:'Play the sentence',ord:0,qfmt:'<div class="tag">🎹 {{Title}}</div><div class="pw">{{Tiles}}</div><button class="pb" id="pall">▶ Play the whole line</button><div style="color:#7a8794">tap a picture: it sounds and turns into the character · tap again: back to the picture</div>'+PIANO_JS,afmt:'{{FrontSide}}',bqfmt:'',bafmt:''}],css:PIANO_CSS,sortf:0,req:[[0,'any',[0,1]]]};
    const nid=now*1000+777,tt=(pianoSources(classify()).find(x=>x.k===PSRC)||{l:'Sentence'}).l,f=tt+'\x1f'+html,did=(D.cards[0]||{did:1}).did,due=(db.exec('select max(due) from cards')[0]?.values[0][0]||0)+1;
@@ -621,7 +647,7 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
  const orph=new Set(D.dropOrphans?orphans():[]);let nk=Math.max(0,...Object.keys(mm).map(Number).filter(isFinite))+1;
  const nm={};for(const name of Object.keys(z.files)){const f=z.files[name];if(f.dir||name==='media'||name===D.cfName)continue;const n=mm[name];if(n&&orph.has(n))continue;
   if(n&&ren[n]&&D.media[n].zkey===name){out.file(name,D.media[n].edited);nm[name]=ren[n];}else{out.file(name,await f.async('uint8array'));if(n)nm[name]=n;}}
- const keptF=D.notes.filter(n=>!D.excluded.has(n.id)).map(effFlds).join(' ');for(const n of Object.keys(D.newMedia)){if(!keptF.includes(n))continue;out.file(String(nk),D.media[n].edited||D.media[n].bytes);nm[String(nk++)]=ren[n]||n;}
+ const keptF=D.notes.filter(n=>!D.excluded.has(n.id)).map(effFlds).join(' ');for(const n of Object.keys(D.newMedia)){if(!keptF.includes(n)&&!(D.virt||{})[n])continue;out.file(String(nk),D.media[n].edited||D.media[n].bytes);nm[String(nk++)]=ren[n]||n;}
  for(const t of TAP){const k=Object.keys(D.media).find(x=>(ren[x]||x)===t);if(!k)continue;out.file(String(nk),D.media[k].edited||D.media[k].bytes);nm[String(nk++)]='_'+t;}TAP.clear();
  out.file(D.cfName,db.export());out.file('media',JSON.stringify(nm));db.close();
  const b=await out.generateAsync({type:'blob',compression:'DEFLATE'});dl(b,D.file.replace(/\.apkg$/,'')+'_fixed.apkg');if(window.__noAlert)return;
@@ -629,7 +655,7 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
 // ---------- import edits JSON ----------
 async function importEdits(j){const E=j.edits||j.audioEdits||{},marks=j.marks||{};let ok=0,skip=[];
  for(const [a,e] of Object.entries(E)){const m=D.media[a];if(!m){skip.push(a+' (no such clip)');continue}
-  try{if(e.op==='variant'){const v=VAR[a]&&VAR[a].variants.find(x=>x.id===e.variant);if(!v){skip.push(a+' (variant '+e.variant+' not found)');continue}
+  try{if(e.op==='variant'){const VV=VAR[a]||VARW[e.word||clipText(a)],v=VV&&VV.variants.find(x=>x.id===e.variant);if(!v){skip.push(a+' (variant '+e.variant+' not found)');continue}
     await setClip(a,await AC.decodeAudioData(b64u8(v.b64).slice().buffer),'variant: '+v.label,{op:'variant',variant:v.id,label:v.label});ok++}
    else if(e.op==='trim'){const ab=await decodeBytes(m.bytes),end=Math.min(e.end,ab.duration);await setClip(a,cut(ab,e.start,end),'trim '+e.start.toFixed(2)+'–'+end.toFixed(2)+' s',{op:'trim',start:e.start,end});ok++}
    else skip.push(a+' ('+e.op+' cannot be re-applied, re-do it by hand)')}catch(err){skip.push(a+' ('+err.message+')')}}
