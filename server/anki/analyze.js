@@ -146,6 +146,22 @@ function chaoTarget(tone,i,n,prev){
   if(tone===5){const lv={1:2.2,2:3,3:3.8,4:1.6}[prev]||2.5;return [lv,lv,lv-0.2,lv-0.3,lv-0.4];}
   return {1:[5,5,5,5,5],2:[3,3.3,3.9,4.5,5],4:[5,4.4,3.4,2.2,1]}[tone];
 }
+// voice onset: first run of >=3 voiced frames (fallback: first loud frame)
+export function voiceOnset(frames){for(let i=0;i+2<frames.length;i++)if(frames[i].f0&&frames[i+1].f0&&frames[i+2].f0)return frames[i].t;let pk=0;for(const f of frames)pk=Math.max(pk,f.rms||0);const f=frames.find(f=>(f.rms||0)>pk*0.15);return f?f.t:0;}
+// syllable slots fixed by the native recording (fractions sl, total d seconds), laid from the learner's voice onset — never stretched to the learner
+export function fixedSpans(frames,nat,n){const on=voiceOnset(frames);let sl=Array.isArray(nat&&nat.sl)&&nat.sl.length===n&&nat.sl.every(x=>x>0)?nat.sl:Array(n).fill(1/n);const S=sl.reduce((a,b)=>a+b,0);sl=sl.map(x=>x/S);
+ const d=isFinite(nat&&nat.d)&&nat.d>0.15&&nat.d<15?+nat.d:n*0.32;let acc=on;return {onset:on,spans:sl.map(x=>{const a=acc;acc+=x*d;return [a,acc];})};}
+// native contour for a card, computed once at deck build time
+export function nativeContour(wav,hanzi){const {samples,rate}=parseWav(wav),target=targetSyllables(hanzi);if(!target.length)throw new Error('No Chinese characters');const n=target.length;
+ let frames=trackPitch(samples,rate);if(frames.filter(f=>f.f0).length<8){const f2=trackPitch(samples,rate,{thr:0.3,win:0.03,maxF:600});if(f2.filter(f=>f.f0).length>frames.filter(f=>f.f0).length)frames=f2;}const vo=frames.filter(f=>f.f0);if(vo.length<3)return {v:2,n,d:null,sl:null,p:[]};
+ const on=voiceOnset(frames);let off=vo[vo.length-1].t+0.01;
+ let pk=0;for(const f of frames)pk=Math.max(pk,f.rms||0);
+ // syllable boundaries: start from equal split of the voiced span, move each to the quietest / unvoiced frame within ±30% of a slot
+ const D=off-on,b=[on];for(let i=1;i<n;i++){const c=on+D*i/n,w=D/n*0.3;let best=null,bs=1e9;for(const f of frames){if(f.t<c-w||f.t>c+w)continue;const sc=(f.rms||0)/pk+(f.f0?0.15:0)+Math.abs(f.t-c)/D*0.2;if(sc<bs){bs=sc;best=f.t}}b.push(best??c)}b.push(off);
+ for(let i=1;i<b.length;i++)if(b[i]<=b[i-1]+0.04)b[i]=b[i-1]+0.04;
+ const spans=b.slice(0,-1).map((x,i)=>[x,b[i+1]]),c=buildContour(frames,spans,target,null,null);
+ const p=[];let k=0;for(const q of c.user){if(!q){if(p.length&&p[p.length-1])p.push(null);continue}if(k++%2)continue;p.push([+(q.t-on).toFixed(3),+q.c.toFixed(2)])}
+ const d=b[b.length-1]-on;return {v:2,n,d:+d.toFixed(3),sl:spans.map(s=>+((s[1]-s[0])/d).toFixed(4)),p};}
 export function buildContour(frames,spans,target,oks,spk){
   const hop=0.01,st=frames.map(f=>f.f0&&isFinite(f.f0)&&f.f0>0?toSt(f.f0):null);
   const vals=st.filter(v=>v!=null);
@@ -175,8 +191,9 @@ export function buildContour(frames,spans,target,oks,spk){
   while(user.length&&user[user.length-1]===null)user.pop();
   const syl=target.map((s,i)=>({hanzi:s.hanzi,pinyin:s.pinyin,tone:s.tone,ok:oks?oks[i]:null,start:+spans[i][0].toFixed(3),end:+spans[i][1].toFixed(3),
     target:chaoTarget(s.tone,i,target.length,i?target[i-1].tone:0)}));
+  syl.forEach(x=>{const k=user.filter(q=>q&&!q.g&&q.t>=x.start&&q.t<x.end).length;x.voiced=+Math.min(1,k*0.01/Math.max(0.01,x.end-x.start)).toFixed(2);});
   const t0=Math.max(0,Math.min(syl[0]?.start??0,user.find(p=>p)?.t??0)-0.05),t1=Math.max(syl[syl.length-1]?.end??0,[...user].reverse().find(p=>p)?.t??0)+0.05;
-  return {unit:'chao',t0:+t0.toFixed(3),t1:+t1.toFixed(3),user,syllables:syl,range:{lo:+lo.toFixed(2),hi:+hi.toFixed(2),obs_lo:good.length?+pct(good,0.05).toFixed(2):null,obs_hi:good.length?+pct(good,0.95).toFixed(2):null},voiced_frames:vals.length,clean_level:level,points:user.filter(Boolean).length};
+  return {unit:'chao',onset:+voiceOnset(frames).toFixed(3),t0:+t0.toFixed(3),t1:+t1.toFixed(3),user,syllables:syl,range:{lo:+lo.toFixed(2),hi:+hi.toFixed(2),obs_lo:good.length?+pct(good,0.05).toFixed(2):null,obs_hi:good.length?+pct(good,0.95).toFixed(2):null},voiced_frames:vals.length,clean_level:level,points:user.filter(Boolean).length};
 }
 
 function spansFrom(tp,frames,n){
@@ -222,11 +239,11 @@ function buildServices({tp,crepe,timings,frames,tpSyl,local}){
       ms:(timings.pitch_ms??0)+(timings.fallback_ms??0),error:null}];
 }
 
-export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
+export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk,nat}){
   const T0=Date.now(),timings={};
   const {samples,rate}=parseWav(wav);
-  if(samples.length<rate*0.2)throw new Error('Запись слишком короткая');
-  if(samples.length>rate*12)throw new Error('Запись слишком длинная (макс. 12 с)');
+  if(samples.length<rate*0.2)throw new Error('Recording is too short');
+  if(samples.length>rate*12)throw new Error('Recording is too long (max 12 s)');
   const target=targetSyllables(hanzi,py);
   if(!target.length)throw new Error('No Chinese characters in expected text');
   const chars=target.map(s=>s.hanzi);
@@ -244,10 +261,10 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
       res.syllables=res.syllables.map((s,i)=>{const c=crepe.syllables[i];if(!c||c.heard_tone==null||c.decision==='uncertain')return s;
         const ok=c.decision!=='review';return {...s,heard_tone:Number(c.heard_tone),ok,verdict:ok?'верно':`похоже на ${c.heard_tone}-й`,tone_source:'crepe'};});
     }
-    const {spans}=spansFrom(null,frames,target.length);
+    let {spans}=spansFrom(null,frames,target.length);if(nat)spans=fixedSpans(frames,nat,target.length).spans;
     return {...res,syllables:addCrepe(res.syllables||[]),provider:'fallback',provider_error:tp.error,crepe,pitch_source,services:buildServices({tp,crepe,timings,frames,tpSyl:null,local}),contour:buildContour(frames,spans,target,res.syllables.map(s=>s.ok),spk),timings:{...timings,server_ms:Date.now()-T0}};
   }
-  const {spans,source}=spansFrom(tp,frames,target.length);
+  let {spans,source}=spansFrom(tp,frames,target.length);if(nat){spans=fixedSpans(frames,nat,target.length).spans;source='native_slots';}
   const base={expected:{hanzi:chars.join(''),pinyin:target.map(s=>s.pinyin).join(' ')},
     heard:{text:null,pinyin:Array.isArray(tp.heard?.syllables)?tp.heard.syllables.map(h=>typeof h==='string'?h:`${h.initial||''}${h.final||''}${h.tone??''}`):null},provider:'toneperfect',task:tp.task,model_version:tp.model_version,billing:tp.billing||null,tp_request:tp.id,span_source:source,crepe,pitch_source};
   if(!tp.assessable){
@@ -285,8 +302,8 @@ export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk}){
 
 async function analyzeHeuristic({wav,hanzi,pinyin:py,apiKey}){
   const {samples,rate}=parseWav(wav);
-  if(samples.length<rate*0.25)throw new Error('Запись слишком короткая');
-  if(samples.length>rate*12)throw new Error('Запись слишком длинная (макс. 12 с)');
+  if(samples.length<rate*0.25)throw new Error('Recording is too short');
+  if(samples.length>rate*12)throw new Error('Recording is too long (max 12 s)');
   const target=targetSyllables(hanzi,py);
   if(!target.length)throw new Error('No Chinese characters in expected text');
   const [heard,frames]=await Promise.all([transcribe(wav,apiKey).catch(e=>({error:e.message})),Promise.resolve(trackPitch(samples,rate))]);

@@ -58,7 +58,29 @@ function patchWrite(q,m){if(!q.includes('HanziWriter=function')||q.includes('id=
  q=q.replace('"✓ Done — tap to see the answer"','"✓ Done — flip the switch to see the answer"').replace('"✓ All "+ws.length+" characters written — tap Show Answer"','"✓ All "+ws.length+" characters written — flip the switch to see the answer"');
  q=q.replace('drawingWidth:14,highlightColor','drawingWidth:14,showHintAfterMisses:2,highlightColor');
  return q+`<div class="wgd"><label class="wsw"><input type="checkbox" id="wsw"><span class="sl"></span></label><span>Answer switch · only this opens the answer</span></div><div class="wans" id="wans"><div class="big">{{Hanzi}}</div><div class="py">{{Pinyin}}</div><div>{{${en}}}</div></div>`+WG_JS}
-function patchTmpl(m,t){t.qfmt=patchWrite(t.qfmt,m);t.qfmt=t.qfmt.split("px -apple-system,sans-serif").join("px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif");let a=t.afmt;
+function rp(t,a,b){if(!t.includes(a))throw new Error('std13 patch anchor missing: '+a.slice(0,50));return t.split(a).join(b)}
+function patchV13(t){if(!t.includes('var SERVER_URL')||t.includes('/*v13rec*/'))return t;
+ const ex=/id="ai-her-a" src="\{\{ExAudioFile\}\}"/.test(t),nf=ex?'ExNative':'Native';
+ t=t.replace(/(<audio id="ai-her-a"[^>]*><\/audio>)/,`$1<div id="ai-nat" style="display:none">{{${nf}}}</div>`);
+ t=t.split('▶ Her voice').join('▶ Hear native');
+ t=rp(t,"var SERVER_URL=","/*v13rec*/var SERVER_URL=");
+ // one AudioContext for every attempt; revive it if iOS suspended / interrupted / closed it
+ t=rp(t,"function ctx(){ if(!W.ac){","function ctx(){ if(W.ac&&W.ac.state==='closed')W.ac=null; if(!W.ac){");
+ t=rp(t,"if(W.ac.state==='suspended')W.ac.resume(); return W.ac;}","if(W.ac.state!=='running'){try{W.ac.resume();}catch(e){}} return W.ac;}");
+ // no OfflineAudioContext per attempt (iOS caps live audio contexts): resample in JS with a small averaging low-pass
+ t=rp(t,"function to16k(ab){","function to16k(ab){ return Promise.resolve(lin(ab)); }\nfunction to16kOld(ab){");
+ t=rp(t,"o[j]=m[k]+((m[k+1]||0)-m[k])*f;}","var s0=0,c0=0,h0=Math.max(0,Math.floor(r/2)); for(var q=k-h0;q<=k+h0;q++){if(q>=0&&q<m.length){s0+=m[q];c0++;}} o[j]=c0?s0/c0:0;}");
+ // every attempt starts from a clean state: old timer, old mic stream and nodes are released first
+ t=rp(t,"function start(){\n  if(W.src){try{W.src.stop();}catch(e){}}","function start(){\n  if(W.recording||$('ai-rec').disabled)return; clearTimeout(W.timer); cancelAnimationFrame(W.raf); cleanup(); W.rec=null; W.chunks=[];\n  if(W.src){try{W.src.stop();}catch(e){}}");
+ t=rp(t,"x.ontimeout=function(){","x.onabort=function(){ clearTimeout(slow); $('ai-rec').disabled=false; };\n  x.ontimeout=function(){");
+ // native slots go to the server; the native line is drawn from data stored in the card
+ t=rp(t,"fd.append('card','bd1:'+CARD);","fd.append('card','bd1:'+CARD); var NT=nat(); if(NT&&NT.sl&&NT.d){fd.append('nslots',JSON.stringify(NT.sl)); fd.append('ndur',NT.d);}");
+ t=rp(t,"function draw0(c){","function nat(){ if(W.natG===GEN)return W.nat; W.natG=GEN; W.nat=null; try{var e=$('ai-nat'),s=e?e.textContent.trim():''; if(s)W.nat=JSON.parse(s);}catch(e){} return W.nat; }\nfunction draw0(c){");
+ t=rp(t,"g.fillText(s.hanzi,(x0+x1)/2,h-22);","g.fillText(s.hanzi,(x0+x1)/2,h-22); if(s.voiced===0){g.save();g.fillStyle='#9aa7b4';g.font='11px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif';g.fillText('not voiced',(x0+x1)/2,Tp+14);g.restore();g.fillStyle=col;}");
+ t=rp(t,"g.lineCap='round'; g.lineJoin='round'; var U=","var NT=nat(); if(NT&&NT.p&&NT.p.length&&isFinite(c.onset)){ g.save(); g.strokeStyle='rgba(75,85,99,.7)'; g.lineWidth=2.5; g.lineCap='round'; var pv=null; NT.p.forEach(function(q){ if(!q){pv=null;return;} var xx=X(c.onset+q[0]), yy=Y(q[1]); if(xx>w-R)return; if(pv){g.beginPath();g.moveTo(pv[0],pv[1]);g.lineTo(xx,yy);g.stroke();} pv=[xx,yy]; }); g.restore(); }\n  g.lineCap='round'; g.lineJoin='round'; var U=");
+ t=rp(t,"g.fillText('your voice',L+128,11);","g.fillText('your voice',L+128,11); if(nat()&&nat().p&&nat().p.length){ g.fillStyle='rgba(75,85,99,.7)'; g.fillRect(L+204,9,18,4); g.fillStyle=fg; g.fillText('native',L+228,11); }");
+ return t}
+function patchTmpl(m,t){t.qfmt=patchWrite(t.qfmt,m);t.qfmt=patchV13(t.qfmt);t.afmt=patchV13(t.afmt);t.qfmt=t.qfmt.split("px -apple-system,sans-serif").join("px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif");let a=t.afmt;
  a=patchAI(a);
  if(a.includes('class="aitl"')&&!a.includes('class="peek"')){const dh=(a.match(/data-hanzi="\{\{text:(\w+)\}\}"/)||[])[1];
   const P={Hanzi:['Hanzi','Pinyin','Short'],ExZh:['ExZh','ExPy','ExEn'],Text:['Text','Pinyin','English']}[dh];
@@ -68,9 +90,22 @@ function patchTmpl(m,t){t.qfmt=patchWrite(t.qfmt,m);t.qfmt=t.qfmt.split("px -app
  const SL='<div class="rich-slot">{{Rich}}</div>';if(a.includes(SL)){const k=a.indexOf(SL),e=a.indexOf('</script>',k);a=a.slice(0,k)+(e>0?a.slice(e+9):a.slice(k+SL.length));}
  if(String(m.id)!==PIANO_MID)a+=`<div class="rich-slot">{{Rich}}</div>`+RICH_JS;
  t.afmt=a;}
+const NATF={'1793305701':[['Native','AudioFile','Hanzi'],['ExNative','ExAudioFile','ExZh']],'1793305702':[['Native','AudioFile','Text']]};const NAT={};
+// before export: compute the native contour of every recorder card's own clip once (cached by file name; reused if the note already has it)
+async function prep(db,MODELS,getBytes,api){const rows=(db.exec('select mid,flds from notes')[0]||{values:[]}).values;const jobs=[];
+ for(const [mid,f] of rows){const L=NATF[String(mid)];if(!L)continue;const names=MODELS[mid].flds.map(x=>x.name),v=f.split('\x1f'),F={};names.forEach((k,i)=>F[k]=v[i]||'');
+  for(const [nf,af,hf] of L){const an=F[af];if(!an||NAT[an])continue;try{const old=JSON.parse(F[nf]||'null');if(old&&old.a===an&&old.v===2){NAT[an]=old;continue}}catch(e){}
+   const hz=strip(F[hf]).replace(/[^\u3400-\u9fff]/g,'');if(!hz)continue;NAT[an]={pending:1};jobs.push([an,hz]);}}
+ const AC=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,1,16000);let done=0;
+ for(const [an,hz] of jobs){try{const by=getBytes(an);if(!by)throw new Error('no audio');const ab=await AC.decodeAudioData(by.slice().buffer);
+   const len=Math.ceil(ab.duration*16000),oc=new OfflineAudioContext(1,len,16000),s=oc.createBufferSource();s.buffer=ab;s.connect(oc.destination);s.start();const x=(await oc.startRendering()).getChannelData(0);
+   const dv=new DataView(new ArrayBuffer(44+x.length*2)),w=(o,t)=>{for(let i=0;i<t.length;i++)dv.setUint8(o+i,t.charCodeAt(i))};w(0,'RIFF');dv.setUint32(4,36+x.length*2,true);w(8,'WAVE');w(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,16000,true);dv.setUint32(28,32000,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,'data');dv.setUint32(40,x.length*2,true);for(let i=0;i<x.length;i++)dv.setInt16(44+i*2,Math.max(-1,Math.min(1,x[i]))*32767,true);
+   const r=await api('/api/inspector/native?h='+encodeURIComponent(hz),{method:'POST',headers:{'Content-Type':'audio/wav'},body:dv.buffer});NAT[an]=await r.json();}catch(e){NAT[an]={error:String(e.message||e)}}done++;}
+ return {computed:jobs.length,errors:jobs.filter(([a])=>NAT[a].error).length}}
 function apply(db,MODELS){const M=JSON.parse(JSON.stringify(MODELS));
  for(const m of Object.values(M)){const c0=m.css||'';m.css=(c0.includes(MARK)?c0.slice(0,c0.indexOf(MARK)).replace(/\n$/,''):c0)+'\n'+CSS;
   if(!m.flds.some(f=>f.name==='Rich'))m.flds.push({...m.flds[0],name:'Rich',ord:m.flds.length,sticky:false});
+  for(const nf of NATF[String(m.id)]||[])if(!m.flds.some(f=>f.name===nf[0]))m.flds.push({...m.flds[0],name:nf[0],ord:m.flds.length,sticky:false});
   for(const t of m.tmpls||[])patchTmpl(m,t);}
  const rows=(db.exec('select id,mid,flds from notes')[0]||{values:[]}).values,nm=mid=>M[mid].flds.map(f=>f.name);
  const W=[];for(const [id,mid,f] of rows)if(String(mid)===WORD_MID){const F={},v=f.split('\x1f');nm(mid).forEach((n,i)=>F[n]=v[i]||'');
@@ -88,7 +123,8 @@ function apply(db,MODELS){const M=JSON.parse(JSON.stringify(MODELS));
    const dict=words.length?`<div class="rsec">Dictionary · every word (CC-CEDICT)</div><div class="rdict">${words.map(w=>`<div><b>${esc(w.hz)}</b> ${esc(w.py)} — ${esc(w.en)}</div>`).join('')}</div>`:'';
    const piano=words.length?`<div class="rsec">🎹 ${words.length>1?'Every word in it':'Its piano card'} · tap to flip and hear</div><div class="pw rp">${words.map(tile).join('')}</div>${words.length>1?'<button class="rpall">▶ Play all</button>':''}`:'';
    v[names.indexOf('Rich')]=`<div class="rich">${bg?`<div class="rbg"><img src="${esc(bg)}"></div>`:''}${head}${dict}${piano}</div>`;}
+  for(const [nf,af,hf] of NATF[String(mid)]||[]){const an=F[af]||'',r=NAT[an];if(r&&!r.error)v[names.indexOf(nf)]=JSON.stringify({...r,a:an});else if(!an)v[names.indexOf(nf)]='';}
   db.run('update notes set flds=?,mod=?,usn=-1 where id=?',[v.join('\x1f'),Math.floor(Date.now()/1000),id]);n++}
  return {models:M,notes:n}}
-window.STD10={apply,CSS,version:11};
+window.STD10={apply,prep,NAT,patchV13,CSS,version:13};
 })();

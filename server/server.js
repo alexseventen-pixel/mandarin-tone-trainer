@@ -80,7 +80,7 @@ async function handleAnkiAnalyze(request,response){
     const form=await new Request('http://local/',{method:'POST',headers:{'content-type':request.headers['content-type']||''},body:Buffer.concat(chunks)}).formData();
     const audio=form.get('audio'),hanzi=String(form.get('hanzi')||'');
     if(!audio||typeof audio==='string'||!hanzi||hanzi.length>40)return send(400,{error:'Need audio file and hanzi'});
-    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi,pinyin:String(form.get('pinyin')||'').slice(0,200),apiKey:config.openaiKey,tpKey:config.tonePerfectKey,crepeUrl:config.crepeUrl,spk:{lo:Number(form.get('spk_lo')),hi:Number(form.get('spk_hi'))}});
+    const data=await analyzeAnki({wav:Buffer.from(await audio.arrayBuffer()),hanzi,pinyin:String(form.get('pinyin')||'').slice(0,200),apiKey:config.openaiKey,tpKey:config.tonePerfectKey,crepeUrl:config.crepeUrl,spk:{lo:Number(form.get('spk_lo')),hi:Number(form.get('spk_hi'))},nat:(()=>{try{const sl=JSON.parse(String(form.get('nslots')||'null'));return Array.isArray(sl)?{sl:sl.map(Number),d:Number(form.get('ndur'))}:null}catch{return null}})()});
     data.timings={...(data.timings||{}),upload_read_ms:tUp};
     const card=String(form.get('card')||'').slice(0,40);if(card)console.log(JSON.stringify({ev:'anki_card_attempt',at:new Date().toISOString(),card,hanzi,score:data.score,heard:data.heard?.pinyin||null,syl:(data.syllables||[]).map(x=>x.ok?1:0)}));
     send(200,data);

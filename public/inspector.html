@@ -691,7 +691,7 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
  // tone-recorder cards: add the ☁ sync line (queue on device, send to the app account when linked)
  {const M2=MODELS===D.models?JSON.parse(JSON.stringify(D.models)):MODELS;let ch=false;for(const m of Object.values(M2))for(const t of m.tmpls||[])if(t.afmt.includes('bd1.anki.hist')&&!t.afmt.includes('bdsync')){t.afmt+=SYNC_JS;ch=true}if(ch){MODELS=M2;pc=true}}
  // anatomy standard v10 (halo, peek, rich answer + piano tiles, tone-listener hardening) on every card type
- if(window.STD10){const r=STD10.apply(db,MODELS);MODELS=r.models;pc=true;}
+ if(window.STD10){if(STD10.prep){const pr=await STD10.prep(db,MODELS,n=>{const k=Object.keys(D.media).find(x=>(ren[x]||x)===n);return k?(D.media[k].edited||D.media[k].bytes):null},api);console.log('native contours',JSON.stringify(pr));}const r=STD10.apply(db,MODELS);MODELS=r.models;pc=true;}
  if(D.modelChanged||pc)db.run('update col set models=?,mod=?',[JSON.stringify(MODELS),now*1000]);
  const orph=new Set(D.dropOrphans?orphans():[]);let nk=Math.max(0,...Object.keys(mm).map(Number).filter(isFinite))+1;
  const nm={};for(const name of Object.keys(z.files)){const f=z.files[name];if(f.dir||name==='media'||name===D.cfName)continue;const n=mm[name];if(n&&orph.has(n))continue;

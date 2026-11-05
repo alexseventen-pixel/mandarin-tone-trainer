@@ -3,6 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { pinyin as toPinyin } from 'pinyin-pro';
+import { nativeContour } from './anki/analyze.js';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { createHmac, createDecipheriv, timingSafeEqual } from 'node:crypto';
 const dataDir=new URL('../inspector-data/',import.meta.url);
@@ -85,6 +86,11 @@ export async function handleInspector(req,res,path){
     if(!/^[\u3400-\u9fff]+$/.test(w))return J(res,400,{error:'Chinese characters only'});
     const d=await cedict();const ent=d.get(w)||[];
     return J(res,200,{word:w,pinyin:toPinyin(w),entries:ent,chars:ent.length?[]:[...w].map(c=>({c,pinyin:toPinyin(c),entries:(d.get(c)||[]).slice(0,2)}))});
+  }
+  if(path==='/api/inspector/native'&&req.method==='POST'){
+    // deck build: native pitch contour + syllable slots of a card's own audio (16-bit WAV body), stored in the card so the phone needs no extra server time
+    const h=(new URL(req.url,'http://x').searchParams.get('h')||'').slice(0,60);const c=[];let n=0;for await(const x of req){n+=x.length;if(n>6e6)return J(res,413,{error:'too big'});c.push(x)}
+    try{return J(res,200,nativeContour(Buffer.concat(c),h))}catch(e){return J(res,400,{error:String(e.message).slice(0,120)})}
   }
   if(path==='/api/inspector/zh'){
     // any text box: pinyin or English -> Chinese suggestions (no Chinese keyboard needed)
