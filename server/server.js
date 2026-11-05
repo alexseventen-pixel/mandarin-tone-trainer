@@ -142,7 +142,7 @@ async function serveFile(request,response){
       response.writeHead(206,{'Content-Type':contentType,'Content-Length':chunk.length,'Content-Range':`bytes ${start}-${end}/${data.length}`,'Accept-Ranges':'bytes','Cache-Control':'no-store'});
       return request.method==='HEAD'?response.end():response.end(chunk);
     }
-    response.writeHead(200,{'Content-Type':contentType,'Content-Length':data.length,'Accept-Ranges':'bytes','Cache-Control':'no-store'});
+    response.writeHead(200,{'Content-Type':contentType,'Content-Length':data.length,'Accept-Ranges':'bytes',...(safe.startsWith('anki/')?{'Cache-Control':'public, max-age=300','Access-Control-Allow-Origin':'*'}:{'Cache-Control':'no-store'})});
     request.method==='HEAD'?response.end():response.end(data);
   }catch{
     response.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'});

@@ -88,7 +88,10 @@ function patchV13b(t){if(!t.includes('/*v13rec*/')||t.includes('/*v13b*/'))retur
  t=rp(t,"if(nat()&&nat().p&&nat().p.length){ g.fillStyle='rgba(75,85,99,.7)'","if(natOn()&&nat()&&nat().p&&nat().p.length){ g.fillStyle='rgba(75,85,99,.7)'");
  t=rp(t,"W.show=show;","W.show=show; (function(){ var sw=$('ai-natsw'); if(!sw)return; if(!(nat()&&nat().p&&nat().p.length)){sw.parentNode.style.display='none';return;} sw.checked=natOn(); sw.onchange=function(){ try{localStorage.setItem('aiNatLine',sw.checked?'1':'0');}catch(e){} if(W.last)draw(W.last.contour); }; })();");
  return t}
-function patchTmpl(m,t){t.qfmt=patchWrite(t.qfmt,m);t.qfmt=patchV13b(patchV13(t.qfmt));t.afmt=patchV13b(patchV13(t.afmt));t.qfmt=t.qfmt.split("px -apple-system,sans-serif").join("px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif");let a=t.afmt;
+const TL_LOADER=`<script>(function(){var s=document.createElement('script');s.src='https://mandarin-tone-trainer.onrender.com/anki/tone-listener.js?v=1&t='+Math.floor(Date.now()/300000);s.onerror=function(){var e=document.getElementById('ai-st');if(e)e.textContent='📡 The tone listener needs the internet — connect and open the card again. (You can still hear the native audio.)';var b=document.getElementById('ai-rec');if(b)b.disabled=true;var h=document.getElementById('ai-her'),a=document.getElementById('ai-her-a');if(h&&a)h.onclick=function(){try{a.currentTime=0;a.play();}catch(x){}};};document.body.appendChild(s);})();<\/script>`;
+// recorder UI code lives on the server (/anki/tone-listener.js); the card keeps only its HTML + data and this loader
+function patchRemote(t){const i=t.indexOf('var SERVER_URL');if(i<0||!t.includes('/*v13b*/'))return t;const a=t.lastIndexOf('<script>',i),b=t.indexOf('</script>',i);if(a<0||b<0)return t;return t.slice(0,a)+'<!--tl-remote-->'+TL_LOADER+t.slice(b+9)}
+function patchTmpl(m,t){t.qfmt=patchWrite(t.qfmt,m);t.qfmt=patchRemote(patchV13b(patchV13(t.qfmt)));t.afmt=patchRemote(patchV13b(patchV13(t.afmt)));t.qfmt=t.qfmt.split("px -apple-system,sans-serif").join("px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif");let a=t.afmt;
  a=patchAI(a);
  if(a.includes('class="aitl"')&&!a.includes('class="peek"')){const dh=(a.match(/data-hanzi="\{\{text:(\w+)\}\}"/)||[])[1];
   const P={Hanzi:['Hanzi','Pinyin','Short'],ExZh:['ExZh','ExPy','ExEn'],Text:['Text','Pinyin','English']}[dh];
