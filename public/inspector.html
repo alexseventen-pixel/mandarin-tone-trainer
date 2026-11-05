@@ -313,26 +313,51 @@ function pianoHtml(ren){const c=classify(),S=pianoSources(c),src=S.find(x=>x.k==
  return T.map(t=>{if(!t.nt)return `<span class="ptxt">${esc(t.h)}</span>`;const d=tileData(t);return `<div class="ptile" data-a="${esc(d.a?rn(d.a):'')}">${d.img?`<img src="${esc(d.img)}">`:''}<div class="b"><div class="h">${esc(d.h)}</div><div class="p">${esc(d.py)}</div></div></div>`}).join('')}
 // ---------- audio → combination game (exactly 8 options, editable per card) ----------
 function acItems(){const c=classify(),it=[],seen=new Set(),add=(k,t,py,en,a)=>{t=strip(t).replace(/\s|[，。,.]/g,'');if(!t||!a||seen.has(t))return;seen.add(t);it.push({k,t,py:strip(py),en:strip(en),a})};
- c.words.forEach(n=>add('p-'+fv(n,'Key'),fv(n,'ExZh'),fv(n,'ExPy'),fv(n,'ExEn'),refs(fv(n,'ExAudio')).a[0]));c.chunks.forEach(n=>add(fv(n,'DrillId')||'c'+n.id,fv(n,'Text'),fv(n,'Pinyin'),fv(n,'English'),refs(fv(n,'Audio')).a[0]));return it}
+ c.words.forEach(n=>add('p-'+fv(n,'Key'),fv(n,'ExZh'),fv(n,'ExPy'),fv(n,'ExEn'),refs(fv(n,'ExAudio')).a[0]));c.chunks.forEach(n=>add(fv(n,'DrillId')||'c'+n.id,fv(n,'Text'),fv(n,'Pinyin'),fv(n,'English'),refs(fv(n,'Audio')).a[0]));const X=acX();X.custom.forEach(r=>add(r.k,r.t,r.py,r.en,r.a));return it.map(x=>({...x,...(X.ov[x.k]||{})}))}
+function acX(){D.acg=D.acg||JSON.parse(localStorage.getItem('insp.acg.'+D.file)||'{}');const X=D.acg.__x=D.acg.__x||{};X.custom=X.custom||[];X.del=X.del||[];X.ov=X.ov||{};return X}
 function acDistractors(it,all){const W=classify().words.map(n=>strip(fv(n,'Hanzi'))).filter(Boolean),out=[],push=x=>{x=x.trim();if(x&&x!==it.t&&!out.includes(x))out.push(x)};
  for(const w of W)if(it.t.includes(w))for(const v of W)if(v!==w&&v.length===w.length&&!it.t.includes(v))push(it.t.replace(w,v));
  all.filter(x=>x!==it).sort((a,b)=>Math.abs(a.t.length-it.t.length)-Math.abs(b.t.length-it.t.length)).forEach(x=>push(x.t));
  for(const w of W)push(it.t+w);let i=0;while(out.length<7)push(it.t+'·'+(++i));return out}
-function acGet(){D.acg=D.acg||JSON.parse(localStorage.getItem('insp.acg.'+D.file)||'{}');const all=acItems();
+function acGet(){D.acg=D.acg||JSON.parse(localStorage.getItem('insp.acg.'+D.file)||'{}');const X=acX(),all=acItems().filter(x=>!X.del.includes(x.k));
  return all.map(it=>{const sv=D.acg[it.k];let o=sv&&sv.options&&sv.options.length===8?sv.options.slice():null;if(!o){const d=acDistractors(it,all);o=[it.t,...d.slice(0,7)]}o[0]=o[0]||it.t;return{...it,options:o,ans:sv&&sv.answer!=null?sv.answer:0,edited:!!sv,dpool:acDistractors(it,all)}})}
 function acSave(){localStorage.setItem('insp.acg.'+D.file,JSON.stringify(D.acg))}
 function acSection(){const G=acGet();if(!G.length)return '';return `<div id="acg"><div class="sec">🎧 Audio → combination game · exactly 8 options per card <span style="text-transform:none;letter-spacing:0" class="muted">listen, pick what you heard · click an option to edit it · ✔ marks the correct one</span></div>
  <label style="font-size:13px"><input type="checkbox" id="accard" ${D.acCard!==false?'checked':''}> add these ${G.length} game cards to the downloaded deck</label>
  <table class="anat"><tr><th>Audio</th><th>Combination</th><th>8 options (correct ✔ + 7 distractors)</th><th></th></tr>${G.map((g,gi)=>`<tr><td><button class="btn sm" data-acp="${esc(g.a)}">▶</button> <button class="btn alt sm" data-alt="${esc(g.a)}" data-txt="${esc(g.t)}" title="Alternative audio & clone">🎧</button></td><td><span class="hz" style="font-size:17px">${esc(g.t)}</span><div class="muted">${esc(g.py)}</div></td>
  <td><div style="display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:4px">${g.options.map((o,i)=>`<div style="display:flex;gap:2px;align-items:center"><button class="btn ${i===g.ans?'':'alt'} sm" data-acans="${gi}:${i}" title="Mark as the correct answer">${i===g.ans?'✔':'○'}</button><input type="text" data-aco="${gi}:${i}" value="${esc(o)}" style="width:100%;padding:4px 6px;font-size:14px${i===g.ans?';border-color:#16a34a':''}"><button class="btn alt sm" data-acr="${gi}:${i}" title="Replace with another distractor">↻</button></div>`).join('')}</div></td>
- <td>${g.edited?`<button class="btn alt sm" data-acd="${gi}">↺ default</button>`:''}</td></tr>`).join('')}</table></div>`}
+ <td><button class="btn alt sm" data-ace="${gi}">✏️ Edit</button> <button class="btn red sm" data-acx="${gi}">🗑 Delete row</button> ${g.edited?`<button class="btn alt sm" data-acd="${gi}">↺ default</button>`:''}</td></tr>`).join('')}</table><div style="margin:8px 0"><button class="btn sm" id="acnew">+ Create game row</button> ${acX().del.length?`<button class="btn alt sm" id="acundo">↶ Undo delete (${acX().del.length} deleted)</button>`:''} <span class="muted" style="font-size:12px">deleted rows are only left out of the downloaded deck; the source cards and audio stay</span></div></div>`}
 function wireAc(){const P=$('acg');if(!P)return;const G=acGet(),put=(gi,f)=>{const g=G[gi],cur={options:g.options.slice(),answer:g.ans};f(cur);D.acg[g.k]=cur;acSave();render()};
  $('accard').onchange=e=>{D.acCard=e.target.checked};
  P.querySelectorAll('[data-acp]').forEach(b=>b.onclick=()=>{const a=b.dataset.acp;if(D.media[a])vplay(D.media[a].url)});
  P.querySelectorAll('[data-aco]').forEach(t=>t.onchange=()=>{const [gi,i]=t.dataset.aco.split(':').map(Number);const v=t.value.trim();if(/[a-z]/i.test(v))return;if(!v||G[gi].options.some((x,j)=>j!==i&&x===v)){if(v)alert('This option is already in the list — every one of the 8 must be different.');return render()}put(gi,c=>c.options[i]=v)});
  P.querySelectorAll('[data-acans]').forEach(b=>b.onclick=()=>{const [gi,i]=b.dataset.acans.split(':').map(Number);put(gi,c=>c.answer=i)});
  P.querySelectorAll('[data-acr]').forEach(b=>b.onclick=()=>{const [gi,i]=b.dataset.acr.split(':').map(Number),g=G[gi],nx=g.dpool.find(x=>!g.options.includes(x))||prompt('New option:');if(nx)put(gi,c=>c.options[i]=nx)});
+ P.querySelectorAll('[data-acx]').forEach(b=>b.onclick=()=>{const X=acX();X.del.push(G[b.dataset.acx].k);acSave();render()});
+ if($('acundo'))$('acundo').onclick=()=>{acX().del.pop();acSave();render()};
+ P.querySelectorAll('[data-ace]').forEach(b=>b.onclick=()=>acEdit(G[b.dataset.ace]));$('acnew').onclick=()=>acEdit(null);
  P.querySelectorAll('[data-acd]').forEach(b=>b.onclick=()=>{delete D.acg[G[b.dataset.acd].k];acSave();render()});}
+function acEdit(g){const X=acX(),c=classify(),src=[...c.words.map(n=>({t:strip(fv(n,'ExZh')),py:fv(n,'ExPy'),en:fv(n,'ExEn'),a:refs(fv(n,'ExAudio')).a[0]})),...c.words.map(n=>({t:strip(fv(n,'Hanzi')),py:fv(n,'Pinyin'),en:fv(n,'Short'),a:refs(fv(n,'Audio')).a[0]})),...c.chunks.concat(c.full).map(n=>({t:strip(fv(n,'Text')),py:fv(n,'Pinyin'),en:fv(n,'English'),a:refs(fv(n,'Audio')).a[0]}))].filter(x=>x.t&&x.a);
+ const cur=g?{t:g.t,py:strip(g.py),en:strip(g.en),a:g.a}:{t:'',py:'',en:'',a:''};
+ $('dt').textContent=g?'Edit game row':'Create game row';
+ $('db').innerHTML=`<div style="width:min(640px,92vw)">${g?'':`<div class="muted" style="font-size:12px">Take an existing card / block…</div><select id="acsrc" style="width:100%;margin:4px 0 10px"><option value="">— or type below —</option>${src.map((x,i)=>`<option value="${i}">${esc(x.t)} · ${esc(strip(x.en)).slice(0,40)}</option>`).join('')}</select>`}
+ <div class="muted" style="font-size:12px">Combination — type Chinese, pinyin or English (pick from the suggestions)</div><input type="text" id="act" data-zh value="${esc(cur.t)}" style="width:100%;font-size:18px">
+ <div style="display:flex;gap:6px;margin:6px 0"><button class="btn alt sm" id="acfill">✨ Fill pinyin + English</button><span class="muted" id="acst"></span></div>
+ <div class="muted" style="font-size:12px">Pinyin</div><input type="text" id="acpy" value="${esc(cur.py)}" style="width:100%"><div class="muted" style="font-size:12px">English</div><input type="text" id="acen" value="${esc(cur.en)}" style="width:100%">
+ <div class="muted" style="font-size:12px;margin-top:6px">Audio</div><div style="display:flex;gap:6px;align-items:center"><span id="aca">${esc(cur.a||'none yet')}</span><button class="btn alt sm" id="acplay">▶</button><button class="btn alt sm" id="actts">🔊 Generate</button><button class="btn sm" id="acalt">🎧 Alternatives & clone</button></div>
+ <div style="margin-top:12px;display:flex;gap:8px"><button class="btn sm" id="acsave">${g?'Save':'Create row'}</button><span class="muted" style="font-size:12px;align-self:center">7 distractors are made automatically; edit them in the table.</span></div></div>`;
+ const setA=a=>{cur.a=a;$('aca').textContent=a};dlg.showModal();
+ if($('acsrc'))$('acsrc').onchange=e=>{const x=src[e.target.value];if(!x)return;$('act').value=x.t;$('acpy').value=strip(x.py);$('acen').value=strip(x.en);setA(x.a)};
+ $('acfill').onclick=async()=>{const t=$('act').value.trim();if(!t)return;$('acst').textContent='…';const j=await (await api('/api/inspector/sentence?t='+encodeURIComponent(t)+'&k='+encodeURIComponent(zhKnown().map(x=>x.h).join(',')))).json();if(j.zh){$('act').value=j.zh.replace(/[。]$/,'');$('acpy').value=j.pinyin;if(!$('acen').value)$('acen').value=j.en}$('acst').textContent=j.note||''};
+ $('acplay').onclick=()=>cur.a&&D.media[cur.a]&&vplay(D.media[cur.a].url);
+ $('actts').onclick=async()=>{const t=hanOnly($('act').value);if(!t)return alert('Chinese first');$('acst').textContent='Generating audio…';const r=await api('/api/inspector/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,voice:'zh-CN-XiaoxiaoNeural',rate:'+0%'})});if(!r.ok){$('acst').textContent='TTS failed';return}
+  const name='ins_acg_'+zplain(pinyinKey($('acpy').value)||'row').slice(0,20)+'_'+Date.now().toString(36)+'.mp3';await addMedia(name,new Uint8Array(await r.arrayBuffer()));(D.virt=D.virt||{})[name]=1;setA(name);$('acst').textContent='Audio ready'};
+ $('acalt').onclick=async()=>{if(!cur.a)await $('actts').onclick();if(cur.a){const k=save(true);variantsDlg(cur.a)}};
+ const save=keep=>{const t=$('act').value.trim().replace(/\s/g,''),row={t,py:$('acpy').value.trim(),en:$('acen').value.trim(),a:cur.a};if(!t||!hanOnly(t))return alert('The combination must be Chinese'),null;if(!row.a)return alert('Add audio first (Generate or pick a card)'),null;
+  if(!g&&acItems().some(x=>x.t.replace(/[，。,.\s]/g,'')===t.replace(/[，。,.]/g,''))){alert('This combination is already a game row (it may be deleted — use Undo).');return null}if(g){const old=g.t;X.ov[g.k]={...row};const sv=D.acg[g.k];if(sv&&sv.options){const i=sv.options.indexOf(old);if(i>=0)sv.options[i]=t}}else{const k='u-'+Date.now().toString(36);X.custom.push({k,...row});g={k,t}}
+  acSave();if(!keep){dlg.close();render()}return g.k};
+ $('acsave').onclick=()=>save(false);}
+const pinyinKey=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const AC_JS=`<script>(function(){var f=document.getElementById('acdata');if(!f)return;var o=f.getAttribute('data-o').split('|'),ans=o[+f.getAttribute('data-a')];
 o.sort(function(){return Math.random()-.5});var d=document.getElementById('acopts'),done=false;
 o.forEach(function(t){var b=document.createElement('button');b.className='aco';b.textContent=t;b.onclick=function(){if(done)return;done=true;
@@ -547,7 +572,7 @@ function noteEditor(nt,o){const isNew=!nt,mids=Object.keys(D.models);let mid=nt?
    const F0=fieldsOf(nt),E=effFlds(nt).split('\x1f');V.forEach((v,i)=>{if(v!==E[i]){if(v===F0[i]){const e=D.fedits[nt.id];if(e)delete e[N[i]]}else (D.fedits[nt.id]=D.fedits[nt.id]||{})[N[i]]=v}});if(D.fedits[nt.id]&&!Object.keys(D.fedits[nt.id]).length)delete D.fedits[nt.id];render();};};
  draw();dlg.showModal();}
 // ---------- type Chinese without a Chinese keyboard: pinyin / English -> 中文 suggestions ----------
-const ZHSEL='[data-aco],[data-wrt],#wrnew,#ehz,#gh,#gexzh,textarea[data-zh]';
+const ZHSEL='[data-aco],[data-wrt],#wrnew,#ehz,#gh,#gexzh,textarea[data-zh],input[data-zh]';
 function zhKnown(){try{return classify().words.map(n=>({h:strip(fv(n,'Hanzi')),p:strip(fv(n,'Pinyin'))})).filter(x=>x.h)}catch{return []}}
 const zplain=x=>String(x).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z]/g,'');
 function zhPop(el,html){let p=document.getElementById('zhpop');if(p)try{p.remove()}catch{};if(!el)return;p=document.createElement('div');p.id='zhpop';const r=el.getBoundingClientRect();
