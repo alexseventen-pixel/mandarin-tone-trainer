@@ -17,8 +17,17 @@ let fails=0,failT=0;
 let CED=null;
 async function cedict(){if(CED)return CED;CED=new Map();const t=gunzipSync(await readFile(new URL('./data/cedict_ts.u8.gz',import.meta.url))).toString('utf8');
   for(const l of t.split('\n')){if(l[0]==='#')continue;const m=l.match(/^(\S+) (\S+) \[([^\]]+)\] \/(.*)\/\s*$/);if(!m)continue;
-    const e={py:m[3],defs:m[4].split('/').filter(Boolean)};for(const k of new Set([m[2],m[1]])){if(!CED.has(k))CED.set(k,[]);CED.get(k).push(e);}}
+    const e={py:m[3],defs:m[4].split('/').filter(Boolean),s:m[2]};for(const k of new Set([m[2],m[1]])){if(!CED.has(k))CED.set(k,[]);CED.get(k).push(e);}}
   return CED;}
+// pinyin (no tones needed) -> hanzi via CC-CEDICT, preferring words the deck already knows
+let PYX=null;const plain=x=>x.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/u:/g,'v').replace(/ü/g,'v').replace(/[^a-z]/g,'');
+async function pyIndex(){if(PYX)return PYX;const d=await cedict();PYX=new Map();for(const [w,E] of d){if(!/^[\u3400-\u9fff]+$/.test(w))continue;for(const e of E){if(e.s!==w)continue;const k=plain(e.py.replace(/\d/g,''));if(!k)continue;const bad=/^(surname|variant of|old variant|used in|see )/i.test(e.defs[0]||'');if(!PYX.has(k))PYX.set(k,[]);const L=PYX.get(k);if(!L.some(x=>x.w===w))L.push({w,bad,n:e.defs.length,def:(e.defs||[]).slice(0,2).join('; ')});}}
+ for(const L of PYX.values())L.sort((a,b)=>(a.bad-b.bad)||(b.n-a.n));return PYX;}
+async function py2hz(q,known){const X=await pyIndex(),K=new Map();for(const w of known){const k=plain(toPinyin(w,{toneType:'none'}).replace(/\s/g,''));if(k)(K.get(k)||K.set(k,[]).get(k)).push(w)}
+ const s=plain(q.replace(/\s+/g,''));if(!s||s.length>60)return null;const best=new Array(s.length+1).fill(null);best[0]={cost:0,segs:[]};
+ for(let i=0;i<s.length;i++){if(!best[i])continue;for(let j=i+1;j<=Math.min(s.length,i+24);j++){const k=s.slice(i,j),opts=[...(K.get(k)||[]).map(w=>({w,known:1})),...(X.get(k)||[]).filter(x=>!(K.get(k)||[]).includes(x.w))];if(!opts.length)continue;
+  const c=best[i].cost+(K.has(k)?0.4:1);if(!best[j]||c<best[j].cost)best[j]={cost:c,segs:[...best[i].segs,{py:k,opts:opts.slice(0,8)}]};}}
+ const r=best[s.length];if(!r)return null;return{zh:r.segs.map(g=>g.opts[0].w).join(''),segs:r.segs.map(g=>({py:g.py,opts:g.opts.map(o=>({w:o.w,known:!!o.known,def:o.def||''}))}))};}
 const VOICES=['zh-CN-XiaoxiaoNeural','zh-CN-XiaoyiNeural','zh-CN-YunxiNeural','zh-CN-YunjianNeural','zh-TW-HsiaoChenNeural'];
 async function edgeTts(text,voice,rate){const t=new MsEdgeTTS();await t.setMetadata(voice,OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
   try{const {audioStream}=t.toStream(text,{rate});const c=[];for await(const x of audioStream)c.push(x);return Buffer.concat(c);}finally{try{t.close()}catch{}}}
@@ -76,6 +85,25 @@ export async function handleInspector(req,res,path){
     if(!/^[\u3400-\u9fff]+$/.test(w))return J(res,400,{error:'Chinese characters only'});
     const d=await cedict();const ent=d.get(w)||[];
     return J(res,200,{word:w,pinyin:toPinyin(w),entries:ent,chars:ent.length?[]:[...w].map(c=>({c,pinyin:toPinyin(c),entries:(d.get(c)||[]).slice(0,2)}))});
+  }
+  if(path==='/api/inspector/zh'){
+    // any text box: pinyin or English -> Chinese suggestions (no Chinese keyboard needed)
+    const u=new URL(req.url,'http://x').searchParams,q=(u.get('q')||'').trim().slice(0,80),known=(u.get('k')||'').split(',').filter(x=>/^[\u3400-\u9fff]{1,8}$/.test(x)).slice(0,300);
+    if(!q)return J(res,200,{options:[]});const p=await py2hz(q,known),out=[];
+    if(p){out.push({zh:p.zh,how:'pinyin'});p.segs.forEach((g,i)=>g.opts.slice(1,4).forEach(o=>out.push({zh:p.segs.map((h,j)=>j===i?o.w:h.opts[0].w).join(''),how:'pinyin alt'})));}
+    if(!p||/\s/.test(q)&&q.split(/\s+/).length>=2&&!p){try{const j=await (await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(q)+'&langpair=en|zh-CN')).json();const z=String((j.responseData||{}).translatedText||'').replace(/[a-zA-Z]/g,'').trim();if(z)out.push({zh:z,how:'English → Chinese (machine translation)'})}catch{}}
+    return J(res,200,{options:out.filter((o,i)=>out.findIndex(x=>x.zh===o.zh)===i).slice(0,8),segs:p?p.segs:[]});
+  }
+  if(path==='/api/inspector/sentence'){
+    // English / pinyin / 中文 -> Chinese + pinyin + English + word split (CC-CEDICT). Translation: free MyMemory API.
+    let t=(new URL(req.url,'http://x').searchParams.get('t')||'').trim().slice(0,120);if(!t)return J(res,400,{error:'Type a sentence'});
+    const tr=async(q,lp)=>{try{const j=await (await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(q)+'&langpair='+lp)).json();return String((j.responseData||{}).translatedText||'')}catch{return ''}};
+    const isZh=/[\u3400-\u9fff]/.test(t),known=(new URL(req.url,'http://x').searchParams.get('k')||'').split(',').filter(x=>/^[\u3400-\u9fff]{1,8}$/.test(x));let zh=t,en='',src='zh';
+    if(!isZh){const p=await py2hz(t,known);if(p){zh=p.zh;src='pinyin';en=await tr(zh,'zh-CN|en');}else{src='en';zh=(await tr(t,'en|zh-CN')).replace(/[a-zA-Z]/g,'').trim();en=t;}}
+    else en=await tr(t.replace(/[。！？，]/g,''),'zh-CN|en');
+    if(zh&&!/[。！？]$/.test(zh))zh+='。';
+    const d=await cedict(),core=[...zh],words=[];for(let i=0;i<core.length;){if(!/[\u3400-\u9fff]/.test(core[i])){i++;continue}let L=Math.min(6,core.length-i);for(;L>1;L--)if(d.has(core.slice(i,i+L).join('')))break;const w=core.slice(i,i+L).join('');const E=d.get(w)||[],e=E.find(x=>!/^surname/i.test((x.defs||[''])[0]))||E[0]||{};words.push({w,py:toPinyin(w),def:(e.defs||[]).slice(0,2).join('; ')});i+=L}
+    return J(res,200,{source:src,zh,pinyin:toPinyin(zh.replace(/[。！？，]/g,'')),en:en?en[0].toUpperCase()+en.slice(1):'',words,note:src==='en'?'Machine translation (MyMemory, free) — check the Chinese before saving.':src==='pinyin'?'Pinyin → Chinese via CC-CEDICT — check the characters.':''});
   }
   if(path==='/api/inspector/tts'&&req.method==='POST'){
     let q={};try{q=JSON.parse(await body(req));}catch{}
