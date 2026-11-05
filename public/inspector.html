@@ -49,7 +49,7 @@ body.drawer-on main{margin-right:346px}.dgrid{display:flex;gap:6px;flex-wrap:wra
 <main id="main"><div class="box muted">Pick a deck on the left or open an .apkg file.</div></main></div>
 <div id="drawer" class="hide"></div>
 <dialog id="dlg"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><b id="dt"></b><span style="flex:1"></span><button class="btn alt sm" onclick="dlg.close()">Close</button></div><div id="db"></div></dialog>
-<script src="/inspector/lib/jszip.min.js"></script><script src="/inspector/lib/sql-wasm.js"></script><script src="/inspector/lib/lame.min.js"></script>
+<script src="/inspector/lib/jszip.min.js"></script><script src="/inspector/lib/sql-wasm.js"></script><script src="/inspector/lib/lame.min.js"></script><script src="/inspector/std10.js"></script>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const GENM=new Set(['1793305797','1793305798','1793305799']);let VARW={},VARK={},VAR={},CLONE={enabled:false},TOKEN=sessionStorage.getItem('insp.t')||'',SQL,D=null,AC;
@@ -97,7 +97,7 @@ function check(ab){const x=ab.getChannelData(0),sr=ab.sampleRate,d=x.length/sr,F
  return{dur:d,rms,pk,flags:fl}}
 // ---------- render ----------
 function fieldsOf(nt){return nt.flds.split('\x1f')}
-function refs(v){const a=[],i=[];v.replace(/\[sound:([^\]]+)\]/g,(_,f)=>a.push(f));v.replace(/<img[^>]+src=["']?([^"' >]+)/gi,(_,f)=>i.push(decodeURIComponent(f)));return{a,i}}
+function refs(v){const a=[],i=[];v.replace(/\[sound:([^\]]+)\]/g,(_,f)=>a.push(f));v.replace(/class="tapau"[^>]*new Audio\('([^']+)'\)/g,(_,f)=>{const o=f.replace(/^_/,'');a.push(D&&D.media&&D.media[o]?o:f)});v.replace(/<img[^>]+src=["']?([^"' >]+)/gi,(_,f)=>i.push(decodeURIComponent(f)));return{a,i}}
 function groupOf(nt){const blk=(nt.tags.match(/\bblock_(\w+)/)||[])[1];const c=D.cards.find(c=>c.nid===nt.id);const dn=c&&D.decks[c.did]?D.decks[c.did].name.replace(/\x1f/g,'::'):'Deck';return dn+(blk?' · Block '+blk:'')}
 function render(){
  const auds=Object.keys(D.info),bad=auds.filter(n=>D.info[n].flags.some(f=>f[0]==='bad')),warn=auds.filter(n=>!bad.includes(n)&&D.info[n].flags.length);
@@ -238,7 +238,7 @@ function expRow(nt,n){if(!EXP.has(nt.id))return '';const A=[...new Set(refs(effF
 function anatomy(){if(!D.notes.length)return '';const c=classify(),ex=D.excluded.size,orph=orphans();
  const blocks=[...new Set(c.chunks.map(n=>(fv(n,'Block')||'').trim()).filter(Boolean))];
  const tile=(n,l,sub)=>`<div class="stat"><b style="${n?'':'color:#9aa7b4'}">${n||0}</b>${l}${sub?`<div class="muted" style="font-size:11px">${sub}</div>`:''}</div>`;
- let h=`<div class="box" id="anat"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">🧬 Sentence anatomy</b><span class="muted">pre-filled with the standard template · click any slot to choose an alternative</span><span class="sp" style="flex:1"></span><button class="btn sm" id="genw">✨ New word</button>${D.exStack.length?'<button class="btn alt sm" id="undoex">↶ Undo delete</button>':''}${(D.audStack||[]).length?'<button class="btn alt sm" id="undoau">↶ Undo sound delete</button>':''}<button class="btn sm" id="addglob">+ Add card / note</button></div>
+ let h=`<div class="box" id="anat"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px">🧬 Sentence anatomy</b><span class="muted">pre-filled with the standard template · click any slot to choose an alternative</span></div><div class="muted" style="font-size:12px;margin-top:4px">📐 Card standard v10 is applied to every card on ⬇ download: blue halo on characters · 👁 peek (character + pinyin) in the tone listener · rich answer on every card (blurred word photo, English, CC-CEDICT line per word, tappable piano tiles of every word in it) · hardened tone listener<div style="display:none"><span class="sp" style="flex:1"></span><button class="btn sm" id="genw">✨ New word</button>${D.exStack.length?'<button class="btn alt sm" id="undoex">↶ Undo delete</button>':''}${(D.audStack||[]).length?'<button class="btn alt sm" id="undoau">↶ Undo sound delete</button>':''}<button class="btn sm" id="addglob">+ Add card / note</button></div>
  <div class="stats" style="margin-top:10px">${tile(c.words.length,'words')}${tile(c.chunks.length,'sentence chunks',blocks.length?'blocks '+blocks.map(esc).join(', '):'')}${tile(c.full.length,'full sentence')}${tile(c.games.length,'games',c.games.length?'':'not built yet')}${tile(c.tests.length,'test / exam',c.tests.length?'':'not built yet')}${tile(ex,'deleted notes')}${tile(orph.length,'orphan media')}</div>`;
  if(c.words.length){h+=`<div class="sec">Words</div><table class="anat"><tr><th>Hanzi</th><th>Picture</th><th>English (card)</th><th>Dictionary (CC-CEDICT)</th><th>Audio</th><th></th></tr>`;
   for(const nt of c.words){const k=fv(nt,'Key'),V=VARK[k],img=refs(fv(nt,'Picture')).i[0],en=strip(fv(nt,'Short')),dct=V&&V.dict?V.dict.map(d=>d.py+': '+d.defs.slice(0,3).join('; ')).join(' | '):strip(fv(nt,'Definition')).slice(0,90);
@@ -397,7 +397,7 @@ function ui(m){var S=g(SK,{}),n=pend().length;el.innerHTML="☁ "+(S.email?("Sav
  document.getElementById("bdsb").onclick=function(){var S=g(SK,{});S.email=document.getElementById("bdse").value.trim();S.code=document.getElementById("bdsc").value.trim();if(!S.email||!S.code)return;localStorage.setItem(SK,JSON.stringify(S));push()};}
 var busy=0;function push(){var S=g(SK,{}),L=pend();if(!S.email||!L.length||busy){if(!busy)ui();return}busy=1;
  fetch(U,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:S.email,code:S.code,device:"anki",attempts:L})}).then(function(r){return r.json().then(function(j){return [r.status,j]})}).then(function(x){busy=0;if(x[0]===200){var S2=g(SK,{});S2.last=S2.last||{};L.forEach(function(a){if(a.t>(S2.last[a.card]||0))S2.last[a.card]=a.t});localStorage.setItem(SK,JSON.stringify(S2));ui("synced")}else ui(x[1].error||"not saved yet, kept in the queue")}).catch(function(){busy=0;ui("offline, will retry")})}
-push();var iv=setInterval(push,8000);setTimeout(function(){clearInterval(iv)},900000);})();<\/script>`;
+push();if(window.__bdSyncIv)clearInterval(window.__bdSyncIv);var iv=window.__bdSyncIv=setInterval(push,8000);setTimeout(function(){clearInterval(iv)},900000);})();<\/script>`;
 // ---------- ✨ new word generator: one word -> picture, answer back, audio, radicals and every task card ----------
 const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)},unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 function seedGen(){const by=mid=>D.notes.filter(n=>String(n.mid)===mid);
@@ -643,6 +643,8 @@ $('rebuild').onclick=async()=>{const z=D.zip,mm=JSON.parse(await z.file('media')
     db.run('insert into cards (id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values (?,?,?,0,?,-1,0,0,?,0,0,0,0,0,0,0,0,?)',[nid+1,nid,did,now,due++,'']);}}}
  // tone-recorder cards: add the ☁ sync line (queue on device, send to the app account when linked)
  {const M2=MODELS===D.models?JSON.parse(JSON.stringify(D.models)):MODELS;let ch=false;for(const m of Object.values(M2))for(const t of m.tmpls||[])if(t.afmt.includes('bd1.anki.hist')&&!t.afmt.includes('bdsync')){t.afmt+=SYNC_JS;ch=true}if(ch){MODELS=M2;pc=true}}
+ // anatomy standard v10 (halo, peek, rich answer + piano tiles, tone-listener hardening) on every card type
+ if(window.STD10){const r=STD10.apply(db,MODELS);MODELS=r.models;pc=true;}
  if(D.modelChanged||pc)db.run('update col set models=?,mod=?',[JSON.stringify(MODELS),now*1000]);
  const orph=new Set(D.dropOrphans?orphans():[]);let nk=Math.max(0,...Object.keys(mm).map(Number).filter(isFinite))+1;
  const nm={};for(const name of Object.keys(z.files)){const f=z.files[name];if(f.dir||name==='media'||name===D.cfName)continue;const n=mm[name];if(n&&orph.has(n))continue;
