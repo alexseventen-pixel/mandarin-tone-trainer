@@ -30,3 +30,8 @@ Applied automatically by `public/inspector/std10.js` whenever the Inspector expo
 - **Rich answer** (`Rich` field, added to every note type): blurred background photo of the word, character/pinyin/English, one CC-CEDICT line per word in it, and its piano tiles (a phrase gets every participating word; tap = flip to character + play). Hidden while the tone-listener lock is closed.
 - **Tone-listener hardening**: state from the previous card (timers, animation frames, in-flight request) is cleared on each card; late server replies are ignored; the pitch trace is drawn even if the target curve is missing, and the canvas waits until it has a width; text writes during recording are throttled; a single cloud-sync timer instead of one per reviewed card.
 New sentences/videos: build in the Inspector and download — the standard is applied on export.
+
+## Standard v11 (std10.js, version 11)
+- Characters always dark (#08003f) with optional soft blue halo; night mode forced to light card + dark text. Font stack puts PingFang SC / Noto Sans CJK SC first so 门 etc. render in the mainland (zh-CN) form — never fall back to a Japanese CJK font.
+- Rich strip: one tile per word in the item; a word that splits into other words shows only its parts (no extra self tile). "▶ Play all" flips + plays tiles in order; every tap toggles a tile and plays it.
+- Writing cards: taps outside the writing boxes are swallowed (+25 ms vibration where supported, shake otherwise); the answer only appears via the "Answer switch" toggle.
