@@ -40,7 +40,7 @@ body.drawer-on main{margin-right:346px}.dgrid{display:flex;gap:6px;flex-wrap:wra
 .filters label{margin-right:12px;font-size:13px}.hide{display:none!important}
 </style></head><body>
 <header><h1>🔎 Deck Inspector</h1><span class="muted" id="dname"></span><span class="sp"></span>
-<button class="btn" id="rebuild" disabled title="Apply all your edits and download a ready-to-import Anki deck" style="font-size:15px;padding:10px 18px">⬇ Download deck (.apkg)</button><span style="position:relative"><button class="btn alt sm" id="more" title="More: JSON exports, import edits">⋯ More</button><div id="moremenu" class="hide" style="position:absolute;right:0;top:110%;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(8,0,63,.18);padding:8px;display:flex;flex-direction:column;gap:6px;z-index:20;min-width:240px"><label class="btn alt sm" id="impl">⬆ Import edits JSON…<input type="file" id="impf" accept=".json,application/json" style="display:none"></label><button class="btn alt sm" id="exp" disabled>Export edits & marks (JSON)</button><button class="btn alt sm" id="expa" disabled>Export for analysis (JSON)</button></div></span></header>
+<button class="btn" id="rebuild" disabled title="Apply all your edits and download a ready-to-import Anki deck" style="font-size:15px;padding:10px 18px">⬇ Download deck (.apkg)</button><button class="btn alt" id="dlaudio" disabled title="Save every audio clip as a zip of named files (characters_pinyin.mp3)">⬇ Download all audio (.zip)</button><span style="position:relative"><button class="btn alt sm" id="more" title="More: JSON exports, import edits">⋯ More</button><div id="moremenu" class="hide" style="position:absolute;right:0;top:110%;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(8,0,63,.18);padding:8px;display:flex;flex-direction:column;gap:6px;z-index:20;min-width:240px"><label class="btn alt sm" id="impl">⬆ Import edits JSON…<input type="file" id="impf" accept=".json,application/json" style="display:none"></label><button class="btn alt sm" id="exp" disabled>Export edits & marks (JSON)</button><button class="btn alt sm" id="expa" disabled>Export for analysis (JSON)</button></div></span></header>
 <div id="login" class="box"><b>Enter passcode</b><p class="muted">This tool is private. Deck files are only opened in your browser.</p>
 <form id="lf"><input type="password" id="code" placeholder="Passcode" autocomplete="current-password" style="width:100%"><div style="margin-top:10px"><button class="btn">Unlock</button> <span id="lerr" style="color:#dc2626"></span></div></form></div>
 <div class="wrap hide" id="app">
@@ -75,7 +75,7 @@ async function openDeck(buf,file,title){
  for(const m of Object.values(media)){m.url=URL.createObjectURL(new Blob([m.bytes],{type:mime(m.name)}));}
  Object.entries(media).forEach(([n,m])=>m.name=n);
  D={db,cfName:cf.name,zip,file,title,models,decks,notes,cards,media,edits:{},fedits:{},excluded:new Set(),modelChanged:false,exStack:[],dropOrphans:false,newMedia:{},marks:JSON.parse(localStorage.getItem('insp.marks.'+file)||'{}'),info:{}};
- notes.forEach(n=>n.flds0=n.flds);$('dname').textContent=title;$('exp').disabled=$('rebuild').disabled=$('expa').disabled=false;
+ notes.forEach(n=>n.flds0=n.flds);$('dname').textContent=title;$('exp').disabled=$('rebuild').disabled=$('expa').disabled=$('dlaudio').disabled=false;
  $('main').innerHTML='<div class="box muted">Analysing audio…</div>';
  const auds=Object.keys(media).filter(n=>/\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(n));
  for(const n of auds)D.info[n]=await analyse(n);
@@ -121,7 +121,7 @@ function render(){
 function audKind(nt,a){if(!nt)return '';const k=n=>refs(fv(nt,n)).a.includes(a);if(k('Audio'))return 'word audio';if(k('ExAudio'))return 'phrase audio';if(k('Keys')){const h=fv(nt,'Keys'),i=h.indexOf('[sound:'+a+']'),c=(h.slice(0,i).match(/class="kc">([^<]+)<\/span><span class="kp">([^<]+)/g)||[]).pop()||'';const mm=c.match(/>([^<]+)<\/span><span class="kp">([^<]+)/);return 'radical sound'+(mm?' '+mm[1]+' '+mm[2]:'')+' (from Keys)'}return 'audio'}
 function audioRow(a,nt){const i=D.info[a],m=D.media[a];if(!m)return `<div class="au"><span class="chip bad">missing audio file ${esc(a)}</span></div>`;const kd=audKind(nt,a);
  return `<div class="au ${/radical/.test(kd)?'kau':''}" data-a="${esc(a)}"><div class="row"><span class="nm">🔊 ${kd?'<span class="chip '+(/radical/.test(kd)?'warn':'ed')+'">'+esc(kd)+'</span> ':''}${esc(a)}</span>${nt?`<button class="btn red sm" data-rma="${nt.id}|${esc(a)}" title="Remove this sound from this card (undo any time)">🗑 Delete</button>`:''}<span class="muted">${i.dur.toFixed(2)} s · ${isFinite(i.rms)?i.rms.toFixed(0):'—'} dB · peak ${(i.pk||0).toFixed(2)} · used by ${usage(a)} note(s)</span>${i.flags.map(f=>`<span class="chip ${f[0]}">${esc(f[1])}</span>`).join('')||'<span class="chip ok">ok</span>'}${m.edited?'<span class="chip ed">edited: '+esc(m.editNote)+'</span>':''}</div>
- <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button><button class="btn sm" data-act="variants">🎧 Alternatives & clone${vget(a)?' ('+vget(a).variants.length+')':''}</button>${CLONE.enabled?'<button class="btn alt sm" data-act="clone">🧬 Voice clone (MiniMax)</button>':'<button class="btn alt sm" disabled title="Set MINIMAX_API_KEY in the Render environment to enable">🧬 Voice clone — key not set</button>'}${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
+ <div class="wf"><canvas></canvas></div><div class="row"><button class="btn sm" data-act="play">▶ Play</button><button class="btn alt sm" data-act="playsel">▶ Selection</button><button class="btn alt sm" data-act="download">⬇ Download</button><button class="btn alt sm" data-act="trim">✂ Keep selection</button><button class="btn alt sm" data-act="replace">⇄ Replace from another clip</button><button class="btn sm" data-act="variants">🎧 Alternatives & clone${vget(a)?' ('+vget(a).variants.length+')':''}</button>${CLONE.enabled?'<button class="btn alt sm" data-act="clone">🧬 Voice clone (MiniMax)</button>':'<button class="btn alt sm" disabled title="Set MINIMAX_API_KEY in the Render environment to enable">🧬 Voice clone — key not set</button>'}${m.edited?'<button class="btn alt sm" data-act="revert">↺ Revert</button>':''}<span class="muted sel"></span></div></div>`}
 function rmAudio(nt,a){D.audStack=D.audStack||[];const N=fnames(nt),E=effFlds(nt).split('\x1f'),prev=nt.added?nt.flds:JSON.stringify(D.fedits[nt.id]||null);
  const tag='[sound:'+a+']';if(nt.added){nt.flds=nt.flds0=E.map(x=>x.split(tag).join('')).join('\x1f')}else{E.forEach((x,i)=>{if(x.includes(tag))(D.fedits[nt.id]=D.fedits[nt.id]||{})[N[i]]=x.split(tag).join('')})}
  D.audStack.push({id:nt.id,added:!!nt.added,prev,a});render()}
@@ -157,6 +157,7 @@ class Wave{constructor(box,ab,cb){this.box=box;this.cv=box.querySelector('canvas
 // ---------- edits ----------
 async function act(k,a,el){const W=el._w,m=D.media[a];
  if(k==='play')return W.play();if(k==='playsel')return W.sel?W.play(...W.sel):W.play();
+ if(k==='download')return downloadAudio(a);
  if(k==='trim'){if(!W.sel)return alert('Drag on the waveform to select the part to keep.');await setClip(a,cut(m.ab,...W.sel),'trim '+W.sel.map(v=>v.toFixed(2)).join('–')+' s',{op:'trim',start:W.sel[0],end:W.sel[1]});}
  if(k==='revert'){delete m.edited;delete m.editNote;delete D.edits[a];D.info[a]=await analyse(a);m.url=URL.createObjectURL(new Blob([m.bytes],{type:mime(a)}));render();}
  if(k==='replace')replaceDlg(a);if(k==='variants'||k==='clone')variantsDlg(a,k==='clone');}
@@ -189,24 +190,100 @@ function clipText(a){if(D.cliptxt&&D.cliptxt[a])return D.cliptxt[a];const t='[so
    if(/^ExAudio/.test(n))return strip(g('ExZh')).replace(/[，。,.\s]/g,'');
    if(n==='Audio')return strip(g('Hanzi')||g('Text')||g('Answer')).replace(/[，。,.\s]/g,'')}}
  return (a.match(/[\u4e00-\u9fff]+/)||[''])[0]}
+
+function safeFn(s){return String(s||'').replace(/[\\/:*?"<>|]+/g,'').replace(/[\n\r]+/g,'').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^_+|_+$/g,'')}
+function clipMeta(a){
+  const hz0=clipText(a)||'';
+  if(!D)return {hz:hz0,py:''};
+  const t='[sound:'+a+']';
+  for(const nt of D.notes){
+    const E=effFlds(nt); if(!E.includes(t)&&!E.includes(a)) continue;
+    const N=fnames(nt), F=E.split('\x1f'), g=n=>N.indexOf(n)>=0?(F[N.indexOf(n)]||''):'';
+    for(let i=0;i<N.length;i++){
+      const Fi=F[i]||''; if(!Fi.includes(t)&&!Fi.includes(a)) continue;
+      const n=N[i];
+      if(n==='Keys'){
+        const idx=Fi.includes(t)?Fi.indexOf(t):Fi.indexOf(a);
+        const h=idx>=0?Fi.slice(0,idx):Fi;
+        const all=[...h.matchAll(/class="kc">([^<]*)<\/span>\s*<span class="kp">([^<]*)/g)];
+        const last=all[all.length-1];
+        if(last) return {hz:last[1],py:last[2]};
+      }
+      if(/^ExAudio/.test(n)) return {hz:strip(g('ExZh')).replace(/[，。,.\s]/g,''),py:strip(g('ExPy'))};
+      if(n==='Audio'||n==='AudioFile') return {hz:strip(g('Hanzi')||g('Text')||g('Answer')).replace(/[，。,.\s]/g,''),py:strip(g('Pinyin'))};
+    }
+    return {hz:strip(g('Hanzi')||g('Text')||g('Answer')||hz0).replace(/[，。,.\s]/g,''),py:strip(g('Pinyin'))};
+  }
+  return {hz:hz0,py:''};
+}
+function audioFileName(a,variant){
+  const meta=clipMeta(a);
+  const parts=[safeFn(meta.hz),safeFn(meta.py),safeFn(variant)].filter(Boolean);
+  let base=parts.join('_')||safeFn(String(a||'audio').replace(/\.[^.]+$/,'').replace(/^_/,''))||'audio';
+  const ext=((String(a||'').match(/\.(mp3|m4a|ogg|wav|aac)$/i))||['.mp3'])[0].toLowerCase();
+  return base+ext;
+}
+function downloadAudio(a){
+  if(!a||!D)return;
+  const bare=String(a).replace(/^_/,''), m=D.media[a]||D.media[bare]||D.media['_'+bare];
+  if(!m){alert('No audio file for '+a);return;}
+  const bytes=m.edited||m.bytes;
+  if(!bytes){alert('Audio data is not loaded yet.');return;}
+  dl(new Blob([bytes],{type:mime(a)||'audio/mpeg'}), audioFileName(a));
+}
+function downloadVariant(a,x){
+  if(!x){alert('No variant audio found.');return;}
+  const name=audioFileName(a,x.label||'');
+  const by=x.bytes||(x.b64?b64u8(x.b64):null);
+  if(by){dl(new Blob([by],{type:'audio/mpeg'}),name);return;}
+  if(x.url){fetch(x.url).then(r=>r.blob()).then(blob=>dl(blob,name)).catch(err=>alert('Could not download: '+err.message));return;}
+  alert('No audio data for this variant.');
+}
+async function downloadAllAudio(){
+  if(!D)return;
+  if(typeof JSZip==='undefined'){alert('JSZip is not loaded.');return;}
+  const zip=new JSZip(), used=new Set(), names=new Set();
+  const keys=Object.keys(D.media).filter(n=>/\.(mp3|m4a|ogg|wav|aac)$/i.test(n))
+    .sort((x,y)=>(x.startsWith('_')-y.startsWith('_'))||x.localeCompare(y));
+  for(const name of keys){
+    const bare=name.replace(/^_/,'');
+    if(name.startsWith('_')&&D.media[bare]) continue;
+    if(used.has(bare)) continue;
+    const m=D.media[name]||D.media[bare];
+    if(!m||!(m.edited||m.bytes)) continue;
+    used.add(bare);
+    let fn=audioFileName(name);
+    if(names.has(fn)){
+      const ext=(fn.match(/\.[^.]+$/)||['.mp3'])[0], stem=fn.slice(0,-ext.length);
+      let i=2; while(names.has(stem+'_'+i+ext)) i++;
+      fn=stem+'_'+i+ext;
+    }
+    names.add(fn);
+    zip.file(fn, m.edited||m.bytes);
+  }
+  if(!names.size){alert('No audio files found in this deck.');return;}
+  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
+  dl(blob, String(D.file||'deck').replace(/\.apkg$/i,'')+'_audio.zip');
+}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-alt]');if(!b)return;e.preventDefault();e.stopPropagation();const a=b.dataset.alt;(D.cliptxt=D.cliptxt||{})[a]=D.cliptxt[a]||b.dataset.txt||'';if(!D.cliptxt[a])delete D.cliptxt[a];variantsDlg(a)},true);
 let VP;function vplay(u){if(VP)VP.pause();VP=new Audio(u);VP.play()}
 function variantsDlg(a,focusClone){const word=clipText(a),v=VAR[a]||VARW[word]||null;
  $('dt').textContent='Replacement variants · '+(word||a);
  const groups={};(v?v.variants:[]).forEach((x,i)=>{x.url=x.url||URL.createObjectURL(new Blob([b64u8(x.b64)],{type:'audio/mpeg'}));(groups[x.group]=groups[x.group]||[]).push(i)});
  const HV=new Set(JSON.parse(localStorage.getItem('insp.hidv')||'[]')),hk=i=>a+'|'+(v&&v.variants[i]?v.variants[i].id+'#'+i:i),nh=v?v.variants.filter((_,i)=>HV.has(hk(i))).length:0;
- const row=(lab,u,i)=>HV.has(hk(i))?'':`<div class="row" style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eef2f5"><button class="btn sm" data-p="${u}">▶</button><span style="flex:1">${esc(lab)}</span><button class="btn alt sm" data-u="${i}">Use this</button>${String(i)[0]==='c'?'':`<button class="btn red sm" data-hv="${i}" title="Remove from this list (undo below)">🗑 Delete</button>`}</div>`;
- $('db').innerHTML=`<div style="width:min(620px,90vw)"><div class="muted" style="margin-bottom:6px">Current clip: <button class="btn alt sm" id="vcur">${D.media[a]?'▶ '+esc(a):'none yet — pick one below'}</button> · All variants are loudness-normalized (−16 LUFS) with silence trimmed. “Use this” swaps the clip in your edits; Export / Rebuild pick it up.</div>
+ const row=(lab,u,i)=>HV.has(hk(i))?'':`<div class="row" style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eef2f5"><button class="btn sm" data-p="${u}">▶</button><span style="flex:1">${esc(lab)}</span><button class="btn alt sm" data-dlv="${i}">⬇ Download</button><button class="btn alt sm" data-u="${i}">Use this</button>${String(i)[0]==='c'?'':`<button class="btn red sm" data-hv="${i}" title="Remove from this list (undo below)">🗑 Delete</button>`}</div>`;
+ $('db').innerHTML=`<div style="width:min(620px,90vw)"><div class="muted" style="margin-bottom:6px">Current clip: <button class="btn alt sm" id="vcur">${D.media[a]?'▶ '+esc(a):'none yet — pick one below'}</button> <button class="btn alt sm" id="vcurdl">⬇ Download</button> · All variants are loudness-normalized (−16 LUFS) with silence trimmed. “Use this” swaps the clip in your edits; Export / Rebuild pick it up.</div>
  ${nh?`<div class="muted" style="font-size:12px">${nh} deleted from this list <button class="btn alt sm" id="vundo">↶ Undo</button> <button class="btn alt sm" id="vall">↺ Restore all</button></div>`:''}${Object.entries(groups).map(([g,ix])=>ix.every(i=>HV.has(hk(i)))?'':`<div class="sec">${esc(g)}</div>`+ix.map(i=>row(v.variants[i].label,v.variants[i].url,i)).join('')).join('')}
  <div class="sec">Generate now · free Microsoft Edge neural TTS · text “${esc(word)}”${SPEAK[word]?' (spoken as '+SPEAK[word]+')':''}</div><div id="vtts">${[['zh-CN-XiaoxiaoNeural','Xiaoxiao F'],['zh-CN-XiaoyiNeural','Xiaoyi F'],['zh-CN-YunxiNeural','Yunxi M'],['zh-CN-YunjianNeural','Yunjian M'],['zh-TW-HsiaoChenNeural','HsiaoChen F TW']].map(([vo,l])=>`<button class="btn alt sm" data-tv="${vo}|+0%">${l}</button><button class="btn alt sm" data-tv="${vo}|-25%">${l} slow</button>`).join(' ')} <span class="muted" id="vts"></span></div><div id="vtto"></div>
  <div class="sec">Cut by hand</div><button class="btn alt sm" id="vcut">⇄ Cut from another clip (story video audio)…</button>
  <div class="sec">Voice clone · Li Pei Ru · Chatterbox (open source, pre-generated above when available) · MiniMax (paid)</div><div id="vcl">${CLONE.enabled?`<button class="btn alt sm" data-c="1">Generate · normal</button> <button class="btn alt sm" data-c="0.8">Generate · slow</button> <span class="muted" id="vcs"></span>`:'<span class="muted">Key not set: add MINIMAX_API_KEY (and MINIMAX_GROUP_ID if needed) in the Render environment.</span>'}</div><div id="vclo"></div>
  <div class="muted" style="font-size:11.5px;margin-top:10px">Sources: re-cut from the original lesson audio · Chatterbox multilingual (Resemble AI, open source, generated offline) · Microsoft Edge neural TTS · audio-cmn by hugolpz (CC BY-SA).</div></div>`;
- const CL={};dlg.showModal();$('vcur').onclick=()=>D.media[a]&&vplay(D.media[a].url);const svH=()=>{localStorage.setItem('insp.hidv',JSON.stringify([...HV]));variantsDlg(a)};
+ const CL={};dlg.showModal();$('vcur').onclick=()=>D.media[a]&&vplay(D.media[a].url);if($('vcurdl'))$('vcurdl').onclick=()=>downloadAudio(a);const svH=()=>{localStorage.setItem('insp.hidv',JSON.stringify([...HV]));variantsDlg(a)};
  $('db').querySelectorAll('[data-hv]').forEach(b=>b.onclick=()=>{HV.add(hk(b.dataset.hv));const st=JSON.parse(localStorage.getItem('insp.hidvs')||'[]');st.push(hk(b.dataset.hv));localStorage.setItem('insp.hidvs',JSON.stringify(st));svH()});
  if($('vundo'))$('vundo').onclick=()=>{const st=JSON.parse(localStorage.getItem('insp.hidvs')||'[]');let k;while((k=st.pop())&&!HV.has(k));if(k)HV.delete(k);localStorage.setItem('insp.hidvs',JSON.stringify(st));svH()};
  if($('vall'))$('vall').onclick=()=>{v.variants.forEach((_,i)=>HV.delete(hk(i)));svH()};
  const wireRows=()=>{$('db').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>vplay(b.dataset.p));
+  $('db').querySelectorAll('[data-dlv]').forEach(b=>b.onclick=()=>{const i=b.dataset.dlv,x=i[0]==='c'?CL[i]:v.variants[i];downloadVariant(a,x);});
   $('db').querySelectorAll('[data-u]').forEach(b=>b.onclick=async()=>{const i=b.dataset.u,x=i[0]==='c'?CL[i]:v.variants[i];const by=x.bytes||b64u8(x.b64);dlg.close();
    if(!D.media[a]){await addMedia(a,by);(D.virt=D.virt||{})[a]=1;render();return}const ab=await AC.decodeAudioData(by.slice().buffer);await setClip(a,ab,'variant: '+x.label,{op:'variant',variant:x.id,label:x.label,word});});};
  $('vcut').onclick=()=>{if(D.media[a])replaceDlg(a);else alert('Pick a variant first, then you can cut.')};
@@ -305,9 +382,7 @@ function wirePiano(){const P=$('piano');if(!P)return;$('psrc').onchange=e=>{PSRC
  P.querySelectorAll('[data-pkn]').forEach(b=>b.onclick=e=>{e.stopPropagation();picDlg(D.notes.find(n=>n.id==b.dataset.pkn))});
  $('pflip').onclick=()=>{const any=tiles.some(t=>!t.classList.contains('fl'));tiles.forEach(t=>t.classList.toggle('fl',any))};
  $('pall').onclick=async()=>{for(const t of tiles){tiles.forEach(x=>x.classList.remove('on'));t.classList.add('on');t.classList.add('fl');const a=t.dataset.a;if(a&&D.media[a]){await new Promise(ok=>{if(VP)VP.pause();VP=new Audio(D.media[a].url);VP.onended=ok;VP.onerror=ok;VP.play().catch(ok)});}await new Promise(ok=>setTimeout(ok,120))}tiles.forEach(x=>x.classList.remove('on'))};}
-const PIANO_JS=`<script>(function(){var T=document.querySelectorAll('.ptile');var A={};function snd(f){if(!f)return;try{if(A.cur)A.cur.pause();A.cur=new Audio(f);A.cur.play();}catch(e){}}
-for(var i=0;i<T.length;i++)T[i].onclick=function(){snd(this.getAttribute('data-a'));if(this.className.indexOf(' fl')<0)this.className+=' fl';else this.className=this.className.replace(' fl','');};
-var p=document.getElementById('pall');if(p)p.onclick=function(){var i=0;(function nx(){if(i>=T.length)return;var t=T[i++];if(t.className.indexOf(' fl')<0)t.className+=' fl';var f=t.getAttribute('data-a');if(!f)return setTimeout(nx,150);if(A.cur)A.cur.pause();A.cur=new Audio(f);A.cur.onended=function(){setTimeout(nx,120)};A.cur.onerror=nx;A.cur.play();})();};})();<\/script>`;
+const PIANO_JS=`<script>(function(){/*__bdPiano*/if(window.__bdWG&&window.__bdWG.off){var sw=document.getElementById("wsw"),hw=document.getElementById("hw")||document.getElementById("hwrow");if(!hw||!sw||sw.checked)window.__bdWG.off();}var T=document.querySelectorAll(".pw .ptile"),A=window.__bdRA=window.__bdRA||{};if(!T.length)T=document.querySelectorAll(".ptile");function snd(f,cb){if(window.__bdAudio)return window.__bdAudio.play(f,cb);if(!f){if(cb)setTimeout(cb,150);return;}try{if(A.cur)A.cur.pause();A.cur=new Audio(f);if(cb){A.cur.onended=function(){setTimeout(cb,120)};A.cur.onerror=cb;}A.cur.play();}catch(e){if(cb)cb();}}function bind(el,fn){if(!el||el.__bdTap)return;el.__bdTap=1;var last=0;function go(e){if(e&&e.type==="pointerup"&&e.button)return;var n=Date.now();if(n-last<400)return;last=n;if(window.__bdAudio)window.__bdAudio.unlock();fn.call(el,e);}el.addEventListener("click",go);el.addEventListener("touchend",go);}for(var i=0;i<T.length;i++)bind(T[i],function(){this.classList.toggle("fl");snd(this.getAttribute("data-a"));});var p=document.getElementById("pall");if(p)bind(p,function(){var i=0;(function nx(){if(i>=T.length)return;var t=T[i++];t.classList.add("fl");snd(t.getAttribute("data-a"),nx);})();});})();<\/script>`;
 const PIANO_CSS=`.card{font-family:-apple-system,sans-serif;background:#f4f8fb;color:#08003f;text-align:center}.pw{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;max-width:220px;margin:0 auto}.ptile{width:96px;height:118px;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(8,0,63,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}.ptile img{width:100%;height:100%;object-fit:cover}.ptile .b{display:none}.ptile.fl img{display:none}.ptile.fl{background:#fffbeb}.ptile.fl .b{display:block}.ptile .h{font-size:32px;font-weight:700}.ptile .p{color:#7a8794}.ptxt{font-size:28px;color:#9aa7b4;align-self:center}.pb{border:none;border-radius:12px;padding:10px 16px;background:#1676d2;color:#fff;font-size:15px;margin:8px}`;
 function pianoHtml(ren){const c=classify(),S=pianoSources(c),src=S.find(x=>x.k===PSRC)||S[0];if(!src)return '';const T=sentenceTiles(src.t,c.words),rn=f=>ren[f]||f;
  return T.map(t=>{if(!t.nt)return `<span class="ptxt">${esc(t.h)}</span>`;const d=tileData(t);return `<div class="ptile" data-a="${esc(d.a?rn(d.a):'')}">${d.img?`<img src="${esc(d.img)}">`:''}<div class="b"><div class="h">${esc(d.h)}</div><div class="p">${esc(d.py)}</div></div></div>`}).join('')}
@@ -623,7 +698,7 @@ function drawDrawer(){const nt=D.notes.find(n=>n.id===SELID);if(!nt)return;const
  <div class="muted" style="font-size:12px">${esc(m.name||'')} · ${D.cards.filter(c=>c.nid===nt.id).length} cards${nt.added?' · new':''}${ex?' · <b style="color:#dc2626">deleted</b>':''} · ↑/↓ to move, Esc to close</div>
  ${[...new Set(R.i)].filter(i=>D.media[i]).slice(0,1).map(i=>`<img src="${D.media[i].url}" style="width:100%;max-height:150px;object-fit:cover;border-radius:12px;margin-top:8px">`).join('')}
  <div class="sec">Preview</div><div class="dgrid">${(m.tmpls||[]).map((t,i)=>`<button class="btn alt sm" data-dpv="${i}">👁 ${esc(t.name)}</button>`).join('')}</div>
- <div class="sec">Audio</div>${[...new Set(R.a)].map(a=>`<div class="drow"><button class="btn sm" data-dpl="${esc(a)}">▶</button><span class="dname" title="${esc(a)}">${esc(a)}</span>${D.info[a]&&D.info[a].flags.length?'<span class="chip warn">!</span>':''}${D.media[a]&&D.media[a].edited?'<span class="chip ed">edited</span>':''}</div><div class="dgrid" style="margin:2px 0 6px 34px">${VAR[a]?`<button class="btn sm" data-dva="${esc(a)}">🎧 Variants (${VAR[a].variants.length})</button>`:''}<button class="btn alt sm" data-dtr="${esc(a)}">✂ Trim</button><button class="btn alt sm" data-drp="${esc(a)}">⇄ Replace</button></div>`).join('')||'<div class="muted">No audio</div>'}
+ <div class="sec">Audio</div>${[...new Set(R.a)].map(a=>`<div class="drow"><button class="btn sm" data-dpl="${esc(a)}">▶</button><span class="dname" title="${esc(a)}">${esc(a)}</span>${D.info[a]&&D.info[a].flags.length?'<span class="chip warn">!</span>':''}${D.media[a]&&D.media[a].edited?'<span class="chip ed">edited</span>':''}</div><div class="dgrid" style="margin:2px 0 6px 34px">${VAR[a]?`<button class="btn sm" data-dva="${esc(a)}">🎧 Variants (${VAR[a].variants.length})</button>`:''}<button class="btn alt sm" data-ddl="${esc(a)}">⬇ Download</button><button class="btn alt sm" data-dtr="${esc(a)}">✂ Trim</button><button class="btn alt sm" data-drp="${esc(a)}">⇄ Replace</button></div>`).join('')||'<div class="muted">No audio</div>'}
  <div class="sec">Content</div><div class="dgrid"><button class="btn alt sm" id="dwed">✎ Edit fields</button>${N.includes('Picture')?'<button class="btn alt sm" id="dwpic">🖼 Choose picture</button><label class="btn alt sm">⬆ Upload picture<input type="file" id="dwup" accept="image/*" style="display:none"></label>':''}${N.includes('Short')?'<button class="btn alt sm" id="dwdef">📖 Definition</button>':''}</div>
  <div class="sec">Successful moment</div><div class="drow"><button class="star ${mk.star?'on':''}" id="dwst">★</button><input type="text" id="dwmk" placeholder="What worked well here?" value="${esc(mk.note||'')}" style="flex:1"></div>
  <div class="sec">Organise</div><div class="dgrid"><button class="btn alt sm" id="dwdup">⧉ Duplicate</button><button class="btn alt sm" id="dwadd">+ Add card after</button></div>
@@ -631,7 +706,7 @@ function drawDrawer(){const nt=D.notes.find(n=>n.id===SELID);if(!nt)return;const
  <div style="margin-top:12px">${ex?`<button class="btn sm" id="dwres">↺ Restore</button>`:`<button class="btn red sm" id="dwdel">🗑 Delete</button>`}</div>`;
  const D_=$('drawer'),q=s=>D_.querySelector(s),byA=(sel,f)=>D_.querySelectorAll(sel).forEach(b=>b.onclick=()=>f(b));
  q('#dwx').onclick=()=>selectNote(null);
- byA('[data-dpv]',b=>preview(nt.id,+b.dataset.dpv));byA('[data-dpl]',b=>vplay(D.media[b.dataset.dpl].url));byA('[data-dva]',b=>variantsDlg(b.dataset.dva));byA('[data-drp]',b=>replaceDlg(b.dataset.drp));
+ byA('[data-dpv]',b=>preview(nt.id,+b.dataset.dpv));byA('[data-dpl]',b=>vplay(D.media[b.dataset.dpl].url));byA('[data-dva]',b=>variantsDlg(b.dataset.dva));byA('[data-ddl]',b=>downloadAudio(b.dataset.ddl));byA('[data-drp]',b=>replaceDlg(b.dataset.drp));
  byA('[data-dtr]',b=>{EXP.add(nt.id);render();const el=[...document.querySelectorAll('#anat tr.aux .au')].find(e=>e.dataset.a===b.dataset.dtr);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.style.boxShadow='0 0 0 3px #7cc7f0';setTimeout(()=>el.style.boxShadow='',1600);}alert('Drag on the highlighted waveform to select the part to keep, then press “✂ Keep selection”.')});
  q('#dwed').onclick=()=>noteEditor(nt,{});if(q('#dwpic'))q('#dwpic').onclick=()=>picDlg(nt);if(q('#dwdef'))q('#dwdef').onclick=()=>defDlg(nt);
  if(q('#dwup'))q('#dwup').onchange=async e=>{const f=e.target.files[0];if(!f)return;const ext=(f.name.match(/\.(\w+)$/)||[,'jpg'])[1].toLowerCase(),name=`ins_pic_${Date.now().toString(36)}.${ext}`;await addMedia(name,new Uint8Array(await f.arrayBuffer()));
@@ -717,5 +792,6 @@ async function importEdits(j){const E=j.edits||j.audioEdits||{},marks=j.marks||{
 $('impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!D)return;try{await importEdits(JSON.parse(await f.text()))}catch(err){alert('Could not import: '+err.message)}};
 $('more').onclick=e=>{e.stopPropagation();$('moremenu').classList.toggle('hide')};document.addEventListener('click',e=>{if(!e.target.closest('#moremenu'))$('moremenu').classList.add('hide')});
 $('moremenu').addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(()=>$('moremenu').classList.add('hide'),0)});
-function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click()}
+function dl(b,n){const a=document.createElement('a');const url=URL.createObjectURL(b);a.href=url;a.download=n;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500)}
+$('dlaudio').onclick=()=>downloadAllAudio();
 </script></body></html>
