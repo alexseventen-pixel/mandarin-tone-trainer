@@ -113,7 +113,7 @@ function patchTmpl(m,t){t.qfmt=patchPiano(patchWrite(t.qfmt,m));t.qfmt=patchRemo
  const SL='<div class="rich-slot">{{Rich}}</div>';if(a.includes(SL)){const k=a.indexOf(SL),e=a.indexOf('</script>',k);a=a.slice(0,k)+(e>0?a.slice(e+9):a.slice(k+SL.length));}
  if(String(m.id)!==PIANO_MID)a+=`<div class="rich-slot">{{Rich}}</div>`+RICH_JS;
  t.qfmt=ensureAudio(t.qfmt);t.afmt=ensureAudio(a);}
-const NATF={'1793305701':[['Native','AudioFile','Hanzi'],['ExNative','ExAudioFile','ExZh']],'1793305702':[['Native','AudioFile','Text']]};const NAT={};
+const NATF={'1793305701':[['Native','AudioFile','Hanzi'],['ExNative','ExAudioFile','ExZh']],'1793305702':[['Native','AudioFile','Text']],'1793305703':[['Native','AudioFile','Text']]};/* 1793305703 = Bear Door Sentence 2 chunk type */const NAT={};
 // before export: compute the native contour of every recorder card's own clip once (cached by file name; reused if the note already has it)
 async function prep(db,MODELS,getBytes,api){const rows=(db.exec('select mid,flds from notes')[0]||{values:[]}).values;const jobs=[];
  for(const [mid,f] of rows){const L=NATF[String(mid)];if(!L)continue;const names=MODELS[mid].flds.map(x=>x.name),v=f.split('\x1f'),F={};names.forEach((k,i)=>F[k]=v[i]||'');

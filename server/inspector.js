@@ -8,11 +8,14 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { createHmac, createDecipheriv, timingSafeEqual } from 'node:crypto';
 const dataDir=new URL('../inspector-data/',import.meta.url);
 const PASS=()=>process.env.INSPECTOR_PASSCODE||'', KEY=()=>process.env.INSPECTOR_DATA_KEY||'';
+// Optional second key (INSPECTOR_DATA_KEY2) for decks added later (index2.enc + their .enc files).
+const KEY2=()=>process.env.INSPECTOR_DATA_KEY2||'';
 const tok=()=>createHmac('sha256',PASS()).update('deck-inspector-v1').digest('hex');
 const eq=(a,b)=>{a=Buffer.from(String(a));b=Buffer.from(String(b));return a.length===b.length&&timingSafeEqual(a,b);};
 const J=(res,s,d)=>{res.writeHead(s,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(d));};
 async function body(req){const c=[];let n=0;for await(const x of req){n+=x.length;if(n>10000)throw new Error('too big');c.push(x);}return Buffer.concat(c).toString();}
-function dec(b){const d=createDecipheriv('aes-256-gcm',Buffer.from(KEY(),'hex'),b.subarray(0,12));d.setAuthTag(b.subarray(12,28));return Buffer.concat([d.update(b.subarray(28)),d.final()]);}
+function dec1(b,k){const d=createDecipheriv('aes-256-gcm',Buffer.from(k,'hex'),b.subarray(0,12));d.setAuthTag(b.subarray(12,28));return Buffer.concat([d.update(b.subarray(28)),d.final()]);}
+function dec(b){try{return dec1(b,KEY());}catch(e){if(KEY2())return dec1(b,KEY2());throw e;}}
 let fails=0,failT=0;
 // ---- CC-CEDICT lookup (CC BY-SA) + free edge neural TTS for new cards ----
 let CED=null;
@@ -155,12 +158,13 @@ export async function handleInspector(req,res,path){
   }
   if(path==='/api/inspector/decks'){
     let idx=[];try{idx=JSON.parse(dec(await readFile(new URL('index.enc',dataDir))).toString());}catch{}
-    return J(res,200,{decks:idx.map(({id,name,group,size})=>({id,name,group,size})),encrypted:!!KEY()});
+    try{const i2=JSON.parse(dec(await readFile(new URL('index2.enc',dataDir))).toString());for(const d of i2){if(idx.some(x=>x.id===d.id))continue;let at=idx.findIndex(x=>x.id===d.after)+1;if(!at){for(let i=0;i<idx.length;i++)if(idx[i].group===d.group)at=i+1;}if(!at)at=idx.length;idx.splice(at,0,d);}}catch{}
+    return J(res,200,{decks:idx.map(({id,name,group,size})=>({id,name,group,size})),encrypted:!!(KEY()||KEY2())});
   }
   if(path==='/api/inspector/deck'){
     const id=new URL(req.url,'http://x').searchParams.get('id')||'';
     if(!/^[a-z0-9_-]{1,64}$/i.test(id))return J(res,400,{error:'bad id'});
-    if(!KEY())return J(res,503,{error:'INSPECTOR_DATA_KEY not set'});
+    if(!KEY()&&!KEY2())return J(res,503,{error:'INSPECTOR_DATA_KEY not set'});
     try{const out=dec(await readFile(new URL(id+'.enc',dataDir)));
       res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Length':out.length,'Cache-Control':'no-store'});return res.end(out);}
     catch(e){return J(res,404,{error:'deck not available'});}
