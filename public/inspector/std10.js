@@ -26,7 +26,7 @@ const CSS=`${MARK}
 .rpall{border:none;border-radius:12px;padding:9px 16px;background:#1676d2;color:#fff;font-size:15px;margin:8px 0 2px}
 .card:has(.lock:not(.open)) .rich,body:has(.lock:not(.open)) .rich{display:none}
 .hw div,#hwrow .mzg,#hwrow>div{touch-action:none;-webkit-user-select:none;user-select:none}
-.wgd{margin:14px auto 6px;max-width:340px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;color:#4a5668};cursor:pointer
+.wgd{margin:14px auto 6px;max-width:340px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;color:#4a5668;cursor:pointer}
 .wsw{position:relative;width:62px;height:34px;flex:none}.wsw input{opacity:0;width:0;height:0}.wsw .sl{position:absolute;inset:0;background:#cbd5e1;border-radius:34px;transition:.2s}
 .wsw .sl:before{content:"";position:absolute;width:28px;height:28px;left:3px;top:3px;background:#fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.2s}.wsw input:checked+.sl{background:#16a34a}.wsw input:checked+.sl:before{transform:translateX(28px)}
 .wans{display:none;margin:8px auto;max-width:340px;background:#fff;border-radius:16px;padding:12px;box-shadow:0 6px 22px rgba(8,0,63,.08)}.wans.on{display:block}.wans .big{font-size:56px;font-weight:600}
