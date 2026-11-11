@@ -1,6 +1,6 @@
 // Deck Inspector API: passcode-gated. Preloaded decks are stored AES-256-GCM encrypted in inspector-data/;
 // the key lives only in the Render env (INSPECTOR_DATA_KEY). Disabled unless INSPECTOR_PASSCODE is set.
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { pinyin as toPinyin } from 'pinyin-pro';
 import { nativeContour } from './anki/analyze.js';
@@ -155,6 +155,11 @@ export async function handleInspector(req,res,path){
     if(!/^[\u3000-\u9fff\uff00-\uffef]+$/.test(text))return J(res,400,{error:'Chinese text only (max 40 chars)'});
     try{const mp3=await cloneTts(text,speed);res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':mp3.length,'Cache-Control':'no-store'});return res.end(mp3);}
     catch(e){return J(res,502,{error:'MiniMax: '+String(e.message).slice(0,200)});}
+  }
+  if(path==='/api/inspector/variant-bundles'){
+    // every inspector-data/*-variants.enc is a pre-generated "Replacement variants" bundle (made by tools/make_variants.py)
+    let ids=[];try{ids=(await readdir(dataDir)).filter(f=>/^[a-z0-9_-]{1,64}-variants\.enc$/i.test(f)).map(f=>f.slice(0,-4)).sort();}catch{}
+    return J(res,200,{bundles:ids});
   }
   if(path==='/api/inspector/decks'){
     let idx=[];try{idx=JSON.parse(dec(await readFile(new URL('index.enc',dataDir))).toString());}catch{}

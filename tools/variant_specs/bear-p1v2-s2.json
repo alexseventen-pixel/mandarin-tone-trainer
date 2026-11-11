@@ -1,0 +1,428 @@
+{
+ "bundle": "bear-p1v2-s2-variants",
+ "out_dir": "/workspace/part1v2/variants_s2",
+ "deck": "/workspace/part1v2/s2/BearDoor_Part1_S2_switchfix.apkg",
+ "items": [
+  {
+   "key": "bd2_yuanben",
+   "clip": "bd2_yuanben.mp3",
+   "word": "原本",
+   "speak": "原本",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 0,
+    "b": 0.4
+   }
+  },
+  {
+   "key": "bd2_danxin",
+   "clip": "bd2_danxin.mp3",
+   "word": "担心",
+   "speak": "担心",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 0.39,
+    "b": 0.94
+   }
+  },
+  {
+   "key": "bd2_meiyou",
+   "clip": "bd2_meiyou.mp3",
+   "word": "没有",
+   "speak": "没有",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 0.87,
+    "b": 1.26
+   }
+  },
+  {
+   "key": "bd2_yong",
+   "clip": "bd2_yong.mp3",
+   "word": "用",
+   "speak": "用",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 1.27,
+    "b": 1.66
+   }
+  },
+  {
+   "key": "bd2_meixiangdao",
+   "clip": "bd2_meixiangdao.mp3",
+   "word": "没想到",
+   "speak": "没想到",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 0,
+    "b": 0.8
+   }
+  },
+  {
+   "key": "bd2_zhe",
+   "clip": "bd2_zhe.mp3",
+   "word": "这",
+   "speak": "这",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 0.73,
+    "b": 0.94
+   }
+  },
+  {
+   "key": "bd2_zhi",
+   "clip": "bd2_zhi.mp3",
+   "word": "只",
+   "speak": "支",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 0.9,
+    "b": 1.11
+   },
+   "note": "只 alone is read zhǐ by TTS; 支 = zhī, the reading used here"
+  },
+  {
+   "key": "bd2_feichang",
+   "clip": "bd2_feichang.mp3",
+   "word": "非常",
+   "speak": "非常",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-08.wav",
+    "a": 0.98,
+    "b": 1.49
+   }
+  },
+  {
+   "key": "bd2_congming",
+   "clip": "bd2_congming.mp3",
+   "word": "聪明",
+   "speak": "聪明",
+   "kind": "word",
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 2.01,
+    "b": 2.69
+   }
+  },
+  {
+   "key": "bd2_k_han3",
+   "clip": "bd2_k_han3.mp3",
+   "word": "厂",
+   "speak": "喊",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_quan2",
+   "clip": "bd2_k_quan2.mp3",
+   "word": "泉",
+   "speak": "泉",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_mu4",
+   "clip": "bd2_k_mu4.mp3",
+   "word": "木",
+   "speak": "木",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_yi1",
+   "clip": "bd2_k_yi1.mp3",
+   "word": "一",
+   "speak": "一",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_shou3",
+   "clip": "bd2_k_shou3.mp3",
+   "word": "扌",
+   "speak": "手",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_dan4",
+   "clip": "bd2_k_dan4.mp3",
+   "word": "旦",
+   "speak": "旦",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_xin1",
+   "clip": "bd2_k_xin1.mp3",
+   "word": "心",
+   "speak": "心",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_shui3",
+   "clip": "bd2_k_shui3.mp3",
+   "word": "氵",
+   "speak": "水",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_shu1",
+   "clip": "bd2_k_shu1.mp3",
+   "word": "殳",
+   "speak": "书",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_you4",
+   "clip": "bd2_k_you4.mp3",
+   "word": "𠂇",
+   "speak": "又",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_rou4",
+   "clip": "bd2_k_rou4.mp3",
+   "word": "月",
+   "speak": "肉",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_yong4",
+   "clip": "bd2_k_yong4.mp3",
+   "word": "用",
+   "speak": "用",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_xiang1",
+   "clip": "bd2_k_xiang1.mp3",
+   "word": "相",
+   "speak": "香",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_zhi4",
+   "clip": "bd2_k_zhi4.mp3",
+   "word": "至",
+   "speak": "至",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_dao1",
+   "clip": "bd2_k_dao1.mp3",
+   "word": "刂",
+   "speak": "刀",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_chuo4",
+   "clip": "bd2_k_chuo4.mp3",
+   "word": "辶",
+   "speak": "绰",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_wen2",
+   "clip": "bd2_k_wen2.mp3",
+   "word": "文",
+   "speak": "文",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_kou3",
+   "clip": "bd2_k_kou3.mp3",
+   "word": "口",
+   "speak": "口",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_ba1",
+   "clip": "bd2_k_ba1.mp3",
+   "word": "八",
+   "speak": "八",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_fei1",
+   "clip": "bd2_k_fei1.mp3",
+   "word": "非",
+   "speak": "非",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_shang4",
+   "clip": "bd2_k_shang4.mp3",
+   "word": "尚",
+   "speak": "尚",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_jin1",
+   "clip": "bd2_k_jin1.mp3",
+   "word": "巾",
+   "speak": "巾",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_er3",
+   "clip": "bd2_k_er3.mp3",
+   "word": "耳",
+   "speak": "耳",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_zong3",
+   "clip": "bd2_k_zong3.mp3",
+   "word": "总",
+   "speak": "总",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_ri4",
+   "clip": "bd2_k_ri4.mp3",
+   "word": "日",
+   "speak": "日",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_k_yue4",
+   "clip": "bd2_k_yue4.mp3",
+   "word": "月",
+   "speak": "月",
+   "kind": "key",
+   "audiocmn": false
+  },
+  {
+   "key": "bd2_x_yuanbendanxin",
+   "clip": "bd2_x_yuanbendanxin.mp3",
+   "word": "原本担心",
+   "speak": "原本担心。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 0,
+    "b": 0.94
+   }
+  },
+  {
+   "key": "bd2_x_danxinmeiyouyong",
+   "clip": "bd2_x_danxinmeiyouyong.mp3",
+   "word": "担心没有用",
+   "speak": "担心没有用。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 0.39,
+    "b": 1.66
+   }
+  },
+  {
+   "key": "bd2_x_meiyouyong",
+   "clip": "bd2_x_meiyouyong.mp3",
+   "word": "没有用",
+   "speak": "没有用。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-03.wav",
+    "a": 0.87,
+    "b": 1.66
+   }
+  },
+  {
+   "key": "bd2_x_meixiangdaozhezhixiong",
+   "clip": "bd2_x_meixiangdaozhezhixiong.mp3",
+   "word": "没想到这只熊",
+   "speak": "没想到这只熊。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 0,
+    "b": 1.36
+   }
+  },
+  {
+   "key": "bd2_x_zhezhixiong",
+   "clip": "bd2_x_zhezhixiong.mp3",
+   "word": "这只熊",
+   "speak": "这只熊。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 0.73,
+    "b": 1.36
+   }
+  },
+  {
+   "key": "bd2_x_feichangdecongming",
+   "clip": "bd2_x_feichangdecongming.mp3",
+   "word": "非常的聪明",
+   "speak": "非常的聪明。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/sentence-04.wav",
+    "a": 1.29,
+    "b": 3.02
+   }
+  },
+  {
+   "key": "bd2_x_h1",
+   "clip": "bd2_x_h1.mp3",
+   "word": "原本担心没有用",
+   "speak": "原本担心没有用。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/reference.wav",
+    "a": 6.88,
+    "b": 8.78
+   }
+  },
+  {
+   "key": "bd2_x_full",
+   "clip": "bd2_x_full.mp3",
+   "word": "原本担心没有用没想到这只熊非常的聪明",
+   "speak": "原本担心没有用，没想到这只熊非常的聪明。",
+   "kind": "chunk",
+   "audiocmn": false,
+   "recut": {
+    "src": "/workspace/mtt-anki/public/lessons/video-1-li-pei-ru/reference.wav",
+    "a": 6.88,
+    "b": 11.9
+   }
+  }
+ ]
+}

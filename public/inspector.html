@@ -178,10 +178,11 @@ function replaceDlg(a){const opts=Object.keys(D.info).filter(n=>n!==a&&D.media[n
 // ---------- replacement variants ----------
 
 async function loadVariants(){try{const c=await api('/api/inspector/clone/status');if(c.ok)CLONE=await c.json();}catch{}
- try{const r=await api('/api/inspector/deck?id=bear-p1v2-variants');if(r.ok){const j=JSON.parse(new TextDecoder().decode(await r.arrayBuffer()));VAR={};VARK={};for(const k in j){VAR[j[k].clip]=j[k];VARK[k]=j[k];if(j[k].word&&!VARW[j[k].word])VARW[j[k].word]=j[k];}}}catch{}
+ let ids=['bear-p1v2-variants'];try{const r=await api('/api/inspector/variant-bundles');if(r.ok){const L=(await r.json()).bundles;if(L&&L.length)ids=L}}catch{}
+ VAR={};VARK={};for(const id of ids){try{const r=await api('/api/inspector/deck?id='+encodeURIComponent(id));if(r.ok){const j=JSON.parse(new TextDecoder().decode(await r.arrayBuffer()));for(const k in j){VAR[j[k].clip]=j[k];VARK[k]=j[k];if(j[k].word&&!VARW[j[k].word])VARW[j[k].word]=j[k];}}}catch{}}
  if(D)render();}
 const b64u8=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-const SPEAK={'彐':'记','忄':'心','灬':'火','阝':'阜','宀':'棉','丨':'滚','亅':'决','乛':'折'};
+const SPEAK={'彐':'记','忄':'心','灬':'火','阝':'阜','宀':'棉','丨':'滚','亅':'决','乛':'折','厂':'喊','扌':'手','氵':'水','殳':'书','𠂇':'又','刂':'刀','辶':'绰'};
 function vget(a){return VAR[a]||VARW[clipText(a)]||null}
 function clipText(a){if(D.cliptxt&&D.cliptxt[a])return D.cliptxt[a];const t='[sound:'+a+']';
  for(const nt of D.notes){if(!effFlds(nt).includes(t)&&!effFlds(nt).includes(a))continue;const N=fnames(nt),F=effFlds(nt).split('\x1f'),g=n=>F[N.indexOf(n)]||'';
