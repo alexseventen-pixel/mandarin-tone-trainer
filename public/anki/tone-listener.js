@@ -1,6 +1,6 @@
 /* Tone Listener for the Anki cards — loaded by a small loader in each recorder card. v1 (2026-11-05). Edit here + deploy: all cards update, no deck re-import. */
 (function(){
-/*v13rec*//*v13b*/var SERVER_URL="https://mandarin-tone-trainer.onrender.com";
+/*v13rec*//*v13b*/var SERVER_URL=window.TL_SERVER||"https://mandarin-tone-trainer.onrender.com"; /* test page can point to another server */
 var W=window.__bdAI=window.__bdAI||{};
 var $=function(id){return document.getElementById(id);};
 var root=$('ai'); if(!root) return; /*std10ai*/ W.gen=(W.gen||0)+1; var GEN=W.gen; try{cancelAnimationFrame(W.raf);cancelAnimationFrame(W.praf);clearTimeout(W.timer);if(W.xhr)W.xhr.abort();if(W.src)W.src.stop();}catch(e){} W.xhr=null; W.dt=0;
@@ -86,7 +86,7 @@ function spk(){ try{var r=JSON.parse(localStorage.getItem('aiSpk')||'null'); if(
 function send(w){
   $('ai-rec').disabled=true; var T=Date.now(), kb=Math.round(w.size/1024); st('📤 Sending ('+kb+' KB)…');
   var fd=new FormData(); fd.append('audio',w,'rec.wav'); fd.append('hanzi',HANZI); fd.append('card','bd1:'+CARD); var NT=nat(); if(NT&&NT.sl&&NT.d){fd.append('nslots',JSON.stringify(NT.sl)); fd.append('ndur',NT.d);}
-  var r0=spk(); if(r0){fd.append('spk_lo',r0.lo); fd.append('spk_hi',r0.hi);}
+  var r0=spk(); if(r0){fd.append('spk_lo',r0.lo); fd.append('spk_hi',r0.hi);} if(window.TL_SCORING)fd.append('scoring',window.TL_SCORING); if(window.TL_COMPARE)fd.append('compare','1');
   var x=W.xhr=new XMLHttpRequest(), tU=0, slow=setTimeout(function(){ if(!tU)st('⏳ Server is waking up (up to ~1 min)…'); },6000);
   x.open('POST',SERVER_URL+'/api/anki/analyze'); x.timeout=70000;
   x.upload.onload=function(){ tU=Date.now()-T; st('🧠 Analysing tones…'); };
@@ -123,7 +123,7 @@ function histUI(a){ a=a||hist()[CARD]||[]; var el=$('ai-hist'); if(!el)return; i
 function show(d){
   $('ai-res').style.display='block';
   var sc=$('ai-score'); sc.textContent=d.score+' / 100'; sc.style.color=d.score>=80?'#16a34a':d.score>=50?'#d97706':'#dc2626';
-  var hp=d.heard&&d.heard.pinyin; $('ai-heard').textContent=hp?('Heard: '+(Array.isArray(hp)?hp.join(' '):hp)):(d.heard&&d.heard.text?'Heard: '+d.heard.text:'');
+  var hp=d.heard&&d.heard.pinyin; if(d.old&&$('ai-old')){ var os=d.old; $('ai-old').innerHTML='Old scoring: <b>'+(os.score==null?'n/a':os.score+' / 100')+'</b> '+(os.syllables||[]).map(function(s){return esc(s.hanzi)+(s.ok?'✓':'✗'+(s.heard_tone||''));}).join(' ')+' · New (sequential): <b>'+d.score+' / 100</b>'; } $('ai-heard').textContent=hp?('Heard: '+(Array.isArray(hp)?hp.join(' '):hp)):(d.heard&&d.heard.text?'Heard: '+d.heard.text:'');
   $('ai-syl').innerHTML=(d.syllables||[]).map(function(s){ var sd=s.sandhi?' <small>(→'+esc(s.sandhi.pinyin)+')</small>':'';
     return '<span class="chip '+(s.ok?(s.unsure?'mid':'ok'):'bad')+'">'+esc(s.hanzi)+' '+esc(s.pinyin)+sd+' '+(s.ok?'✓':'✗ '+(s.heard_tone?'tone '+s.heard_tone:'?'))+'</span>';}).join('');
   $('ai-tips').innerHTML=tipsEn(d).map(function(t){return '• '+esc(t);}).join('<br>');
@@ -131,6 +131,10 @@ function show(d){
   var l=root.closest?root.closest('.lock'):null; if(l&&l.className.indexOf('open')<0)l.className+=' open';
 }
 function draw(c){ var cv=$('ai-cv'); if(c&&cv&&!cv.clientWidth&&W.dt<30){W.dt++;cv.style.display='block';requestAnimationFrame(function(){draw(c);});return;} W.dt=0; try{draw0(c);}catch(e){try{st('Could not draw the pitch: '+e.message);}catch(_){}} }
+/* native time (s from native onset) -> learner time: each native syllable slot is stretched onto the learner's own syllable box, so the grey line follows the learner's pace instead of racing ahead */
+function natWarp(NT,S,c){ var n=S.length, sl=NT.sl, d=+NT.d; if(!n||!sl||sl.length!==n||!(d>0)) { if(n&&d>0){ var a0=S[0].start,b0=S[n-1].end; return function(t){return a0+Math.max(0,Math.min(1,t/d))*(b0-a0);}; } return function(t){return c.onset+t;}; }
+  var tot=0; sl.forEach(function(x){tot+=x;}); var edges=[0]; sl.forEach(function(x){edges.push(edges[edges.length-1]+x/tot*d);});
+  return function(t){ var k=0; while(k<n-1&&t>edges[k+1])k++; var f=(t-edges[k])/Math.max(1e-3,edges[k+1]-edges[k]); f=Math.max(0,Math.min(1,f)); return S[k].start+f*(S[k].end-S[k].start); }; }
 function natOn(){ try{return localStorage.getItem('aiNatLine')!=='0';}catch(e){return true;} }
 function nat(){ if(W.natG===GEN)return W.nat; W.natG=GEN; W.nat=null; try{var e=$('ai-nat'),s=e?e.textContent.trim():''; if(s)W.nat=JSON.parse(s);}catch(e){} return W.nat; }
 function draw0(c){
@@ -151,7 +155,7 @@ function draw0(c){
     g.beginPath(); for(var j=0;j<=24;j++){ var u=j/24*(p.length-1), lo=Math.floor(u), hi=Math.min(p.length-1,lo+1), f=u-lo, P0=p[Math.max(0,lo-1)], P1=p[lo], P2=p[hi], P3=p[Math.min(p.length-1,hi+1)], v=0.5*((2*P1)+(-P0+P2)*f+(2*P0-5*P1+4*P2-P3)*f*f+(-P0+3*P1-3*P2+P3)*f*f*f), xx=a+(b-a)*j/24; j?g.lineTo(xx,Y(v)):g.moveTo(xx,Y(v)); } g.stroke();
     g.textAlign='center'; g.textBaseline='alphabetic'; g.fillStyle=col; g.font='600 '+fs+'px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif';
     g.fillText(s.hanzi,(x0+x1)/2,h-22); if(s.voiced===0){g.save();g.fillStyle='#9aa7b4';g.font='11px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif';g.fillText(x1-x0>66?'not voiced':'—',(x0+x1)/2,Tp+14);g.restore();g.fillStyle=col;} if(fp){g.font=fp+'px PingFang SC,Noto Sans CJK SC,-apple-system,sans-serif'; g.fillText(s.pinyin,(x0+x1)/2,h-7);} });
-  var NT=nat(); if(natOn()&&NT&&NT.p&&NT.p.length&&isFinite(c.onset)){ g.save(); g.strokeStyle='rgba(75,85,99,.7)'; g.lineWidth=2.5; g.lineCap='round'; var pv=null; NT.p.forEach(function(q){ if(!q){pv=null;return;} var xx=X(c.onset+q[0]), yy=Y(q[1]); if(xx>w-R)return; if(pv){g.beginPath();g.moveTo(pv[0],pv[1]);g.lineTo(xx,yy);g.stroke();} pv=[xx,yy]; }); g.restore(); }
+  var NT=nat(); if(natOn()&&NT&&NT.p&&NT.p.length&&isFinite(c.onset)){ g.save(); g.strokeStyle='rgba(75,85,99,.7)'; g.lineWidth=2.5; g.lineCap='round'; var pv=null, NW=natWarp(NT,S,c); NT.p.forEach(function(q){ if(!q){pv=null;return;} var xx=X(NW(q[0])), yy=Y(q[1]); if(xx>w-R)return; if(pv){g.beginPath();g.moveTo(pv[0],pv[1]);g.lineTo(xx,yy);g.stroke();} pv=[xx,yy]; }); g.restore(); }
   g.lineCap='round'; g.lineJoin='round'; var U=(c.user||[]).map(function(q){return q&&isFinite(q.t)&&isFinite(q.c)?q:null;}), prev=null;
   for(var i=0;i<U.length;i++){ var q=U[i]; if(!q){prev=null;continue;}
     if(!prev&&!U[i+1]){ g.fillStyle='#1676d2'; g.beginPath(); g.arc(X(q.t),Y(q.c),3.5,0,7); g.fill(); }

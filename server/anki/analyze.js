@@ -141,7 +141,7 @@ export async function assessTonePerfect(wav,chars,cardTones,key){
 
 // ---- clean contour: octave fix, median filter, gap interpolation, smoothing, Chao 1..5 normalisation ----
 const pct=(arr,p)=>{const v=[...arr].sort((a,b)=>a-b);return v[Math.min(v.length-1,Math.max(0,Math.round(p*(v.length-1))))];};
-function chaoTarget(tone,i,n,prev){
+export function chaoTarget(tone,i,n,prev){
   if(tone===3)return (n>1&&i<n-1)?[2,1.6,1.2,1.1,1.2]:[2,1.4,1,1.8,3.6]; // half-third inside a word, full 214 at the end
   if(tone===5){const lv={1:2.2,2:3,3:3.8,4:1.6}[prev]||2.5;return [lv,lv,lv-0.2,lv-0.3,lv-0.4];}
   return {1:[5,5,5,5,5],2:[3,3.3,3.9,4.5,5],4:[5,4.4,3.4,2.2,1]}[tone];
@@ -239,7 +239,7 @@ function buildServices({tp,crepe,timings,frames,tpSyl,local}){
       ms:(timings.pitch_ms??0)+(timings.fallback_ms??0),error:null}];
 }
 
-export async function analyze({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk,nat}){
+async function analyzeClassic({wav,hanzi,pinyin:py,apiKey,tpKey,crepeUrl,spk,nat}){
   const T0=Date.now(),timings={};
   const {samples,rate}=parseWav(wav);
   if(samples.length<rate*0.2)throw new Error('Recording is too short');
@@ -352,4 +352,42 @@ async function analyzeHeuristic({wav,hanzi,pinyin:py,apiKey}){
     syllables,contour:{user:userContour,target:targetContour,unit:'semitones relative to speaker median'},tips,
     note:'Tone check is heuristic (YIN pitch + template matching); syllables are split evenly over the voiced span.'
   };
+}
+
+// ---- scoring switch (branch tone-seq-scoring) ----
+// 'classic' = TonePerfect verdicts (fallback: YIN + CREPE), contour laid on the native's syllable slots.
+// 'seq'     = sequential, speed-independent tone check (seqscore.js); syllable boxes follow the learner's own syllables.
+// Default comes from env TONE_SCORING (unset = classic, so merging alone changes nothing); a request can pass scoring=seq|classic.
+// compare=true also runs the classic engine and returns it as `old` (test page only).
+import { sequentialAnalyze } from './seqscore.js';
+export async function analyze(args){
+  const mode=(args.scoring||process.env.TONE_SCORING||'classic')==='seq'?'seq':'classic';
+  if(mode==='classic'&&!args.compare)return analyzeClassic(args);
+  const oldP=args.compare?analyzeClassic(args).catch(e=>({error:e.message})):null;
+  if(mode==='classic'){const o=await oldP;return o;}
+  const T0=Date.now();
+  const {samples,rate}=parseWav(args.wav);
+  if(samples.length<rate*0.2)throw new Error('Recording is too short');
+  if(samples.length>rate*12)throw new Error('Recording is too long (max 12 s)');
+  const target=targetSyllables(args.hanzi,args.pinyin);
+  if(!target.length)throw new Error('No Chinese characters in expected text');
+  let frames=trackPitch(samples,rate);
+  if(frames.filter(f=>f.f0).length<8){const f2=trackPitch(samples,rate,{thr:0.3,win:0.03,maxF:600});if(f2.filter(f=>f.f0).length>frames.filter(f=>f.f0).length)frames=f2;}
+  const r=sequentialAnalyze({frames,target,spk:args.spk});
+  const expected={hanzi:target.map(s=>s.hanzi).join(''),pinyin:target.map(s=>s.pinyin).join(' ')};
+  const old=oldP?await oldP:undefined;
+  const oldBrief=old?{score:old.score??null,provider:old.provider||null,error:old.error||old.provider_error||null,syllables:(old.syllables||[]).map(s=>({hanzi:s.hanzi,tone:s.tone,heard_tone:s.heard_tone??null,ok:!!s.ok})),contour:old.contour||null}:undefined;
+  if(!r.assessable){
+    const sp=Array.from({length:target.length},(_,i)=>[i*0.3,(i+1)*0.3]);
+    return {scoring:'seq',expected,heard:{text:null,pinyin:null},score:0,assessable:false,reason:r.reason,tips:['Голос не слышен — говори громче и ближе к микрофону.'],
+      syllables:target.map(s=>({...s,ok:false,verdict:'не оценено'})),contour:buildContour(frames,sp,target,null,args.spk),old:oldBrief,timings:{server_ms:Date.now()-T0}};
+  }
+  const tips=[];
+  r.syllables.forEach(s=>{if(!s.ok&&s.heard_tone){const t=tipFor(s.tone,s.heard_tone);if(t)tips.push(`${s.hanzi} (${s.pinyin}): ${t}`);}else if(!s.ok)tips.push(`${s.hanzi} (${s.pinyin}): слог почти не слышен — произнеси его отчётливее.`);});
+  if(!tips.length)tips.push(r.score>=85?'Отлично! Тоны на месте.':'Ошибок не найдено, но в некоторых слогах тон неясный — произнеси чётче.');
+  const contour=buildContour(frames,r.spans,target,r.syllables.map(s=>s.ok),args.spk);
+  contour.span_source='learner';
+  return {scoring:'seq',expected,heard:{text:null,pinyin:null},provider:'seq-local',assessable:true,score:r.score,syllables:r.syllables,tips,contour,
+    span_source:'learner_segments',old:oldBrief,timings:{server_ms:Date.now()-T0},
+    note:'Sequential tone check: syllables cut by the learner\'s own energy/voicing dips, tone per syllable from its own pitch shape (time-normalised), compared in order. Speed and timing are not scored.'};
 }
